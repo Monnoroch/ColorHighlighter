@@ -5,6 +5,7 @@ import sublime, sublime_plugin
 # Constants
 PACKAGES_PATH = sublime.packages_path()
 
+
 class ColorSelection(sublime_plugin.EventListener):
     #000000
     #FFFFFF
@@ -73,5 +74,6 @@ class ColorSelection(sublime_plugin.EventListener):
 			if self.isHexColor(str):
 				self.SetColor(view, str)
 				self.colored = True
+
 
 
