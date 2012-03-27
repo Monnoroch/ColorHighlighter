@@ -15,7 +15,7 @@ class ColorSelection(sublime_plugin.EventListener):
 
     # определить, является ли строка корректным шестнадцетеричным цветом
 	def isHexColor(self, col):
-		if not (len(col) >= 7 and col[0] == '#'):
+		if not (len(col) > 1 and col[0] == '#'):
 			return False
 		for c in col[1:]:
 			if not (c in ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F']):
