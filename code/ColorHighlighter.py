@@ -5,7 +5,7 @@ import sublime, sublime_plugin
 # Constants
 PACKAGES_PATH = sublime.packages_path()
 
-class ColorHighliter(sublime_plugin.EventListener):
+class ColorSelection(sublime_plugin.EventListener):
     #000000
     #FFFFFF
 
@@ -22,6 +22,9 @@ class ColorHighliter(sublime_plugin.EventListener):
 		return True
 
 	def SetColor(self, view, color):
+		if self.old == "":
+			self.colored = False
+			self.old = self.GetColor(view)
 		cs = view.settings().get('color_scheme')
 		fol = cs.find('/')
 		cs = cs[fol:]
@@ -68,11 +71,7 @@ class ColorHighliter(sublime_plugin.EventListener):
 				self.colored = False
 		else:
 			if self.isHexColor(str):
-				if self.old == "":
-					self.colored = False
-					self.old = self.GetColor(view)
 				self.SetColor(view, str)
 				self.colored = True
-
 
 
