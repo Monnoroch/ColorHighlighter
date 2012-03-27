@@ -1,0 +1,3 @@
+*.pyc
+*.tmLanguage.cache
+package-metadata.json
