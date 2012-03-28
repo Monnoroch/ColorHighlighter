@@ -7,7 +7,7 @@ PACKAGES_PATH = sublime.packages_path()
 
 
 class ColorSelection(sublime_plugin.EventListener):
-    #000000
+    #00000009
     #FFFFFF
 
 	old = ""
@@ -17,7 +17,9 @@ class ColorSelection(sublime_plugin.EventListener):
 
     # check if col is a hexademical color code
 	def isHexColor(self, col):
-		if not (len(col) > 1 and col[0] == '#'):
+		l = len(col)
+		# short, normal and alpha-channel support
+		if not ((l == 4 or l == 7 or l == 9) and col[0] == '#'):
 			return False
 		for c in col[1:]:
 			if c not in self.letters:
@@ -68,11 +70,9 @@ class ColorSelection(sublime_plugin.EventListener):
 			if not self.isHexColor(str):
 				self.colored = False
 				self.SetColor(view, self.old)
+			else:
+				self.SetColor(view, str)
 		else:
 			if self.isHexColor(str):
 				self.colored = True
 				self.SetColor(view, str)
-				
-
-
-
