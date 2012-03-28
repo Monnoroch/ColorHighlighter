@@ -15,7 +15,6 @@ class ColorSelection(sublime_plugin.EventListener):
 	color_scheme = ""
 	letters = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F', 'a', 'b', 'c', 'd', 'e', 'f']
 
-
     # check if col is a hexademical color code
 	def isHexColor(self, col):
 		if not (len(col) > 1 and col[0] == '#'):
@@ -74,3 +73,6 @@ class ColorSelection(sublime_plugin.EventListener):
 				self.colored = True
 				self.SetColor(view, str)
 				
+
+
+
