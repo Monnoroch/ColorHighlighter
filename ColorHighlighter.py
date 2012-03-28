@@ -8,12 +8,14 @@ PACKAGES_PATH = sublime.packages_path()
 
 class ColorSelection(sublime_plugin.EventListener):
     #000000
-    #FFFFFF
+    #FFFFFFFF
 
 	old = ""
 	colored = False
 	color_scheme = ""
 	letters = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F', 'a', 'b', 'c', 'd', 'e', 'f']
+	current_col = ""
+
 
     # check if col is a hexademical color code
 	def isHexColor(self, col):
@@ -74,9 +76,12 @@ class ColorSelection(sublime_plugin.EventListener):
 			if not self.isHexColor(str):
 				self.colored = False
 				self.SetColor(view, self.old)
-			else:
+				self.current_col = ""
+			elif str != self.current_col:
 				self.SetColor(view, str)
+				self.current_col = str
 		else:
 			if self.isHexColor(str):
 				self.colored = True
 				self.SetColor(view, str)
+				self.current_col = str
