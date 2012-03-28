@@ -1,2 +1,1 @@
-ColorHighlighter - плагин для Sublime text 2, который подсвечивает выделенные значения цвета, записанные в шестнадцатеричном виде.
-Например, если выделить "#FFFFFF", то цвет выделения текста изменится на черный.
+ColorHighlighter - is a plugin for the Sublime text 2, which underlays selected hexadecimal colorcodes (like "#FFFFFF") with their real color. I could underlay em all right after file loading, but i don't like a bunch of colored spots in my screen.
