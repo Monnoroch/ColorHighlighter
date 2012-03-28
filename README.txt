@@ -1,1 +1,1 @@
-ColorHighlighter - is a plugin for the Sublime text 2, which underlays selected hexadecimal colorcodes (like "#FFFFFF") with their real color. I could underlay em all right after file loading, but i don't like a bunch of colored spots in my screen.
+ColorHighlighter - is a plugin for the Sublime text 2, which underlays selected hexadecimal colorcodes (like "#FFFFFF") with their real color. I could underlay em all right after file loading, but i don't like a bunch of colored spots in my screen, so it only happens when you select one.
