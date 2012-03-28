@@ -7,7 +7,7 @@ PACKAGES_PATH = sublime.packages_path()
 
 
 class ColorSelection(sublime_plugin.EventListener):
-    #00000009
+    #000000
     #FFFFFF
 
 	old = ""
@@ -17,9 +17,8 @@ class ColorSelection(sublime_plugin.EventListener):
 
     # check if col is a hexademical color code
 	def isHexColor(self, col):
-		l = len(col)
 		# short, normal and alpha-channel support
-		if not ((l == 4 or l == 7 or l == 9) and col[0] == '#'):
+		if not (len(col) in [4, 7, 9] and col[0] == '#'):
 			return False
 		for c in col[1:]:
 			if c not in self.letters:
@@ -51,12 +50,17 @@ class ColorSelection(sublime_plugin.EventListener):
 		oldcol = cont1[n1+8:n2]
 		length = n2 - (n1+8)
 		newlength = len(color)
+		# wrighting back in file
+		f.seek(n+n1+8)
 		if length == newlength:
-			f.seek(n+n1+8)
 			f.write(color)
+		elif length == 9 and newlength == 7:
+			# clever hack (IDK really can i do it w\o any side effects)
+			# TODO: figue out
+			f.write(color)
+			f.write("FF")
 		else:
 			# грустно, но надо переписывать весь файл
-			f.seek(n+n1+8)
 			f.write(color)
 			f.write(cont[n+n2:])
 		f.close()
