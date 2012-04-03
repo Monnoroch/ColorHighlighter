@@ -19,6 +19,12 @@ class MyEx(BaseException):
 	def __rep__(self):
 		return "MyEx("+self.s+")"
 
+def RepairOldScheme(self, view):
+	if self.old != "":
+		self.SetColor(view, self.old)
+		self.colored = False
+		self.current_col = ""
+
 def color_scheme_change(self, view):
 	# getting the color file path (cs)
 	cs = view.settings().get('color_scheme')
@@ -27,6 +33,9 @@ def color_scheme_change(self, view):
 	cs = cs[cs.find('/'):]
 	# if color scheme has been changed - update one
 	if self.color_scheme != cs:
+		# because it could break =(
+		RepairOldScheme(self, view)
+
 		self.color_scheme = cs
 		self.old = ""
 
@@ -170,9 +179,7 @@ class ColorSelection(sublime_plugin.EventListener):
 		s = self.isHexColor(view, s)
 		if self.colored:
 			if not s:
-				self.colored = False
-				self.SetColor(view, self.old)
-				self.current_col = ""
+				RepairOldScheme(self, view)
 			elif s != self.current_col:
 				self.SetColor(view, s)
 				self.current_col = s
