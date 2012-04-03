@@ -30,6 +30,21 @@ def color_scheme_change(self, view):
 		self.color_scheme = cs
 		self.old = ""
 
+		f = open(PACKAGES_PATH + self.color_scheme, u'r+')
+		cont = f.read()
+		
+		n = cont.find("<key>selection</key>")
+		cont1 = cont[n:]
+		n1 = cont1.find("<string>") + 8
+		n2 = cont1.find("</string>")
+		if self.old == "":
+			self.old = cont1[n1:n2]
+		self.n1 = n + n1
+		self.n2 = n + n2
+		
+		f.close()
+		
+
 def colorcode_formats_change(self, view):
 	self.colorcode_formats = settings.get("colorcode_formats")
 
@@ -73,7 +88,7 @@ class ColorSelection(sublime_plugin.EventListener):
     #000000
     #FFFFFFFF
     # 0x000000
-    # rgb(FF,FF,FF)
+    # rgb(AA,FF,22)
 
 	letters = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F', 'a', 'b', 'c', 'd', 'e', 'f']
 
@@ -83,6 +98,8 @@ class ColorSelection(sublime_plugin.EventListener):
 	current_col = ""
 	colorcode_formats = []
 	colorcode_transform = []
+	n1 = 0
+	n2 = 0
 		
 
 	def on_new(self, view):
@@ -126,19 +143,11 @@ class ColorSelection(sublime_plugin.EventListener):
 		
 		f = open(PACKAGES_PATH + self.color_scheme, u'r+')
 		cont = f.read()
-		n = cont.find("<key>selection</key>")
-		cont1 = cont[n:]
-		n1 = cont1.find("<string>")
-		n2 = cont1.find("</string>")
-		# set defauld color if needed
-		if self.old == "":
-			self.old = cont1[n1+8:n2]
 		# main job
-		oldcol = cont1[n1+8:n2]
-		length = n2 - (n1+8)
+		length = self.n2 - self.n1
 		newlength = len(color)
 		# wrighting back in file
-		f.seek(n+n1+8)
+		f.seek(self.n1)
 		if length == newlength:
 			f.write(color)
 		elif length == 9 and newlength == 7:
@@ -149,7 +158,8 @@ class ColorSelection(sublime_plugin.EventListener):
 		else:
 			# грустно, но надо переписывать весь файл
 			f.write(color)
-			f.write(cont[n+n2:])
+			f.write(cont[self.n2:])
+			self.n2 = self.n2 - length + newlength
 		f.close()
 
 	def on_selection_modified(self, view):
@@ -174,3 +184,4 @@ class ColorSelection(sublime_plugin.EventListener):
 
 	def on_activate(self, view):
 		self.on_selection_modified(view)
+		
