@@ -5,41 +5,125 @@ import sublime, sublime_plugin
 # Constants
 PACKAGES_PATH = sublime.packages_path()
 
+settings = sublime.load_settings(u'ColorHighlighter.sublime-settings')
+
+# just for testing
+class MyEx(BaseException):
+
+	def __init__(self, s):
+		self.s = s
+
+	def __str__(self):
+		return "MyEx("+self.s+")"
+
+	def __rep__(self):
+		return "MyEx("+self.s+")"
+
+def color_scheme_change(self, view):
+	# getting the color file path (cs)
+	cs = view.settings().get('color_scheme')
+	# does not support null color scheme yet
+	if cs == "": return
+	cs = cs[cs.find('/'):]
+	# if color scheme has been changed - update one
+	if self.color_scheme != cs:
+		self.color_scheme = cs
+		self.old = ""
+
+def colorcode_formats_change(self, view):
+	self.colorcode_formats = settings.get("colorcode_formats")
+
+def colorcode_transform_change(self, view):
+	self.colorcode_transform = settings.get("colorcode_transform")
+
+# matches col against fmt
+def Match(col, fmt):
+	if len(col) != len(fmt):
+		return False
+	for (c,i) in zip(fmt, xrange(0, len(fmt) - 1)):
+		if c != '%' and c != col[i]:
+			return False
+	return True
+
+# get number from color code col, matched to format fmt
+def GetNum(col, fmt):
+	num = ""
+	for (c,s) in zip(col, fmt):
+		if s == '%':
+			num += c
+	return num
+
+# get number from color code col, matched to format fmt
+def PutNum(num, fmt):
+	k = 0
+	res = ""
+	for c in fmt:
+		if c != '%':
+			res += c
+		else:
+			res += num[k]
+			k+=1
+	return res
+
+# convert color code from format fmt1 to format fmt2
+def Convert(col, fmt1, fmt2):
+	return PutNum(GetNum(col, fmt1), fmt2)
 
 class ColorSelection(sublime_plugin.EventListener):
     #000000
     #FFFFFFFF
+    # 0x000000
+
+	letters = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F', 'a', 'b', 'c', 'd', 'e', 'f']
 
 	old = ""
 	colored = False
 	color_scheme = ""
-	letters = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F', 'a', 'b', 'c', 'd', 'e', 'f']
 	current_col = ""
+	colorcode_formats = []
+	colorcode_transform = []
+		
+
+	def on_new(self, view):
+		sets = view.settings()
+		sets.add_on_change("color_scheme", lambda s = self, v = view : color_scheme_change(s,v))
+		color_scheme_change(self, view)
+		#
+		settings.add_on_change("colorcode_formats", lambda s = self, v = view : colorcode_formats_change(s,v))
+		settings.add_on_change("colorcode_transform", lambda s = self, v = view : colorcode_transform_change(s,v))
+		colorcode_formats_change(self, view)
+		colorcode_transform_change(self, view)
+
+	def on_clone(self, view):
+		self.on_new(view)
+
+	# returns color code converted to native form or False
+	def isHexColor(self, view, col):
+		for fmt in self.colorcode_formats:
+			if Match(col, fmt):
+				if fmt in self.colorcode_transform:
+					return Convert(col, fmt, self.colorcode_transform[fmt])
+				return col
+		return False
 
 
     # check if col is a hexademical color code
-	def isHexColor(self, col):
-		# short, normal and alpha-channel support
-		if not (len(col) in [4, 7, 9] and col[0] == '#'):
-			return False
-		for c in col[1:]:
-			if c not in self.letters:
-				return False
-		return True
+#	def isHexColor(self, view, col):
+#		# short, normal and alpha-channel support
+#		if not (len(col) in [4, 7, 9] and col[0] == '#'):
+#			return False
+#		for c in col[1:]:
+#			if c not in self.letters:
+#				return False
+#		return True
+
+	# in case of any multithread optimization made it that way
+	#def SetColor(self, view, color):
+	#	sublime.set_timeout(lambda sl = self, v = view, cl = color: sl._SetColor(v, cl), 0)
 
 	def SetColor(self, view, color):
-		# getting the color file path (cs)
-		cs = view.settings().get('color_scheme')
-		# does not support null color scheme yet
-		if cs == "": return
-		cs = cs[cs.find('/'):]
-
-		# if color scheme has been changed - update one
-		if self.color_scheme != cs:
-			self.color_scheme = cs
-			self.old = ""
-
-		f = open(PACKAGES_PATH + self.color_scheme, 'r+')
+		
+		f = open(PACKAGES_PATH + self.color_scheme, u'r+')
 		cont = f.read()
 		n = cont.find("<key>selection</key>")
 		cont1 = cont[n:]
@@ -71,17 +155,18 @@ class ColorSelection(sublime_plugin.EventListener):
 		selection = view.sel()
 		# we dont do it with multiple selection
 		if len(selection) != 1: return
-		str = view.substr(selection[0])
+		s = view.substr(selection[0])
+		s = self.isHexColor(view, s)
 		if self.colored:
-			if not self.isHexColor(str):
+			if not s:
 				self.colored = False
 				self.SetColor(view, self.old)
 				self.current_col = ""
-			elif str != self.current_col:
-				self.SetColor(view, str)
-				self.current_col = str
+			elif s != self.current_col:
+				self.SetColor(view, s)
+				self.current_col = s
 		else:
-			if self.isHexColor(str):
+			if s:
 				self.colored = True
-				self.SetColor(view, str)
-				self.current_col = str
+				self.SetColor(view, s)
+				self.current_col = s
