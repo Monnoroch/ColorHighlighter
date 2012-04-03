@@ -73,6 +73,7 @@ class ColorSelection(sublime_plugin.EventListener):
     #000000
     #FFFFFFFF
     # 0x000000
+    # rgb(FF,FF,FF)
 
 	letters = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F', 'a', 'b', 'c', 'd', 'e', 'f']
 
@@ -118,10 +119,10 @@ class ColorSelection(sublime_plugin.EventListener):
 #		return True
 
 	# in case of any multithread optimization made it that way
-	#def SetColor(self, view, color):
-	#	sublime.set_timeout(lambda sl = self, v = view, cl = color: sl._SetColor(v, cl), 0)
-
 	def SetColor(self, view, color):
+		sublime.set_timeout(lambda sl = self, v = view, cl = color: sl._SetColor(v, cl), 0)
+
+	def _SetColor(self, view, color):
 		
 		f = open(PACKAGES_PATH + self.color_scheme, u'r+')
 		cont = f.read()
@@ -170,3 +171,6 @@ class ColorSelection(sublime_plugin.EventListener):
 				self.colored = True
 				self.SetColor(view, s)
 				self.current_col = s
+
+	def on_activate(self, view):
+		self.on_selection_modified(view)
