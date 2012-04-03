@@ -9,6 +9,8 @@ PACKAGES_PATH = sublime.packages_path()
 class ColorSelection(sublime_plugin.EventListener):
     #000000
     #FFFFFFFF
+    # 0x000000
+    # 0xFFFFFFFF
 
 	old = ""
 	colored = False
@@ -26,6 +28,12 @@ class ColorSelection(sublime_plugin.EventListener):
 			if c not in self.letters:
 				return False
 		return True
+
+	def formatHex(self, col):
+		zeroxcol = len(col) in [8, 10] and (col[0] + col[1]) == '0x'
+		if zeroxcol:
+			col = '#' + col[2:]
+		return col
 
 	def SetColor(self, view, color):
 		# getting the color file path (cs)
@@ -72,6 +80,7 @@ class ColorSelection(sublime_plugin.EventListener):
 		# we dont do it with multiple selection
 		if len(selection) != 1: return
 		str = view.substr(selection[0])
+		str = self.formatHex(str)
 		if self.colored:
 			if not self.isHexColor(str):
 				self.colored = False
