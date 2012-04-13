@@ -164,8 +164,9 @@ class ColorSelection(sublime_plugin.EventListener):
 			# TODO: figue out
 			f.write(color)
 			f.write("FF")
+			self.n2 = self.n2 + 2
 		else:
-			# грустно, но надо переписывать весь файл
+			# sad, but nesessary =\
 			f.write(color)
 			f.write(cont[self.n2:])
 			self.n2 = self.n2 - length + newlength
