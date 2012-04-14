@@ -16,7 +16,8 @@ class ColorChangeEvent:
 		self.ev = ev
 
 	def run(self):
-		self.ev(self.view, self.color)
+		e = self.ev
+		e(self.view, self.color)
 
 events = []
 fast_events = []
@@ -57,13 +58,6 @@ class MyEx(BaseException):
 	def __rep__(self):
 		return "MyEx("+self.s+")"
 
-def RepairOldScheme(self, view):
-	if self.old != "":
-		# need to be fast
-		self.SetColor(view, self.old, True)
-		self.colored = False
-		self.current_col = ""
-
 def color_scheme_change(self, view):
 	global hold
 	hold = True
@@ -75,7 +69,7 @@ def color_scheme_change(self, view):
 	# if color scheme has been changed - update one
 	if self.color_scheme != cs:
 		# because it could break =(
-		RepairOldScheme(self, view)
+		self.RepairOldScheme(view)
 
 		self.color_scheme = cs
 		self.old = ""
@@ -177,19 +171,15 @@ class ColorSelection(sublime_plugin.EventListener):
 				return col
 		return False
 
-
-    # check if col is a hexademical color code
-#	def isHexColor(self, view, col):
-#		# short, normal and alpha-channel support
-#		if not (len(col) in [4, 7, 9] and col[0] == '#'):
-#			return False
-#		for c in col[1:]:
-#			if c not in self.letters:
-#				return False
-#		return True
+	def RepairOldScheme(self, view):
+		if self.old != "":
+			# need to be fast
+			self.SetColor(view, self.old, True)
+			self.colored = False
+			self.current_col = ""
 
 	# in case of any multithread optimization made it that way
-	def SetColor(self, view, color, prior = False):
+	def SetColor(self, view, color, prior):
 		add_event(ColorChangeEvent(view, self._SetColor, color), prior)
 		sublime.set_timeout(run_events, 0)
 
@@ -225,14 +215,14 @@ class ColorSelection(sublime_plugin.EventListener):
 		s = self.isHexColor(view, s)
 		if self.colored:
 			if not s:
-				RepairOldScheme(self, view)
+				self.RepairOldScheme(view)
 			elif s != self.current_col:
-				self.SetColor(view, s)
+				self.SetColor(view, s, False)
 				self.current_col = s
 		else:
 			if s:
 				self.colored = True
-				self.SetColor(view, s)
+				self.SetColor(view, s, False)
 				self.current_col = s
 
 	def on_activate(self, view):
