@@ -5,7 +5,45 @@ import sublime, sublime_plugin
 # Constants
 PACKAGES_PATH = sublime.packages_path()
 
+
+
 settings = sublime.load_settings(u'ColorHighlighter.sublime-settings')
+
+class ColorChangeEvent:
+	def __init__(self, view, ev, color):
+		self.color = color
+		self.view = view
+		self.ev = ev
+
+	def run(self):
+		self.ev(self.view, self.color)
+
+events = []
+fast_events = []
+hold = False
+def add_event(ev, prior):
+	if prior:
+		fast_events.append(ev)
+	else:
+		events.append(ev)
+
+def run_events():
+	global events, fast_events, hold
+	ev = None
+	if hold:
+		sublime.set_timeout(run_events, 10)
+	# need to process ALL fast events
+	if fast_events != []:
+		ev = fast_events[0]
+		fast_events = fast_events[1:]
+	# need to process only the last event
+	elif events != []:
+		ev = events[0]
+		events = []
+	if ev:
+		ev.run()
+	
+	
 
 # just for testing
 class MyEx(BaseException):
@@ -21,11 +59,14 @@ class MyEx(BaseException):
 
 def RepairOldScheme(self, view):
 	if self.old != "":
-		self.SetColor(view, self.old)
+		# need to be fast
+		self.SetColor(view, self.old, True)
 		self.colored = False
 		self.current_col = ""
 
 def color_scheme_change(self, view):
+	global hold
+	hold = True
 	# getting the color file path (cs)
 	cs = view.settings().get('color_scheme')
 	# does not support null color scheme yet
@@ -52,6 +93,9 @@ def color_scheme_change(self, view):
 		self.n2 = n + n2
 		
 		f.close()
+	hold = False
+
+
 		
 
 def colorcode_formats_change(self, view):
@@ -145,11 +189,13 @@ class ColorSelection(sublime_plugin.EventListener):
 #		return True
 
 	# in case of any multithread optimization made it that way
-	def SetColor(self, view, color):
-		sublime.set_timeout(lambda sl = self, v = view, cl = color: sl._SetColor(v, cl), 0)
+	def SetColor(self, view, color, prior = False):
+		add_event(ColorChangeEvent(view, self._SetColor, color), prior)
+		sublime.set_timeout(run_events, 0)
 
 	def _SetColor(self, view, color):
-		
+		global hold
+		hold = True
 		f = open(PACKAGES_PATH + self.color_scheme, u'r+')
 		cont = f.read()
 		# main job
@@ -162,15 +208,14 @@ class ColorSelection(sublime_plugin.EventListener):
 		elif length == 9 and newlength == 7:
 			# clever hack (IDK really can i do it w\o any side effects)
 			# TODO: figue out
-			f.write(color)
-			f.write("FF")
-			self.n2 = self.n2 + 2
+			f.write(color+"FF")
 		else:
 			# sad, but nesessary =\
 			f.write(color)
 			f.write(cont[self.n2:])
 			self.n2 = self.n2 - length + newlength
 		f.close()
+		hold = False
 
 	def on_selection_modified(self, view):
 		selection = view.sel()
