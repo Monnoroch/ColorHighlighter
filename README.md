@@ -4,10 +4,10 @@
 
 **Installation :**
 
-- Using [Sublime Package Control](http://wbond.net/sublime_packages/package_control"Sublime Package Control")
+- Using [Sublime Package Control](http://wbond.net/sublime_packages/package_control "Sublime Package Control")
     - `ctrl+shft+p` then select `Package Control: Install Package`
     - install `Color Highlighter`
-- Alternatively, download the package from [GitHub](https://github.com/Monnoroch/ColorHighlighter"ColorHighlighter") into your `Packages` folder
+- Alternatively, download the package from [GitHub](https://github.com/Monnoroch/ColorHighlighter "ColorHighlighter") into your `Packages` folder
 
 **Usage :**
 
