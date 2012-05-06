@@ -3,15 +3,20 @@ import sublime, sublime_plugin
 # Constants
 PACKAGES_PATH = sublime.packages_path()
 
-dec_digits = ['0','1','2','3','4','5','6','7','8','9']
+dec_digits = "0123456789" #['0','1','2','3','4','5','6','7','8','9']
 
-hex_digits = dec_digits + [ 'A','B','C','D','E','F','a','b','c','d','e','f']
+hex_digits = dec_digits + "ABCDEFabcdef" #[ 'A','B','C','D','E','F','a','b','c','d','e','f']
 
+MAX_COL_LEN = 16
+
+# turn on when debugging
 def log(s):
 	pass #print s
 
 def tohex(r,g,b):
-	return "#" + hex_digits[r / 16] + hex_digits[r % 16] + hex_digits[g / 16] + hex_digits[g % 16] + hex_digits[b / 16] + hex_digits[b % 16]
+	return "#" + hex_digits[r / 16] + hex_digits[r % 16] + \
+	hex_digits[g / 16] + hex_digits[g % 16] + \
+	hex_digits[b / 16] + hex_digits[b % 16]
 
 def tolong(col):
 	ln = len(col)
@@ -23,7 +28,7 @@ def tolong(col):
 
 def isColor(col):
 	ln = len(col)
-	if ln < 4 or ln > 16:
+	if ln < 4 or ln > MAX_COL_LEN:
 		return False
 	if col[0] == '#':
 		if ln not in [4,7,9]:
@@ -59,7 +64,9 @@ class ColorContainer:
 		self.newcolors.append(col)
 
 	def generate_string(self, col):
-		self.string += u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>mcol_" + col + "</string><key>settings</key><dict><key>background</key><string>" + col + "</string></dict></dict>\n"
+		self.string += u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>mcol_" + col + \
+		"</string><key>settings</key><dict><key>background</key><string>" + col + \
+		"</string></dict></dict>\n"
 
 	def update(self):
 		res = False
@@ -93,7 +100,7 @@ class ColorSelection(sublime_plugin.EventListener):
 	color_scheme_cont = None
 	process = False
 
-	letters = hex_digits + ['#','(', ')',',','r','g','b']
+	letters = hex_digits + "#(),rgb" # ['#','(', ')',',','r','g','b']
 
 
 	def get_current_word(self, view, sel):
@@ -101,9 +108,9 @@ class ColorSelection(sublime_plugin.EventListener):
 		e = sel.end()
 		n = b - 1
 		k = e
-		while view.substr(n) in self.letters:
+		while k - n <= MAX_COL_LEN and view.substr(n) in self.letters:
 			n -= 1
-		while view.substr(k) in self.letters:
+		while k - n <= MAX_COL_LEN and view.substr(k) in self.letters:
 			k += 1
 		return sublime.Region(n + 1,k)
 
@@ -129,7 +136,6 @@ class ColorSelection(sublime_plugin.EventListener):
 		f = open(PACKAGES_PATH + self.color_scheme, u'w+')
 		f.write(self.color_scheme_cont[0] + self.colors.string + self.color_scheme_cont[1])
 		f.close()
-		print "Updated!"
 		self.stop_process()
 
 	def color_scheme_change(self, view):
@@ -142,7 +148,7 @@ class ColorSelection(sublime_plugin.EventListener):
 		self.start_process()
 		f = open(PACKAGES_PATH + cs, u'r')
 		cont = f.read()
-		n = cont.find("<array>") + len("<array>")
+		n = cont.find("<array>") + 7
 		self.color_scheme_cont = [cont[:n], cont[n:]]
 		f.close()
 		self.color_scheme = cs
@@ -171,8 +177,8 @@ class ColorSelection(sublime_plugin.EventListener):
 		if self.colors.update():
 			self.modify_color_scheme()
 		if words == []:
-			view.erase_regions("mon_col")
+			view.erase_regions("mon_CH")
 			return
 		for wd in words:
 			w,c = wd
-			view.add_regions("mon_col",[w],"mcol_"+c)
+			view.add_regions("mon_CH",[w],"mcol_"+c)
