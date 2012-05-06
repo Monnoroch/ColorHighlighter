@@ -1,230 +1,178 @@
-# -*- coding: utf-8 -*- 
-
 import sublime, sublime_plugin
 
 # Constants
 PACKAGES_PATH = sublime.packages_path()
 
+dec_digits = ['0','1','2','3','4','5','6','7','8','9']
 
+hex_digits = dec_digits + [ 'A','B','C','D','E','F','a','b','c','d','e','f']
 
-settings = sublime.load_settings(u'ColorHighlighter.sublime-settings')
+def log(s):
+	print s
 
-class ColorChangeEvent:
-	def __init__(self, view, ev, color):
-		self.color = color
-		self.view = view
-		self.ev = ev
+def tohex(r,g,b):
+	return "#" + hex_digits[r / 16] + hex_digits[r % 16] + hex_digits[g / 16] + hex_digits[g % 16] + hex_digits[b / 16] + hex_digits[b % 16]
 
-	def run(self):
-		e = self.ev
-		e(self.view, self.color)
+def tolong(col):
+	ln = len(col)
+	if ln == 9:
+		return col
+	if ln == 7:
+		return col + "FF"
+	return "#" + col[1]*2 + col[2]*2 + col[3]*2 + "FF"
 
-events = []
-fast_events = []
-hold = False
-def add_event(ev, prior):
-	if prior:
-		fast_events.append(ev)
-	else:
-		events.append(ev)
-
-def run_events():
-	global events, fast_events, hold
-	ev = None
-	if hold:
-		sublime.set_timeout(run_events, 10)
-	# need to process ALL fast events
-	if fast_events != []:
-		ev = fast_events[0]
-		fast_events = fast_events[1:]
-	# need to process only the last event
-	elif events != []:
-		ev = events[0]
-		events = []
-	if ev:
-		ev.run()
-	
-	
-
-# just for testing
-class MyEx(BaseException):
-
-	def __init__(self, s):
-		self.s = s
-
-	def __str__(self):
-		return "MyEx("+self.s+")"
-
-	def __rep__(self):
-		return "MyEx("+self.s+")"
-
-def color_scheme_change(self, view):
-	global hold
-	hold = True
-	# getting the color file path (cs)
-	cs = view.settings().get('color_scheme')
-	# does not support null color scheme yet
-	if cs == "": return
-	cs = cs[cs.find('/'):]
-	# if color scheme has been changed - update one
-	if self.color_scheme != cs:
-		# because it could break =(
-		self.RepairOldScheme(view)
-
-		self.color_scheme = cs
-		self.old = ""
-
-		f = open(PACKAGES_PATH + self.color_scheme, u'r+')
-		cont = f.read()
-		
-		n = cont.find("<key>selection</key>")
-		cont1 = cont[n:]
-		n1 = cont1.find("<string>") + 8
-		n2 = cont1.find("</string>")
-		if self.old == "":
-			self.old = cont1[n1:n2]
-		self.n1 = n + n1
-		self.n2 = n + n2
-		
-		f.close()
-	hold = False
-
-
-		
-
-def colorcode_formats_change(self, view):
-	self.colorcode_formats = settings.get("colorcode_formats")
-
-def colorcode_transform_change(self, view):
-	self.colorcode_transform = settings.get("colorcode_transform")
-
-# matches col against fmt
-def Match(col, fmt):
-	if len(col) != len(fmt):
+def isColor(col):
+	ln = len(col)
+	if ln < 4 or ln > 16:
 		return False
-	for (c,i) in zip(fmt, xrange(0, len(fmt) - 1)):
-		if c != '%' and c != col[i]:
+	if col[0] == '#':
+		if ln not in [4,7,9]:
 			return False
-	return True
+		for l in col[1:]:
+			if l not in hex_digits:
+				return False
+		return tolong(col)
+	if col[-1] != ')' or col[0:4] != "rgb(":
+		return False
+	col = col[4:-1].split(',')
+	if len(col) != 3:
+		return False
+	for n in col:
+		ll = len(n)
+		if ll > 3:
+			return False
+		for c in n:
+			if c not in dec_digits:
+				return False
+	return tolong(tohex(int(col[0]),int(col[1]),int(col[2])))
 
-# get number from color code col, matched to format fmt
-def GetNum(col, fmt):
-	num = ""
-	for (c,s) in zip(col, fmt):
-		if s == '%':
-			num += c
-	return num
+class ColorContainer:
 
-# get number from color code col, matched to format fmt
-def PutNum(num, fmt):
-	k = 0
-	res = ""
-	for c in fmt:
-		if c != '%':
-			res += c
-		else:
-			res += num[k]
-			k+=1
-	return res
+	colors = []
+	newcolors = []
+	string = u""
 
-# convert color code from format fmt1 to format fmt2
-def Convert(col, fmt1, fmt2):
-	return PutNum(GetNum(col, fmt1), fmt2)
+	def __init__(self):
+		pass
+
+	def add(self,col):
+		self.newcolors.append(col)
+
+	def generate_string(self, col):
+		self.string += u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>mcol_" + col + "</string><key>settings</key><dict><key>background</key><string>" + col + "</string></dict></dict>\n"
+
+	def update(self):
+		res = False
+		for c in self.newcolors:
+			if c not in self.colors:
+				self.colors.append(c)
+				self.generate_string(c)
+				res = True
+		self.newcolors = []
+		return res
+
+	def need_update(self):
+		return self.newcolors != []
+
+	def deinit(self):
+		self.colors = []
+		self.newcolors = []
+		self.string = u""
+
+
+
 
 class ColorSelection(sublime_plugin.EventListener):
     #000000
     #FFFFFFFF
     # 0x000000
-    # rgb(AA,FF,22)
+    # rgb(255,255,255)
 
-	letters = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F', 'a', 'b', 'c', 'd', 'e', 'f']
+	colors = ColorContainer()
+	color_scheme = None
+	color_scheme_cont = None
+	process = False
 
-	old = ""
-	colored = False
-	color_scheme = ""
-	current_col = ""
-	colorcode_formats = []
-	colorcode_transform = []
-	n1 = 0
-	n2 = 0
-		
+	letters = hex_digits + ['#','(', ')',',','r','g','b']
+
+
+	def get_current_word(self, view, sel):
+		b = sel.begin()
+		e = sel.end()
+		n = b - 1
+		k = e
+		while view.substr(n) in self.letters:
+			n -= 1
+		while view.substr(k) in self.letters:
+			k += 1
+		return sublime.Region(n + 1,k)
+
+	def _stop_process(self):
+		log("Stopped!")
+		self.process = False
+
+	def stop_process(self):
+		sublime.set_timeout(lambda self = self : self._stop_process(), 500)
+
+	def start_process(self):
+		log("Started!")
+		self.process = True
+
+	def modify_color_scheme(self):
+		if self.process:
+			# try later
+			sublime.set_timeout(lambda self = self : self.modify_color_scheme(), 250)
+			return False
+		if self.color_scheme == None:
+			return False
+		self.start_process()
+		f = open(PACKAGES_PATH + self.color_scheme, u'w+')
+		f.write(self.color_scheme_cont[0] + self.colors.string + self.color_scheme_cont[1])
+		f.close()
+		print "Updated!"
+		self.stop_process()
+
+	def color_scheme_change(self, view):
+		if self.process:
+			return
+		# getting the color file path (cs)
+		cs = view.settings().get('color_scheme')
+		if cs == "": return
+		cs = cs[cs.find('/'):]
+		self.start_process()
+		f = open(PACKAGES_PATH + cs, u'r')
+		cont = f.read()
+		n = cont.find("<array>") + len("<array>")
+		self.color_scheme_cont = [cont[:n], cont[n:]]
+		f.close()
+		self.color_scheme = cs
+		self.stop_process()
+		self.modify_color_scheme()
 
 	def on_new(self, view):
 		sets = view.settings()
-		sets.add_on_change("color_scheme", lambda s = self, v = view : color_scheme_change(s,v))
-		color_scheme_change(self, view)
-		#
-		settings.add_on_change("colorcode_formats", lambda s = self, v = view : colorcode_formats_change(s,v))
-		settings.add_on_change("colorcode_transform", lambda s = self, v = view : colorcode_transform_change(s,v))
-		colorcode_formats_change(self, view)
-		colorcode_transform_change(self, view)
+		sets.add_on_change("color_scheme", lambda self = self, view = view : self.color_scheme_change(view))
+		self.color_scheme_change(view)
 
 	def on_clone(self, view):
 		self.on_new(view)
 
-	# returns color code converted to native form or False
-	def isHexColor(self, view, col):
-		for fmt in self.colorcode_formats:
-			if Match(col, fmt):
-				if fmt in self.colorcode_transform:
-					return Convert(col, fmt, self.colorcode_transform[fmt])
-				return col
-		return False
-
-	def RepairOldScheme(self, view):
-		if self.old != "":
-			# need to be fast
-			self.SetColor(view, self.old, True)
-			self.colored = False
-			self.current_col = ""
-
-	# in case of any multithread optimization made it that way
-	def SetColor(self, view, color, prior):
-		add_event(ColorChangeEvent(view, self._SetColor, color), prior)
-		sublime.set_timeout(run_events, 0)
-
-	def _SetColor(self, view, color):
-		global hold
-		hold = True
-		f = open(PACKAGES_PATH + self.color_scheme, u'r+')
-		cont = f.read()
-		# main job
-		length = self.n2 - self.n1
-		newlength = len(color)
-		# wrighting back in file
-		f.seek(self.n1)
-		if length == newlength:
-			f.write(color)
-		elif length == 9 and newlength == 7:
-			# clever hack (IDK really can i do it w\o any side effects)
-			# TODO: figue out
-			f.write(color+"FF")
-		else:
-			# sad, but nesessary =\
-			f.write(color)
-			f.write(cont[self.n2:])
-			self.n2 = self.n2 - length + newlength
-		f.close()
-		hold = False
-
 	def on_selection_modified(self, view):
+		if self.color_scheme_cont == None:
+			self.color_scheme_change(view)
 		selection = view.sel()
-		# we dont do it with multiple selection
-		if len(selection) != 1: return
-		s = view.substr(selection[0])
-		s = self.isHexColor(view, s)
-		if self.colored:
-			if not s:
-				self.RepairOldScheme(view)
-			elif s != self.current_col:
-				self.SetColor(view, s, False)
-				self.current_col = s
-		else:
-			if s:
-				self.colored = True
-				self.SetColor(view, s, False)
-				self.current_col = s
-
-	def on_activate(self, view):
-		self.on_selection_modified(view)
-		
+		words = []
+		for s in selection:
+			wd = self.get_current_word(view,s)
+			col = isColor(view.substr(wd))
+			if col:
+				self.colors.add(col)
+				words.append((wd,col))
+		if self.colors.update():
+			self.modify_color_scheme()
+		if words == []:
+			view.erase_regions("mon_col")
+			return
+		for wd in words:
+			w,c = wd
+			view.add_regions("mon_col",[w],"mcol_"+c)
