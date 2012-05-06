@@ -8,7 +8,7 @@ dec_digits = ['0','1','2','3','4','5','6','7','8','9']
 hex_digits = dec_digits + [ 'A','B','C','D','E','F','a','b','c','d','e','f']
 
 def log(s):
-	print s
+	pass #print s
 
 def tohex(r,g,b):
 	return "#" + hex_digits[r / 16] + hex_digits[r % 16] + hex_digits[g / 16] + hex_digits[g % 16] + hex_digits[b / 16] + hex_digits[b % 16]
