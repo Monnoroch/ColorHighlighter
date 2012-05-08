@@ -14,7 +14,11 @@ _ColorHighlighter is a simple plugin for the Sublime Text 2, which unobtrusively
 Just click or move the cursor on the color code e.g. #FFFFFF and it'll be highlighted with it's real color.
 Two color representations are currently supported:
 - Hexademical e.g. #RGB or #RRGGBB or #RRGGBBAA (you can use both upper and lower case letters)
-- RBG value e.g. rgb(rrr,ggg,bbb) with decimal channel values. 
+- RBG value e.g. rgb(rrr,ggg,bbb) with decimal channel values.
+
+And two more you can enable in options:
+- Hexademical e.g. #RGB or #RRGGBB or #RRGGBBAA (you can use both upper and lower case letters)
+- RBG value e.g. rgb(rrr,ggg,bbb) with decimal channel values.
 
 **Note :**
 This version is beta and although it works fine, it corrupts color scheme with additional values. The color scheme will still work, but it'll became bigger and bigger.
