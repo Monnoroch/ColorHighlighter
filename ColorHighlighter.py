@@ -127,7 +127,6 @@ def tolong(col):
 	if ln == 7:
 		return col + "FF"
 	return "#%s%s%sFF" % (col[1]*2, col[2]*2, col[3]*2)
-0xFFF
 def isColor(col):
 	ln = len(col)
 	if ln < 3 or ln > MAX_COL_LEN:
