@@ -32,9 +32,7 @@ def region_name(s):
 	return PREFIX + s[1:]
 
 def tohex(r,g,b):
-	return "#" + hex_digits[r / 16] + hex_digits[r % 16] + \
-	hex_digits[g / 16] + hex_digits[g % 16] + \
-	hex_digits[b / 16] + hex_digits[b % 16]
+	return "#%X%X%XFF" % (r,g,b)
 
 def tolong(col):
 	ln = len(col)
@@ -42,7 +40,7 @@ def tolong(col):
 		return col
 	if ln == 7:
 		return col + "FF"
-	return "#" + col[1]*2 + col[2]*2 + col[3]*2 + "FF"
+	return "#%s%s%sFF" % (col[1]*2, col[2]*2, col[3]*2)
 
 def isColor(col):
 	ln = len(col)
@@ -67,7 +65,7 @@ def isColor(col):
 		for c in n:
 			if c not in dec_digits:
 				return False
-	return tolong(tohex(int(col[0]),int(col[1]),int(col[2])))
+	return tohex(int(col[0]),int(col[1]),int(col[2]))
 
 def get_y(col):
 	return (0.3 * int(col[1:3],16) + 0.59 * int(col[3:5],16) + 0.11 * int(col[5:7],16)) * (int(col[7:9],16) / 255.0)
@@ -82,6 +80,11 @@ class ColorContainer:
 	colors = []
 	newcolors = []
 	string = u""
+	gen_string = u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>%s\
+</string><key>settings</key><dict><key>background</key><string>%s\
+</string><key>caret</key><string>%s\
+</string><key>foreground</key><string>%s\
+</string></dict></dict>\n"
 
 	def __init__(self):
 		pass
@@ -91,15 +94,7 @@ class ColorContainer:
 
 	def generate_string(self, col):
 		cont = get_cont_col(col)
-		self.string += u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>" + \
-		region_name(col) + \
-		"</string><key>settings</key><dict><key>background</key><string>" + \
-		col + \
-		"</string><key>caret</key><string>" + \
-		cont  + \
-		"</string><key>foreground</key><string>" + \
-		cont + \
-		"</string></dict></dict>\n"
+		self.string += self.gen_string % (region_name(col), col, cont, cont)
 
 	def update(self):
 		res = False
