@@ -209,15 +209,16 @@ class ColorSelection(sublime_plugin.EventListener):
 		#log("! Started!")
 		self.process = True
 
-	def modify_color_scheme(self):
+	def modify_color_scheme(self, view):
 		if self.color_scheme == None:
+			self.color_scheme_change(view)
 			log("color_scheme is none")
 			return False
 		if self.process:
 			# try later
 			log("Alreaty doing something")
 			# TODO: decide if needed
-			sublime.set_timeout(lambda self = self : self.modify_color_scheme(), 100)
+			sublime.set_timeout(lambda self = self, view = view : self.modify_color_scheme(view), 100)
 			return False
 		self.start_process()
 		f = open(PACKAGES_PATH + self.color_scheme, u'w')
@@ -251,7 +252,7 @@ class ColorSelection(sublime_plugin.EventListener):
 		self.read_colors(cont[n:cont.rfind(PREFIX)+8+5])
 		f.close()
 		self.stop_process()
-		self.modify_color_scheme()
+		self.modify_color_scheme(view)
 
 	def color_scheme_change(self, view):
 		# getting the color file path (cs)
@@ -288,8 +289,8 @@ class ColorSelection(sublime_plugin.EventListener):
 				self.colors.add(col)
 				words.append((wd,col))
 		if self.colors.update():
-			#sublime.set_timeout(lambda self = self : self.modify_color_scheme(), 0)
-			self.modify_color_scheme()
+			#sublime.set_timeout(lambda self = self, view = view : self.modify_color_scheme(view), 0)
+			self.modify_color_scheme(view)
 		if words == []:
 			view.erase_regions("mon_CH")
 			return
