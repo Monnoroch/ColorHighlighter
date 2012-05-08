@@ -69,6 +69,14 @@ def isColor(col):
 				return False
 	return tolong(tohex(int(col[0]),int(col[1]),int(col[2])))
 
+def get_y(col):
+	return (0.3 * int(col[1:3],16) + 0.59 * int(col[3:5],16) + 0.11 * int(col[5:7],16)) * (int(col[7:9],16) / 255.0)
+
+def get_cont_col(col):
+	if get_y(col) > 255.0/2:
+		return "#000000FF"
+	return "#FFFFFFFF"
+
 class ColorContainer:
 
 	colors = []
@@ -82,10 +90,15 @@ class ColorContainer:
 		self.newcolors.append(col)
 
 	def generate_string(self, col):
+		cont = get_cont_col(col)
 		self.string += u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>" + \
 		region_name(col) + \
 		"</string><key>settings</key><dict><key>background</key><string>" + \
 		col + \
+		"</string><key>caret</key><string>" + \
+		cont  + \
+		"</string><key>foreground</key><string>" + \
+		cont + \
 		"</string></dict></dict>\n"
 
 	def update(self):
