@@ -2,7 +2,7 @@ import sublime, sublime_plugin
 import os 
 
 
-version = "2.0.1"
+version = "2.0.2"
 
 # Constants
 PACKAGES_PATH = sublime.packages_path()
@@ -17,6 +17,24 @@ PREFIX = "mcol_"
 sets_name = "ColorHighlighter.sublime-settings"
 
 ch_settings = sublime.load_settings(sets_name)
+
+
+# turn on when debugging
+def log(s):
+	global loglist
+	loglist.append(s)
+	#print s
+
+def write_file(fl, s):
+	f = open(fl, 'w')
+	f.write(s)
+	f.close()
+
+def read_file(fl):
+	f = open(fl, 'r')
+	res = f.read()
+	f.close()
+	return res
 
 # treat hex vals as colors
 class HexValsAsColorsCommand(sublime_plugin.WindowCommand):
@@ -35,18 +53,6 @@ class XHexValsAsColorsCommand(sublime_plugin.WindowCommand):
 
 	def is_checked(self):
 		return ch_settings.get("0x_hex_values")
-
-def write_file(fl, s):
-	f = open(fl, 'w')
-	f.write(s)
-	f.close()
-
-def read_file(fl):
-	f = open(fl, 'r')
-	res = f.read()
-	f.close()
-	return res
-
 
 class ColorContainer:
 
@@ -119,13 +125,7 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
 			all_colors.deinit()
 		else:
 			log("No backup :(")
-		
 
-# turn on when debugging
-def log(s):
-	global loglist
-	loglist.append(s)
-	#print s
 
 def region_name(s):
 	return PREFIX + s[1:]
@@ -241,12 +241,13 @@ class ColorSelection(sublime_plugin.EventListener):
 		
 	def read_colors(self, s):
 		n = s.find(PREFIX)
+		self.colors.deinit()
 		while n != -1:
 			s = s[n+5:]
 			self.colors.add('#' + s[:8])
 			n = s.find(PREFIX)
 		log("Colors loaded: " + str(self.colors.newcolors))
-		self.colors.update() #ff0
+		self.colors.update()
 
 	def _color_scheme_change(self, view, cs):
 		log("Changing to scheme: " + cs)
