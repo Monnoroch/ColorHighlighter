@@ -1,5 +1,8 @@
 import sublime, sublime_plugin
-import os
+import os 
+
+
+version = "2.0"
 
 # Constants
 PACKAGES_PATH = sublime.packages_path()
@@ -9,7 +12,7 @@ dec_digits = "0123456789" #['0','1','2','3','4','5','6','7','8','9']
 hex_digits = dec_digits + "ABCDEFabcdef" #[ 'A','B','C','D','E','F','a','b','c','d','e','f']
 
 MAX_COL_LEN = 16
-loglist = []
+loglist = ["Version: " + version]
 PREFIX = "mcol_"
 sets_name = "ColorHighlighter.sublime-settings"
 
@@ -33,13 +36,24 @@ class XHexValsAsColorsCommand(sublime_plugin.WindowCommand):
 	def is_checked(self):
 		return ch_settings.get("0x_hex_values")
 
+def write_file(fl, s):
+	f = open(fl, 'w')
+	f.write(s)
+	f.close()
+
+def read_file(fl):
+	f = open(fl, 'r')
+	res = f.read()
+	f.close()
+	return res
+
 
 class ColorContainer:
 
 	colors = []
 	newcolors = []
-	string = u""
-	gen_string = u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>%s\
+	string = ""
+	gen_string = "<dict><key>name</key><string>mon_color</string><key>scope</key><string>%s\
 </string><key>settings</key><dict><key>background</key><string>%s\
 </string><key>caret</key><string>%s\
 </string><key>foreground</key><string>%s\
@@ -63,6 +77,7 @@ class ColorContainer:
 				self.generate_string(c)
 				res = True
 		self.newcolors = []
+		self.string = self.string.decode("utf-8").encode("utf-8")
 		return res
 
 	def need_update(self):
@@ -71,19 +86,20 @@ class ColorContainer:
 	def deinit(self):
 		self.colors = []
 		self.newcolors = []
-		self.string = u""
+		self.string = "".decode("utf-8").encode("utf-8")
 
 all_colors = ColorContainer()
 
 # command to print log
 class chlogCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		res = u""
+		res = ""
 		for l in loglist:
 			res += l + "\n"
 			print "! CH ! " + l
-		if res == u"":
+		if res == "":
 			return
+		log("Log printed.")
 		#self.view.insert(edit, 0, res + "\n\n\n")
 
 # command to restore color scheme
@@ -92,27 +108,24 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
 		cs = self.view.settings().get('color_scheme')
 		# do not support empty color scheme
 		if cs == "":
-			log("Empty scheme")
+			log("Empty scheme, can't restore")
 			return
 		# extract name
 		cs = cs[cs.find('/'):]
 		if os.path.exists(PACKAGES_PATH + cs + ".chback"):
-			print "Nya!"
-			b = open(PACKAGES_PATH + cs + ".chback", "r")
-			f = open(PACKAGES_PATH + cs, "w")
-			f.write(b.read())
-			f.close()
-			b.close()
-			print "Done!"
+			log("Starting restore scheme: " + cs)
+			write_file(PACKAGES_PATH + cs, read_file(PACKAGES_PATH + cs + ".chback"))
+			log("Restore done.")
+			all_colors.deinit()
 		else:
 			log("No backup :(")
-		all_colors.deinit()
+		
 
 # turn on when debugging
 def log(s):
 	global loglist
 	loglist.append(s)
-	#print s
+	print s
 
 def region_name(s):
 	return PREFIX + s[1:]
@@ -126,7 +139,9 @@ def tolong(col):
 		return col
 	if ln == 7:
 		return col + "FF"
-	return "#%s%s%sFF" % (col[1]*2, col[2]*2, col[3]*2)
+	return ("#%s%s%sFF" % (col[1]*2, col[2]*2, col[3]*2)).upper()
+
+
 def isColor(col):
 	ln = len(col)
 	if ln < 3 or ln > MAX_COL_LEN:
@@ -186,10 +201,8 @@ class ColorSelection(sublime_plugin.EventListener):
 
 
 	def get_current_word(self, view, sel):
-		b = sel.begin()
-		e = sel.end()
-		n = b - 1
-		k = e
+		n = sel.begin() - 1
+		k = sel.end()
 		while k - n <= MAX_COL_LEN and view.substr(n) in self.letters:
 			n -= 1
 		while k - n <= MAX_COL_LEN and view.substr(k) in self.letters:
@@ -197,7 +210,7 @@ class ColorSelection(sublime_plugin.EventListener):
 		return sublime.Region(n + 1,k)
 
 	def _stop_process(self):
-		#log("! Stopped!")
+		log("Stopped!")
 		self.process = False
 
 	def stop_process(self):
@@ -205,7 +218,7 @@ class ColorSelection(sublime_plugin.EventListener):
 		#sublime.set_timeout(lambda self = self : self._stop_process(), 200)
 
 	def start_process(self):
-		#log("! Started!")
+		log("Started!")
 		self.process = True
 
 	def modify_color_scheme(self, view):
@@ -219,11 +232,12 @@ class ColorSelection(sublime_plugin.EventListener):
 			# TODO: decide if needed
 			sublime.set_timeout(lambda self = self, view = view : self.modify_color_scheme(view), 100)
 			return False
+		log("Modifying scheme: " + self.color_scheme)
 		self.start_process()
-		f = open(PACKAGES_PATH + self.color_scheme, u'w')
-		f.write(self.color_scheme_cont[0] + self.colors.string + self.color_scheme_cont[1])
-		f.close()
+		ss = self.color_scheme_cont[0] + self.colors.string + self.color_scheme_cont[1]
+		write_file(PACKAGES_PATH + self.color_scheme, ss)
 		self.stop_process()
+		log("Modifying done.")
 
 	def read_colors(self, s):
 		n = s.find(PREFIX)
@@ -235,22 +249,22 @@ class ColorSelection(sublime_plugin.EventListener):
 		log("Colors loaded: " + str(self.colors.colors))
 
 	def _color_scheme_change(self, view, cs):
+		log("Changing to scheme: " + cs)
 		self.color_scheme = cs
 		self.start_process()
-		f = open(PACKAGES_PATH + cs, u'r')
-		cont = f.read()
+		cont = read_file(PACKAGES_PATH + cs)
 
 		# backup the theme
 		if not os.path.exists(PACKAGES_PATH + cs + ".chback"):
-			b = open(PACKAGES_PATH + cs + ".chback", "w")
-			b.write(cont)
-			b.close()
+			log("Backup scheme: " + cs)
+			write_file(PACKAGES_PATH + cs + ".chback", cont)
+			log("Backup done!")
 		
 		n = cont.find("<array>") + 7
 		self.color_scheme_cont = [cont[:n], cont[n:]]
 		self.read_colors(cont[n:cont.rfind(PREFIX)+8+5])
-		f.close()
 		self.stop_process()
+		log("Changing done.")
 		self.modify_color_scheme(view)
 
 	def color_scheme_change(self, view):
