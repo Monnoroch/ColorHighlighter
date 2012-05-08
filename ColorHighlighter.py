@@ -1,4 +1,5 @@
 import sublime, sublime_plugin
+import os
 
 # Constants
 PACKAGES_PATH = sublime.packages_path()
@@ -11,6 +12,48 @@ MAX_COL_LEN = 16
 loglist = []
 PREFIX = "mcol_"
 
+
+class ColorContainer:
+
+	colors = []
+	newcolors = []
+	string = u""
+	gen_string = u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>%s\
+</string><key>settings</key><dict><key>background</key><string>%s\
+</string><key>caret</key><string>%s\
+</string><key>foreground</key><string>%s\
+</string></dict></dict>\n"
+
+	def __init__(self):
+		pass
+
+	def add(self,col):
+		self.newcolors.append(col)
+
+	def generate_string(self, col):
+		cont = get_cont_col(col)
+		self.string += self.gen_string % (region_name(col), col, cont, cont)
+
+	def update(self):
+		res = False
+		for c in self.newcolors:
+			if c not in self.colors:
+				self.colors.append(c)
+				self.generate_string(c)
+				res = True
+		self.newcolors = []
+		return res
+
+	def need_update(self):
+		return self.newcolors != []
+
+	def deinit(self):
+		self.colors = []
+		self.newcolors = []
+		self.string = u""
+
+all_colors = ColorContainer()
+
 # command to print log
 class chlogCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -20,7 +63,29 @@ class chlogCommand(sublime_plugin.TextCommand):
 			print "! CH ! " + l
 		if res == u"":
 			return
-		self.view.insert(edit, 0, res + "\n\n\n")
+		#self.view.insert(edit, 0, res + "\n\n\n")
+
+# command to print log
+class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		cs = self.view.settings().get('color_scheme')
+		# do not support empty color scheme
+		if cs == "":
+			log("Empty scheme")
+			return
+		# extract name
+		cs = cs[cs.find('/'):]
+		if os.path.exists(PACKAGES_PATH + cs + ".chback"):
+			print "Nya!"
+			b = open(PACKAGES_PATH + cs + ".chback", "r")
+			f = open(PACKAGES_PATH + cs, "w")
+			f.write(b.read())
+			f.close()
+			b.close()
+			print "Done!"
+		else:
+			log("No backup :(")
+		all_colors.deinit()
 
 # turn on when debugging
 def log(s):
@@ -75,55 +140,12 @@ def get_cont_col(col):
 		return "#000000FF"
 	return "#FFFFFFFF"
 
-class ColorContainer:
-
-	colors = []
-	newcolors = []
-	string = u""
-	gen_string = u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>%s\
-</string><key>settings</key><dict><key>background</key><string>%s\
-</string><key>caret</key><string>%s\
-</string><key>foreground</key><string>%s\
-</string></dict></dict>\n"
-
-	def __init__(self):
-		pass
-
-	def add(self,col):
-		self.newcolors.append(col)
-
-	def generate_string(self, col):
-		cont = get_cont_col(col)
-		self.string += self.gen_string % (region_name(col), col, cont, cont)
-
-	def update(self):
-		res = False
-		for c in self.newcolors:
-			if c not in self.colors:
-				self.colors.append(c)
-				self.generate_string(c)
-				res = True
-		self.newcolors = []
-		return res
-
-	def need_update(self):
-		return self.newcolors != []
-
-	def deinit(self):
-		self.colors = []
-		self.newcolors = []
-		self.string = u""
-
-
-
-
 class ColorSelection(sublime_plugin.EventListener):
     #000000
     #FFFFFFFF
-    # 0x000000
     # rgb(255,255,255)
 
-	colors = ColorContainer()
+	colors = all_colors
 	color_scheme = None
 	color_scheme_cont = None
 	process = False
@@ -184,6 +206,13 @@ class ColorSelection(sublime_plugin.EventListener):
 		self.start_process()
 		f = open(PACKAGES_PATH + cs, u'r')
 		cont = f.read()
+
+		# backup the theme
+		if not os.path.exists(PACKAGES_PATH + cs + ".chback"):
+			b = open(PACKAGES_PATH + cs + ".chback", "w")
+			b.write(cont)
+			b.close()
+		
 		n = cont.find("<array>") + 7
 		self.color_scheme_cont = [cont[:n], cont[n:]]
 		self.read_colors(cont[n:cont.rfind(PREFIX)+8+5])
@@ -226,7 +255,8 @@ class ColorSelection(sublime_plugin.EventListener):
 				self.colors.add(col)
 				words.append((wd,col))
 		if self.colors.update():
-			self.modify_color_scheme()
+			sublime.set_timeout(lambda self = self : self.modify_color_scheme(), 0)
+			#self.modify_color_scheme()
 		if words == []:
 			view.erase_regions("mon_CH")
 			return

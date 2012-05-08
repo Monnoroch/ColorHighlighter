@@ -1,0 +1,22 @@
+[  
+    {  
+        "id": "tools",  
+        "children":  
+        [  
+            {
+                "caption": "Color Highlighter",
+                "children":
+                [
+                    {
+                        "caption": "Restore color scheme",
+                        "command": "restore_color_scheme"
+                    },
+                    {
+                        "caption": "Print log",
+                        "command": "chlog"
+                    }
+                ]
+            }
+        ]  
+    }    
+]
