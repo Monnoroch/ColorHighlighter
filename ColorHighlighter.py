@@ -11,6 +11,27 @@ hex_digits = dec_digits + "ABCDEFabcdef" #[ 'A','B','C','D','E','F','a','b','c',
 MAX_COL_LEN = 16
 loglist = []
 PREFIX = "mcol_"
+sets_name = "ColorHighlighter.sublime-settings"
+
+ch_settings = sublime.load_settings(sets_name)
+
+# treat hex vals as colors
+class HexValsAsColorsCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		ch_settings.set("hex_values", not ch_settings.get("hex_values"))
+		sublime.save_settings(sets_name)
+
+	def is_checked(self):
+		return ch_settings.get("hex_values")
+
+# treat hex vals as colors
+class XHexValsAsColorsCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		ch_settings.set("0x_hex_values", not ch_settings.get("0x_hex_values"))
+		sublime.save_settings(sets_name)
+
+	def is_checked(self):
+		return ch_settings.get("0x_hex_values")
 
 
 class ColorContainer:
@@ -65,7 +86,7 @@ class chlogCommand(sublime_plugin.TextCommand):
 			return
 		#self.view.insert(edit, 0, res + "\n\n\n")
 
-# command to print log
+# command to restore color scheme
 class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		cs = self.view.settings().get('color_scheme')
@@ -109,7 +130,7 @@ def tolong(col):
 
 def isColor(col):
 	ln = len(col)
-	if ln < 4 or ln > MAX_COL_LEN:
+	if ln < 3 or ln > MAX_COL_LEN:
 		return False
 	if col[0] == '#':
 		if ln not in [4,7,9]:
@@ -118,19 +139,31 @@ def isColor(col):
 			if l not in hex_digits:
 				return False
 		return tolong(col)
+	if ch_settings.get("0x_hex_values") and col[0:2] == "0x":
+		if ln in [5,8,10]:
+			for l in col[2:]:
+				if l not in hex_digits:
+					return False
+			return tolong('#' + col[2:])
+		return False
+	if ch_settings.get("hex_values") and ln in [3,6,8]:
+		for l in col:
+			if l not in hex_digits:
+				return False
+		return tolong('#' + col)
 	if col[-1] != ')' or col[0:4] != "rgb(":
 		return False
-	col = col[4:-1].split(',')
-	if len(col) != 3:
+	cols = col[4:-1].split(',')
+	if len(cols) != 3:
 		return False
-	for n in col:
+	for n in cols:
 		ll = len(n)
 		if ll > 3:
 			return False
 		for c in n:
 			if c not in dec_digits:
 				return False
-	return tohex(int(col[0]),int(col[1]),int(col[2]))
+	return tohex(int(cols[0]),int(cols[1]),int(cols[2]))
 
 def get_y(col):
 	return (0.3 * int(col[1:3],16) + 0.59 * int(col[3:5],16) + 0.11 * int(col[5:7],16)) * (int(col[7:9],16) / 255.0)
@@ -151,6 +184,8 @@ class ColorSelection(sublime_plugin.EventListener):
 	process = False
 
 	letters = hex_digits + "#(),rgb" # ['#','(', ')',',','r','g','b']
+	if ch_settings.get("0x_hex_values"):
+		letters += "x"
 
 
 	def get_current_word(self, view, sel):
