@@ -119,7 +119,7 @@ class ColorSelection(sublime_plugin.EventListener):
 		self.process = False
 
 	def stop_process(self):
-		sublime.set_timeout(lambda self = self : self._stop_process(), 500)
+		sublime.set_timeout(lambda self = self : self._stop_process(), 200)
 
 	def start_process(self):
 		log("Started!")
@@ -128,12 +128,12 @@ class ColorSelection(sublime_plugin.EventListener):
 	def modify_color_scheme(self):
 		if self.process:
 			# try later
-			sublime.set_timeout(lambda self = self : self.modify_color_scheme(), 250)
+			sublime.set_timeout(lambda self = self : self.modify_color_scheme(), 100)
 			return False
 		if self.color_scheme == None:
 			return False
 		self.start_process()
-		f = open(PACKAGES_PATH + self.color_scheme, u'w+')
+		f = open(PACKAGES_PATH + self.color_scheme, u'w')
 		f.write(self.color_scheme_cont[0] + self.colors.string + self.color_scheme_cont[1])
 		f.close()
 		self.stop_process()
@@ -182,3 +182,4 @@ class ColorSelection(sublime_plugin.EventListener):
 		for wd in words:
 			w,c = wd
 			view.add_regions("mon_CH",[w],"mcol_"+c)
+
