@@ -127,7 +127,7 @@ def tolong(col):
 	if ln == 7:
 		return col + "FF"
 	return "#%s%s%sFF" % (col[1]*2, col[2]*2, col[3]*2)
-
+0xFFF
 def isColor(col):
 	ln = len(col)
 	if ln < 3 or ln > MAX_COL_LEN:
@@ -139,7 +139,7 @@ def isColor(col):
 			if l not in hex_digits:
 				return False
 		return tolong(col)
-	if ch_settings.get("0x_hex_values") and col[0:2] == "0x":
+	if ch_settings.get("0x_hex_values") and col[:2] == "0x":
 		if ln in [5,8,10]:
 			for l in col[2:]:
 				if l not in hex_digits:
@@ -183,9 +183,7 @@ class ColorSelection(sublime_plugin.EventListener):
 	color_scheme_cont = None
 	process = False
 
-	letters = hex_digits + "#(),rgb" # ['#','(', ')',',','r','g','b']
-	if ch_settings.get("0x_hex_values"):
-		letters += "x"
+	letters = hex_digits + "#(),rgbx" # ['#','(', ')',',','r','g','b']
 
 
 	def get_current_word(self, view, sel):
