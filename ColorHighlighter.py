@@ -2,7 +2,7 @@ import sublime, sublime_plugin
 import os 
 
 
-version = "2.0"
+version = "2.0.1"
 
 # Constants
 PACKAGES_PATH = sublime.packages_path()
@@ -125,7 +125,7 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
 def log(s):
 	global loglist
 	loglist.append(s)
-	print s
+	#print s
 
 def region_name(s):
 	return PREFIX + s[1:]
@@ -136,9 +136,9 @@ def tohex(r,g,b):
 def tolong(col):
 	ln = len(col)
 	if ln == 9:
-		return col
+		return col.upper()
 	if ln == 7:
-		return col + "FF"
+		return col.upper() + "FF"
 	return ("#%s%s%sFF" % (col[1]*2, col[2]*2, col[3]*2)).upper()
 
 
@@ -238,15 +238,15 @@ class ColorSelection(sublime_plugin.EventListener):
 		write_file(PACKAGES_PATH + self.color_scheme, ss)
 		self.stop_process()
 		log("Modifying done.")
-
+		
 	def read_colors(self, s):
 		n = s.find(PREFIX)
 		while n != -1:
 			s = s[n+5:]
 			self.colors.add('#' + s[:8])
 			n = s.find(PREFIX)
-		self.colors.update()
-		log("Colors loaded: " + str(self.colors.colors))
+		log("Colors loaded: " + str(self.colors.newcolors))
+		self.colors.update() #ff0
 
 	def _color_scheme_change(self, view, cs):
 		log("Changing to scheme: " + cs)
@@ -279,6 +279,7 @@ class ColorSelection(sublime_plugin.EventListener):
 		# nothing's changed
 		if self.color_scheme == cs:
 			return
+		log("Loaded scheme: " + cs)
 		if self.process:
 			log("Something's really wrong!")
 			return
@@ -302,11 +303,13 @@ class ColorSelection(sublime_plugin.EventListener):
 				self.colors.add(col)
 				words.append((wd,col))
 		if self.colors.update():
-			#sublime.set_timeout(lambda self = self, view = view : self.modify_color_scheme(view), 0)
-			self.modify_color_scheme(view)
+			sublime.set_timeout(lambda self = self, view = view : self.modify_color_scheme(view), 0)
+			#self.modify_color_scheme(view)
 		if words == []:
 			view.erase_regions("mon_CH")
 			return
 		for wd in words:
 			w,c = wd
+			log(region_name(c))
 			view.add_regions("mon_CH",[w], region_name(c))
+			
