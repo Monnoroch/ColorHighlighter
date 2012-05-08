@@ -8,10 +8,28 @@ dec_digits = "0123456789" #['0','1','2','3','4','5','6','7','8','9']
 hex_digits = dec_digits + "ABCDEFabcdef" #[ 'A','B','C','D','E','F','a','b','c','d','e','f']
 
 MAX_COL_LEN = 16
+loglist = []
+PREFIX = "mcol_"
+
+# command to print log
+class chlogCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		res = u""
+		for l in loglist:
+			res += l + "\n"
+			print "! CH ! " + l
+		if res == u"":
+			return
+		self.view.insert(edit, 0, res + "\n\n\n")
 
 # turn on when debugging
 def log(s):
-	pass #print s
+	global loglist
+	loglist.append(s)
+	#print s
+
+def region_name(s):
+	return PREFIX + s[1:]
 
 def tohex(r,g,b):
 	return "#" + hex_digits[r / 16] + hex_digits[r % 16] + \
@@ -64,8 +82,10 @@ class ColorContainer:
 		self.newcolors.append(col)
 
 	def generate_string(self, col):
-		self.string += u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>mcol_" + col + \
-		"</string><key>settings</key><dict><key>background</key><string>" + col + \
+		self.string += u"<dict><key>name</key><string>mon_color</string><key>scope</key><string>" + \
+		region_name(col) + \
+		"</string><key>settings</key><dict><key>background</key><string>" + \
+		col + \
 		"</string></dict></dict>\n"
 
 	def update(self):
@@ -115,22 +135,26 @@ class ColorSelection(sublime_plugin.EventListener):
 		return sublime.Region(n + 1,k)
 
 	def _stop_process(self):
-		log("Stopped!")
+		#log("! Stopped!")
 		self.process = False
 
 	def stop_process(self):
-		sublime.set_timeout(lambda self = self : self._stop_process(), 200)
+		self._stop_process()
+		#sublime.set_timeout(lambda self = self : self._stop_process(), 200)
 
 	def start_process(self):
-		log("Started!")
+		#log("! Started!")
 		self.process = True
 
 	def modify_color_scheme(self):
+		if self.color_scheme == None:
+			log("color_scheme is none")
+			return False
 		if self.process:
 			# try later
+			log("Alreaty doing something")
+			# TODO: decide if needed
 			sublime.set_timeout(lambda self = self : self.modify_color_scheme(), 100)
-			return False
-		if self.color_scheme == None:
 			return False
 		self.start_process()
 		f = open(PACKAGES_PATH + self.color_scheme, u'w')
@@ -138,22 +162,43 @@ class ColorSelection(sublime_plugin.EventListener):
 		f.close()
 		self.stop_process()
 
-	def color_scheme_change(self, view):
-		if self.process:
-			return
-		# getting the color file path (cs)
-		cs = view.settings().get('color_scheme')
-		if cs == "": return
-		cs = cs[cs.find('/'):]
+	def read_colors(self, s):
+		n = s.find(PREFIX)
+		while n != -1:
+			s = s[n+5:]
+			self.colors.add('#' + s[:8])
+			n = s.find(PREFIX)
+		self.colors.update()
+		log("Colors loaded: " + str(self.colors.colors))
+
+	def _color_scheme_change(self, view, cs):
+		self.color_scheme = cs
 		self.start_process()
 		f = open(PACKAGES_PATH + cs, u'r')
 		cont = f.read()
 		n = cont.find("<array>") + 7
 		self.color_scheme_cont = [cont[:n], cont[n:]]
+		self.read_colors(cont[n:cont.rfind(PREFIX)+8+5])
 		f.close()
-		self.color_scheme = cs
 		self.stop_process()
 		self.modify_color_scheme()
+
+	def color_scheme_change(self, view):
+		# getting the color file path (cs)
+		cs = view.settings().get('color_scheme')
+		# do not support empty color scheme
+		if cs == "":
+			log("Empty scheme")
+			return
+		# extract name
+		cs = cs[cs.find('/'):]
+		# nothing's changed
+		if self.color_scheme == cs:
+			return
+		if self.process:
+			log("Something's really wrong!")
+			return
+		self._color_scheme_change(view, cs)
 
 	def on_new(self, view):
 		sets = view.settings()
@@ -164,8 +209,6 @@ class ColorSelection(sublime_plugin.EventListener):
 		self.on_new(view)
 
 	def on_selection_modified(self, view):
-		if self.color_scheme_cont == None:
-			self.color_scheme_change(view)
 		selection = view.sel()
 		words = []
 		for s in selection:
@@ -181,5 +224,4 @@ class ColorSelection(sublime_plugin.EventListener):
 			return
 		for wd in words:
 			w,c = wd
-			view.add_regions("mon_CH",[w],"mcol_"+c)
-
+			view.add_regions("mon_CH",[w], region_name(c))
