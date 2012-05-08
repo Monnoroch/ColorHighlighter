@@ -255,8 +255,8 @@ class ColorSelection(sublime_plugin.EventListener):
 				self.colors.add(col)
 				words.append((wd,col))
 		if self.colors.update():
-			sublime.set_timeout(lambda self = self : self.modify_color_scheme(), 0)
-			#self.modify_color_scheme()
+			#sublime.set_timeout(lambda self = self : self.modify_color_scheme(), 0)
+			self.modify_color_scheme()
 		if words == []:
 			view.erase_regions("mon_CH")
 			return
