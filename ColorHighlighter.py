@@ -1,8 +1,7 @@
 import sublime, sublime_plugin
 import os 
 
-
-version = "2.0.3"
+version = "2.0.4"
 
 # Constants
 PACKAGES_PATH = sublime.packages_path()
@@ -18,8 +17,6 @@ sets_name = "ColorHighlighter.sublime-settings"
 
 ch_settings = sublime.load_settings(sets_name)
 
-
-# turn on when debugging
 def log(s):
 	global loglist
 	loglist.append(s)
@@ -35,6 +32,8 @@ def read_file(fl):
 	res = f.read()
 	f.close()
 	return res
+
+# Commands
 
 # treat hex vals as colors
 class HexValsAsColorsCommand(sublime_plugin.WindowCommand):
@@ -53,6 +52,36 @@ class XHexValsAsColorsCommand(sublime_plugin.WindowCommand):
 
 	def is_checked(self):
 		return ch_settings.get("0x_hex_values")
+
+# command to print log
+class chlogCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		res = ""
+		for l in loglist:
+			res += l + "\n"
+			print "! CH ! " + l
+		if res == "":
+			return
+		log("Log printed.")
+		#self.view.insert(edit, 0, res + "\n\n\n")
+
+# command to restore color scheme
+class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		cs = self.view.settings().get('color_scheme')
+		# do not support empty color scheme
+		if cs == "":
+			log("Empty scheme, can't restore")
+			return
+		# extract name
+		cs = cs[cs.find('/'):]
+		if os.path.exists(PACKAGES_PATH + cs + ".chback"):
+			log("Starting restore scheme: " + cs)
+			write_file(PACKAGES_PATH + cs, read_file(PACKAGES_PATH + cs + ".chback"))
+			log("Restore done.")
+			all_colors.deinit()
+		else:
+			log("No backup :(")
 
 class ColorContainer:
 
@@ -95,37 +124,6 @@ class ColorContainer:
 		self.string = "".decode("utf-8").encode("utf-8")
 
 all_colors = ColorContainer()
-
-# command to print log
-class chlogCommand(sublime_plugin.TextCommand):
-	def run(self, edit):
-		res = ""
-		for l in loglist:
-			res += l + "\n"
-			print "! CH ! " + l
-		if res == "":
-			return
-		log("Log printed.")
-		#self.view.insert(edit, 0, res + "\n\n\n")
-
-# command to restore color scheme
-class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
-	def run(self, edit):
-		cs = self.view.settings().get('color_scheme')
-		# do not support empty color scheme
-		if cs == "":
-			log("Empty scheme, can't restore")
-			return
-		# extract name
-		cs = cs[cs.find('/'):]
-		if os.path.exists(PACKAGES_PATH + cs + ".chback"):
-			log("Starting restore scheme: " + cs)
-			write_file(PACKAGES_PATH + cs, read_file(PACKAGES_PATH + cs + ".chback"))
-			log("Restore done.")
-			all_colors.deinit()
-		else:
-			log("No backup :(")
-
 
 def region_name(s):
 	return PREFIX + s[1:]
@@ -240,8 +238,8 @@ class ColorSelection(sublime_plugin.EventListener):
 		log("Modifying done.")
 		
 	def read_colors(self, s):
-		n = s.find(PREFIX)
 		self.colors.deinit()
+		n = s.find(PREFIX)
 		while n != -1:
 			s = s[n+5:]
 			self.colors.add('#' + s[:8])
@@ -304,8 +302,8 @@ class ColorSelection(sublime_plugin.EventListener):
 				self.colors.add(col)
 				words.append((wd,col))
 		if self.colors.update():
-			sublime.set_timeout(lambda self = self, view = view : self.modify_color_scheme(view), 0)
-			#self.modify_color_scheme(view)
+			#sublime.set_timeout(lambda self = self, view = view : self.modify_color_scheme(view), 0)
+			self.modify_color_scheme(view)
 		if words == []:
 			view.erase_regions("mon_CH")
 			return
