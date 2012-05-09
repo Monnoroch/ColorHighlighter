@@ -17,8 +17,10 @@ Two color representations are currently supported:
 - RBG value e.g. rgb(rrr,ggg,bbb) with decimal channel values.
 
 And two more you can enable in options:
-- Hexademical e.g. #RGB or #RRGGBB or #RRGGBBAA (you can use both upper and lower case letters)
-- RBG value e.g. rgb(rrr,ggg,bbb) with decimal channel values.
+- Usual hexademical numbers like RRGGBBAA.
+- Hexademical numbers with prefix 0x like 0xRRGGBBAA
+
+Both you can enable or disable from the menu Tools -> Color Highlighter.
 
 **Note :**
 This version is beta and although it works fine, it corrupts color scheme with additional values. The color scheme will still work, but it'll became bigger and bigger.
