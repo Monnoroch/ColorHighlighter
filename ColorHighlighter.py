@@ -2,7 +2,7 @@ import sublime, sublime_plugin
 import os 
 
 
-version = "2.0.2"
+version = "2.0.3"
 
 # Constants
 PACKAGES_PATH = sublime.packages_path()
@@ -311,6 +311,6 @@ class ColorSelection(sublime_plugin.EventListener):
 			return
 		for wd in words:
 			w,c = wd
-			log(region_name(c))
+			#log(region_name(c))
 			view.add_regions("mon_CH",[w], region_name(c))
 			
