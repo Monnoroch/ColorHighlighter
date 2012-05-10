@@ -20,6 +20,8 @@ And two more you can enable in options:
 - Usual hexademical numbers like RRGGBBAA.
 - Hexademical numbers with prefix 0x like 0xRRGGBBAA
 
+Named colors like "green", "black" and many others are also supported.
+
 Both you can enable or disable from the menu Tools -> Color Highlighter.
 
 **Note :**
