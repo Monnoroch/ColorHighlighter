@@ -1,7 +1,9 @@
 import sublime, sublime_plugin
-import os 
+import os
 
-version = "2.0.4"
+import colors
+
+version = "2.1.0"
 
 # Constants
 PACKAGES_PATH = sublime.packages_path()
@@ -292,12 +294,20 @@ class ColorSelection(sublime_plugin.EventListener):
 	def on_clone(self, view):
 		self.on_new(view)
 
+		black
+
 	def on_selection_modified(self, view):
 		selection = view.sel()
 		words = []
 		for s in selection:
 			wd = self.get_current_word(view,s)
 			col = isColor(view.substr(wd))
+			if not col:
+				wd = view.word(s)
+				try:
+					col = colors.names_to_hex[view.substr(wd)]
+				except KeyError:
+					pass
 			if col:
 				self.colors.add(col)
 				words.append((wd,col))
