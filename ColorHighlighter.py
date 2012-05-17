@@ -172,7 +172,7 @@ def isColor(col):
 		return False
 	for n in cols:
 		ll = len(n)
-		if ll > 3:
+		if ll > 3 or ll == 0:
 			return False
 		for c in n:
 			if c not in dec_digits:
