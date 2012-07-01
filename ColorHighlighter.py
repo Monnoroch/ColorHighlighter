@@ -189,8 +189,7 @@ def isColor(col):
 				return False
 	return tohex(int(cols[0]),int(cols[1]),int(cols[2]))
 
-def get_y(col):
-	print "DEBUG!!! " + col
+def get_y(col
 	return (0.3 * int(col[1:3],16) + 0.59 * int(col[3:5],16) + 0.11 * int(col[5:7],16)) * (int(col[7:9],16) / 255.0)
 
 def get_cont_col(col):
