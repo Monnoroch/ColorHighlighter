@@ -95,6 +95,8 @@ class ColorContainer:
 </string><key>foreground</key><string>%s\
 </string></dict></dict>\n"
 
+# rgb(255,1,10)
+
 	def __init__(self):
 		pass
 
@@ -130,7 +132,16 @@ def region_name(s):
 	return PREFIX + s[1:]
 
 def tohex(r,g,b):
-	return "#%X%X%XFF" % (r,g,b)
+	sr = "%X" % r
+	if len(sr) == 1:
+		sr = '0' + sr
+	sg = "%X" % g
+	if len(sg) == 1:
+		sg = '0' + sg
+	sb = "%X" % b
+	if len(sb) == 1:
+		sb = '0' + sb
+	return "#%s%s%sFF" % (sr,sg,sb)
 
 def tolong(col):
 	ln = len(col)
@@ -171,7 +182,7 @@ def isColor(col):
 		return False
 	for n in cols:
 		ll = len(n)
-		if ll > 3:
+		if ll > 3 or ll == 0:
 			return False
 		for c in n:
 			if c not in dec_digits:
@@ -179,6 +190,7 @@ def isColor(col):
 	return tohex(int(cols[0]),int(cols[1]),int(cols[2]))
 
 def get_y(col):
+	print "DEBUG!!! " + col
 	return (0.3 * int(col[1:3],16) + 0.59 * int(col[3:5],16) + 0.11 * int(col[5:7],16)) * (int(col[7:9],16) / 255.0)
 
 def get_cont_col(col):
