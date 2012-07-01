@@ -61,7 +61,6 @@ class chlogCommand(sublime_plugin.TextCommand):
 		res = ""
 		for l in loglist:
 			res += l + "\n"
-			print "! CH ! " + l
 		if res == "":
 			return
 		log("Log printed.")
