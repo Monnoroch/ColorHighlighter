@@ -270,9 +270,13 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
 		htmlGen.restore_color_scheme(self.view)
 
 all_regs = []
+inited = False
 
 class ColorSelection(sublime_plugin.EventListener):
 	def on_new(self, view):
+		global inited
+		if inited: return
+		inited = True
 		sets = view.settings()
 		htmlGen.set_color_scheme(view)
 		sets.add_on_change("color_scheme", lambda self = self, view = view : htmlGen.change_color_scheme(view))
@@ -281,8 +285,8 @@ class ColorSelection(sublime_plugin.EventListener):
 	def on_clone(self, view):
 		self.on_new(view)
 
-	def on_close(self, view):
-		htmlGen.restore_color_scheme(view)
+	# def on_close(self, view):
+	# 	htmlGen.restore_color_scheme()
 
 	def on_selection_modified(self, view):
 		selection = view.sel()
