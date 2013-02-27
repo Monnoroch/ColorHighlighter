@@ -269,6 +269,7 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		htmlGen.restore_color_scheme(self.view)
 
+all_regs = []
 
 class ColorSelection(sublime_plugin.EventListener):
 	def on_new(self, view):
@@ -295,8 +296,15 @@ class ColorSelection(sublime_plugin.EventListener):
 		if htmlGen.need_update():
 			htmlGen.update(view)
 
-		view.erase_regions("mon_CH")
+		global all_regs
+		for s in all_regs:
+			view.erase_regions(s)
+		all_regs = []
 
+		i = 0
 		for wd in words:
 			w, c = wd
-			view.add_regions("mon_CH",[w], htmlGen.region_name(c))
+			i += 1
+			s = "mon_CH" + str(i)
+			all_regs.append(s)
+			view.add_regions(s, [w], htmlGen.region_name(c))
