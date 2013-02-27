@@ -27,3 +27,8 @@ Both you can enable or disable from the menu Tools -> Color Highlighter.
 
 **Note :**
 This version is beta and although it works fine, it corrupts color scheme with additional values. The color scheme will still work, but it'll became bigger and bigger. Anyway, you always can restore the original color scheme file from the menu.
+
+**TODO :**
+- ST3 support.
+- Highlighting all the colors at once.
+- Run IO operations in another thread.
