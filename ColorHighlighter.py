@@ -267,7 +267,7 @@ class chlogCommand(sublime_plugin.TextCommand):
 # command to restore color scheme
 class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		htmlGen.restore_color_scheme(self.view)
+		htmlGen.restore_color_scheme()
 
 all_regs = []
 inited = False
