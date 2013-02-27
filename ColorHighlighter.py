@@ -117,13 +117,20 @@ def isInColor(view, sel):
 	if res != None:
 		return wd, res
 
+	lwd, lres = None, None
 	for i in range(1, max_len):
 		s = view.substr(sublime.Region(b - i, b + i))
 		wd, res = isInColorS(s, i)
-		if res != None:
-			return sublime.Region(wd.begin() + (b - i), wd.end() + (b - i)), res
+		if res == None and lres != None:
+			i = i - 1
+			return sublime.Region(lwd.begin() + (b - i), lwd.end() + (b - i)), lres
+		lwd, lres = wd, res
 
-	return None, None
+	if lres == None:
+		return None, None
+		
+	i = max_len - 1
+	return sublime.Region(lwd.begin() + (b - i), lwd.end() + (b - i)), lres
 
 class HtmlGen:
 	colors = []
