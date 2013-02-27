@@ -235,23 +235,23 @@ htmlGen = HtmlGen()
 
 # Commands
 
-# treat hex vals as colors
-class HexValsAsColorsCommand(sublime_plugin.WindowCommand):
-	def run(self):
-		ch_settings.set("hex_values", not ch_settings.get("hex_values"))
-		sublime.save_settings(sets_name)
+# # treat hex vals as colors
+# class HexValsAsColorsCommand(sublime_plugin.WindowCommand):
+# 	def run(self):
+# 		ch_settings.set("hex_values", not ch_settings.get("hex_values"))
+# 		sublime.save_settings(sets_name)
 
-	def is_checked(self):
-		return ch_settings.get("hex_values")
+# 	def is_checked(self):
+# 		return ch_settings.get("hex_values")
 
-# treat hex vals as colors
-class XHexValsAsColorsCommand(sublime_plugin.WindowCommand):
-	def run(self):
-		ch_settings.set("0x_hex_values", not ch_settings.get("0x_hex_values"))
-		sublime.save_settings(sets_name)
+# # treat hex vals as colors
+# class XHexValsAsColorsCommand(sublime_plugin.WindowCommand):
+# 	def run(self):
+# 		ch_settings.set("0x_hex_values", not ch_settings.get("0x_hex_values"))
+# 		sublime.save_settings(sets_name)
 
-	def is_checked(self):
-		return ch_settings.get("0x_hex_values")
+# 	def is_checked(self):
+# 		return ch_settings.get("0x_hex_values")
 
 # command to print log
 class chlogCommand(sublime_plugin.TextCommand):
