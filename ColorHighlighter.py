@@ -203,7 +203,6 @@ class HtmlGen:
 	def restore_color_scheme(self):
 		if not self.need_restore: return
 		self.need_restore = False
-
 		cs = self.color_scheme
 		# do not support empty color scheme
 		if cs == "":
@@ -215,6 +214,8 @@ class HtmlGen:
 			log("Starting restore scheme: " + cs)
 			# TODO: move to other thread
 			write_file(PACKAGES_PATH + cs, read_file(PACKAGES_PATH + cs + ".chback"))
+			self.colors = []
+			self.string = ""
 			log("Restore done.")
 		else:
 			log("No backup :(")
