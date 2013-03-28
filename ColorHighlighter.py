@@ -11,7 +11,6 @@ version = "3.0"
 PACKAGES_PATH = sublime.packages_path()
 
 hex_digits = string.digits + "ABCDEF"
-letters = string.digits + string.letters
 
 loglist = ["Version: " + version]
 PREFIX = "mcol_"
@@ -101,9 +100,9 @@ def isInColorS(s, pos):
 def get_current_word(view, sel):
 	n = sel.begin() - 1
 	k = sel.end()
-	while k - n <= max_len and view.substr(n) in letters:
+	while k - n <= max_len and view.substr(n).isalpha():
 		n -= 1
-	while k - n <= max_len and view.substr(k) in letters:
+	while k - n <= max_len and view.substr(k).isalpha():
 		k += 1
 	return sublime.Region(n + 1, k)
 
@@ -197,8 +196,6 @@ class HtmlGen:
 			cont = read_file(PACKAGES_PATH + cs)
 			write_file(PACKAGES_PATH + cs + ".chback", cont) # backup
 			log("Backup done")
-
-		self.string = self.string.decode("utf-8").encode("utf-8")
 
 		# edit cont
 		n = cont.find("<array>") + len("<array>")
