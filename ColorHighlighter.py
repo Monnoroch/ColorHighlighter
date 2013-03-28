@@ -182,7 +182,7 @@ class HtmlGen:
 		if not self.need_upd: return
 		self.need_upd = False
 
-		cs = self.color_scheme
+		cs = view.settings().get('color_scheme')
 		# do not support empty color scheme
 		if cs == "":
 			log("Empty scheme, can't backup")
@@ -198,7 +198,6 @@ class HtmlGen:
 			write_file(PACKAGES_PATH + cs + ".chback", cont) # backup
 			log("Backup done")
 
-		self.string = self.string.decode("utf-8").encode("utf-8")
 
 		# edit cont
 		n = cont.find("<array>") + len("<array>")
@@ -210,7 +209,7 @@ class HtmlGen:
 	def restore_color_scheme(self):
 		if not self.need_restore: return
 		self.need_restore = False
-		cs = self.color_scheme
+		cs = view.settings().get('color_scheme')
 		# do not support empty color scheme
 		if cs == "":
 			log("Empty scheme, can't restore")
