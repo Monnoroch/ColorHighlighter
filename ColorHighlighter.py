@@ -3,7 +3,7 @@ import os
 import re
 import string
 
-import colors
+from . import colors
 
 version = "3.0"
 
@@ -11,7 +11,7 @@ version = "3.0"
 PACKAGES_PATH = sublime.packages_path()
 
 hex_digits = string.digits + "ABCDEF"
-letters = string.digits + string.letters
+letters = string.digits + string.ascii_letters
 
 loglist = ["Version: " + version]
 PREFIX = "mcol_"
@@ -128,7 +128,7 @@ def isInColor(view, sel):
 
 	if lres == None:
 		return None, None
-		
+
 	i = max_len - 1
 	return sublime.Region(lwd.begin() + (b - i), lwd.end() + (b - i)), lres
 
