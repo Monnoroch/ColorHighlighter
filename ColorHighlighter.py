@@ -43,12 +43,13 @@ def read_file(fl):
 # words
 # black
 
-max_len = max(len("#FFB"), len("#FFFFFF"), len("#FFFFFFAA"), len("rgb(199,255,255)"))
+max_len = max(len("#FFB"), len("#FFFFFF"), len("#FFFFFFAA"), len("rgb(199, 255, 255)"), len("rgba(255, 255, 255, 0.555)"))
 
-regex1 = re.compile("[r][g][b][(]\d{1,3}[,]\d{1,3}[,]\d{1,3}[)]")
+regex1 = re.compile("[r][g][b][(]\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d{1,3}[)]")
 regex2 = re.compile("[#][\dA-F]{8}")
 regex3 = re.compile("[#][\dA-F]{6}")
 regex4 = re.compile("[#][\dA-F]{3}")
+regex5 = re.compile("[r][g][b][a][(]\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d[\.\d]*[)]")
 
 
 def tohex(r,g,b):
@@ -75,6 +76,20 @@ def isInColorS(s, pos):
 		g = s[0:n]
 		s = s[n+1:]
 		b = s
+		return sublime.Region(m.start(0), m.end(0)), tohex(int(r), int(g), int(b))
+
+	m = regex5.search(s)
+	if m != None and m.group(0) != None and m.start(0) <= pos and m.end(0) >= pos:
+		s = m.group(0)
+		s = s[4+1:-1]
+		n = s.find(",")
+		r = s[0:n]
+		s = s[n+1:]
+		n = s.find(",")
+		g = s[0:n]
+		s = s[n+1:]
+		n = s.find(",")
+		b = s[0:n]
 		return sublime.Region(m.start(0), m.end(0)), tohex(int(r), int(g), int(b))
 
 	s = s.upper()
