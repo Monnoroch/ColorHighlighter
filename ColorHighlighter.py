@@ -3,7 +3,7 @@ import os
 import re
 import string
 
-import colors
+import ColorHighlighter.colors
 
 version = "3.0"
 
@@ -197,6 +197,9 @@ class HtmlGen:
 		self.need_upd = False
 
 		cs = self.color_scheme
+		if cs == None:
+			self.color_scheme = view.settings().get('color_scheme')
+			cs = self.color_scheme
 		# do not support empty color scheme
 		if cs == "":
 			log("Empty scheme, can't backup")
