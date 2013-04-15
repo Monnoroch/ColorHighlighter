@@ -3,7 +3,8 @@ import os
 import re
 import string
 
-import ColorHighlighter.colors
+# TODO: import ColorHighlighter.colors for ST3
+import colors
 
 version = "3.0"
 
