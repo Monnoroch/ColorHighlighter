@@ -218,7 +218,10 @@ class HtmlGen:
 
 		# edit cont
 		n = cont.find("<array>") + len("<array>")
-		cont = cont[:n] + self.string + cont[n:]
+		try:
+			cont = cont[:n] + self.string + cont[n:]
+		except UnicodeDecodeError:
+			cont = cont[:n] + self.string.encode("utf-8") + cont[n:]
 
 		write_file(PACKAGES_PATH + cs, cont)
 		self.need_restore = True
