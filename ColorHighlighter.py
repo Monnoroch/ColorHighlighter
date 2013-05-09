@@ -3,6 +3,7 @@ import os
 import re
 import string
 
+# TODO: import ColorHighlighter.colors for ST3
 import colors
 
 version = "3.0"
@@ -197,6 +198,9 @@ class HtmlGen:
 		self.need_upd = False
 
 		cs = self.color_scheme
+		if cs == None:
+			self.color_scheme = view.settings().get('color_scheme')
+			cs = self.color_scheme
 		# do not support empty color scheme
 		if cs == "":
 			log("Empty scheme, can't backup")
@@ -214,7 +218,10 @@ class HtmlGen:
 
 		# edit cont
 		n = cont.find("<array>") + len("<array>")
-		cont = cont[:n] + self.string + cont[n:]
+		try:
+			cont = cont[:n] + self.string + cont[n:]
+		except UnicodeDecodeError:
+			cont = cont[:n] + self.string.encode("utf-8") + cont[n:]
 
 		write_file(PACKAGES_PATH + cs, cont)
 		self.need_restore = True
