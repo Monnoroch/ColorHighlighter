@@ -50,7 +50,7 @@ regex1 = re.compile("[r][g][b][(]\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d{1,3}[)]")
 regex2 = re.compile("[#][\dA-F]{8}")
 regex3 = re.compile("[#][\dA-F]{6}")
 regex4 = re.compile("[#][\dA-F]{3}")
-regex5 = re.compile("[r][g][b][a][(]\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d[\.\d]*[)]")
+regex5 = re.compile("[r][g][b][a][(]\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d{1,3}[,][ ]*(\d+|\d*\.\d+)[)]")
 
 
 def tohex(r,g,b):
