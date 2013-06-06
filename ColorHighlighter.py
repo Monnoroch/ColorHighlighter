@@ -1,3 +1,7 @@
+import time
+import threading
+from functools import partial
+
 import os
 import string
 
@@ -50,7 +54,7 @@ def read_file(fl):
 
 colors_re = r'(\b%s\b|%s)|%s|%s' % (
     r'\b|\b'.join(names_to_hex.keys()),
-    r'#[0-9a-f]{8}\b|#[0-9a-f]{6}\b',
+    r'#[0-9a-f]{8}\b|#[0-9a-f]{6}\b|#[0-9a-f]{3}\b',
     r'rgb\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)',
     r'rgba\(([0-9]+),\s*([0-9]+),\s*([0-9]+),\s*([0-9]+(\.\d+)?)\)',
 )
@@ -247,50 +251,285 @@ class ColorSelection(sublime_plugin.EventListener):
     # def on_close(self, view):
     #   htmlGen.restore_color_scheme()
 
-    def on_load(self, view):
-        self.on_modified(view)
-
     def on_modified(self, view):
-        words = {}
-        found = []
-        ranges = view.find_all(colors_re, sublime.IGNORECASE, r'\1\2\5,\3\6,\4\7,\8', found)
-        for i, col in enumerate(found):
-            col = col.rstrip(',')
-            col = col.split(',')
-            if len(col) == 1:
-                col = col[0]
-                col = names_to_hex.get(col.lower(), col.upper())
-                if len(col) == 4:
-                    col = '#' + col[1] * 2 + col[2] * 2 + col[3] * 2 + 'FF'
-                elif len(col) == 7:
-                    col += 'FF'
-            else:
-                r = int(col[0])
-                g = int(col[1])
-                b = int(col[2])
-                if r >= 256 or g >= 256 or b >= 256:
+        queue_highlight_colors(view)
+
+    def on_load(self, view):
+        if view.is_scratch() or view.settings().get('colorhighlighter') is False or view.settings().get('colorhighlighter') == 'save-only':
+            return
+
+        queue_highlight_colors(view, event='on_load')
+
+    def on_post_save(self, view):
+        if view.is_scratch() or view.settings().get('colorhighlighter') is False:
+            return
+
+        queue_highlight_colors(view, preemptive=True, event='on_post_save')
+
+    def on_selection_modified(self, view):
+        if view.is_scratch():
+            return
+        delay_queue(1000)  # on movement, delay queue (to make movement responsive)
+
+
+TIMES = {}       # collects how long it took the color highlighter to complete
+COLOR_HIGHLIGHTS = {}  # Highlighted regions
+
+
+def highlight_colors(view, **kwargs):
+    vid = view.id()
+    start = time.time()
+
+    words = {}
+    found = []
+    ranges = view.find_all(colors_re, sublime.IGNORECASE, r'\1\2\5,\3\6,\4\7,\8', found)
+    for i, col in enumerate(found):
+        col = col.rstrip(',')
+        col = col.split(',')
+        if len(col) == 1:
+            col = col[0]
+            col = names_to_hex.get(col.lower(), col.upper())
+            if len(col) == 4:
+                col = '#' + col[1] * 2 + col[2] * 2 + col[3] * 2 + 'FF'
+            elif len(col) == 7:
+                col += 'FF'
+        else:
+            r = int(col[0])
+            g = int(col[1])
+            b = int(col[2])
+            if r >= 256 or g >= 256 or b >= 256:
+                continue
+            if len(col) == 4:
+                a = float(col[3])
+                if a > 1.0:
                     continue
-                if len(col) == 4:
-                    a = float(col[3])
-                    if a > 1.0:
-                        continue
-                else:
-                    a = 1.0
-                col = tohex(r, g, b, a)
-            name = htmlGen.add_color(col)
-            if name not in words:
-                words[name] = [ranges[i]]
             else:
-                words[name].append(ranges[i])
+                a = 1.0
+            col = tohex(r, g, b, a)
+        name = htmlGen.add_color(col)
+        if name not in words:
+            words[name] = [ranges[i]]
+        else:
+            words[name].append(ranges[i])
 
-        if htmlGen.need_update():
-            htmlGen.update(view)
+    if htmlGen.need_update():
+        htmlGen.update(view)
 
-        global all_regs
-        for s in all_regs:
-            view.erase_regions(s)
-        all_regs = []
+    global all_regs
+    for s in all_regs:
+        view.erase_regions(s)
+    all_regs = []
 
-        for name, w in words.items():
-            all_regs.append(name)
-            view.add_regions(name, w, name)
+    for name, w in words.items():
+        all_regs.append(name)
+        view.add_regions(name, w, name)
+
+    end = time.time()
+    TIMES[vid] = (end - start) * 1000  # Keep how long it took to color highlight
+
+
+################################################################################
+# Queue connection
+
+QUEUE = {}       # views waiting to be processed by color highlighter
+
+# For snappier color highlighting, different delays are used for different color highlighting times:
+# (color highlighting time, delays)
+DELAYS = (
+    (50, (50, 100)),
+    (100, (100, 300)),
+    (200, (200, 500)),
+    (400, (400, 1000)),
+    (800, (800, 2000)),
+    (1600, (1600, 3000)),
+)
+
+
+def get_delay(t, view):
+    delay = 0
+
+    for _t, d in DELAYS:
+        if _t <= t:
+            delay = d
+        else:
+            break
+
+    delay = delay or DELAYS[0][1]
+
+    # If the user specifies a delay greater than the built in delay,
+    # figure they only want to see marks when idle.
+    minDelay = int(view.settings().get('colorhighlighter_delay', 0) * 1000)
+
+    return (minDelay, minDelay) if minDelay > delay[1] else delay
+
+
+def _update_view(view, filename, **kwargs):
+    # It is possible that by the time the queue is run,
+    # the original file is no longer being displayed in the view,
+    # or the view may be gone. This happens especially when
+    # viewing files temporarily by single-clicking on a filename
+    # in the sidebar or when selecting a file through the choose file palette.
+    valid_view = False
+    view_id = view.id()
+
+    for window in sublime.windows():
+        for v in window.views():
+            if v.id() == view_id:
+                valid_view = True
+                break
+
+    if not valid_view or view.is_loading() or (view.file_name() or '').encode('utf-8') != filename:
+        return
+
+    try:
+        highlight_colors(view, **kwargs)
+    except RuntimeError, ex:
+        print ex
+
+
+def queue_highlight_colors(view, timeout=-1, preemptive=False, event=None):
+    '''Put the current view in a queue to be examined by a color highlighter'''
+
+    if preemptive:
+        timeout = busy_timeout = 0
+    elif timeout == -1:
+        timeout, busy_timeout = get_delay(TIMES.get(view.id(), 100), view)
+    else:
+        busy_timeout = timeout
+
+    kwargs = {'timeout': timeout, 'busy_timeout': busy_timeout, 'preemptive': preemptive, 'event': event}
+    queue(view, partial(_update_view, view, (view.file_name() or '').encode('utf-8'), **kwargs), kwargs)
+
+
+def _callback(view, filename, kwargs):
+    kwargs['callback'](view, filename, **kwargs)
+
+
+def background_color_highlighter():
+    __lock_.acquire()
+
+    try:
+        callbacks = QUEUE.values()
+        QUEUE.clear()
+    finally:
+        __lock_.release()
+
+    for callback in callbacks:
+        sublime.set_timeout(callback, 0)
+
+################################################################################
+# Queue dispatcher system:
+
+queue_dispatcher = background_color_highlighter
+queue_thread_name = 'background color highlighter'
+MAX_DELAY = 10
+
+
+def queue_loop():
+    '''An infinite loop running the color highlighter in a background thread meant to
+       update the view after user modifies it and then does no further
+       modifications for some time as to not slow down the UI with color highlighting.'''
+    global __signaled_, __signaled_first_
+
+    while __loop_:
+        #print 'acquire...'
+        __semaphore_.acquire()
+        __signaled_first_ = 0
+        __signaled_ = 0
+        #print 'DISPATCHING!', len(QUEUE)
+        queue_dispatcher()
+
+
+def queue(view, callback, kwargs):
+    global __signaled_, __signaled_first_
+    now = time.time()
+    __lock_.acquire()
+
+    try:
+        QUEUE[view.id()] = callback
+        timeout = kwargs['timeout']
+        busy_timeout = kwargs['busy_timeout']
+
+        if now < __signaled_ + timeout * 4:
+            timeout = busy_timeout or timeout
+
+        __signaled_ = now
+        _delay_queue(timeout, kwargs['preemptive'])
+
+        if not __signaled_first_:
+            __signaled_first_ = __signaled_
+            #print 'first',
+        #print 'queued in', (__signaled_ - now)
+    finally:
+        __lock_.release()
+
+
+def _delay_queue(timeout, preemptive):
+    global __signaled_, __queued_
+    now = time.time()
+
+    if not preemptive and now <= __queued_ + 0.01:
+        return  # never delay queues too fast (except preemptively)
+
+    __queued_ = now
+    _timeout = float(timeout) / 1000
+
+    if __signaled_first_:
+        if MAX_DELAY > 0 and now - __signaled_first_ + _timeout > MAX_DELAY:
+            _timeout -= now - __signaled_first_
+            if _timeout < 0:
+                _timeout = 0
+            timeout = int(round(_timeout * 1000, 0))
+
+    new__signaled_ = now + _timeout - 0.01
+
+    if __signaled_ >= now - 0.01 and (preemptive or new__signaled_ >= __signaled_ - 0.01):
+        __signaled_ = new__signaled_
+        #print 'delayed to', (preemptive, __signaled_ - now)
+
+        def _signal():
+            if time.time() < __signaled_:
+                return
+            __semaphore_.release()
+
+        sublime.set_timeout(_signal, timeout)
+
+
+def delay_queue(timeout):
+    __lock_.acquire()
+    try:
+        _delay_queue(timeout, False)
+    finally:
+        __lock_.release()
+
+
+# only start the thread once - otherwise the plugin will get laggy
+# when saving it often.
+__semaphore_ = threading.Semaphore(0)
+__lock_ = threading.Lock()
+__queued_ = 0
+__signaled_ = 0
+__signaled_first_ = 0
+
+# First finalize old standing threads:
+__loop_ = False
+__pre_initialized_ = False
+
+
+def queue_finalize(timeout=None):
+    global __pre_initialized_
+
+    for thread in threading.enumerate():
+        if thread.isAlive() and thread.name == queue_thread_name:
+            __pre_initialized_ = True
+            thread.__semaphore_.release()
+            thread.join(timeout)
+queue_finalize()
+
+# Initialize background thread:
+__loop_ = True
+__active_color_highlighter_thread = threading.Thread(target=queue_loop, name=queue_thread_name)
+__active_color_highlighter_thread.__semaphore_ = __semaphore_
+__active_color_highlighter_thread.start()
+
+################################################################################
