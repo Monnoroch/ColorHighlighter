@@ -260,23 +260,25 @@ class ColorSelection(sublime_plugin.EventListener):
     #   htmlGen.restore_color_scheme()
 
     def on_modified(self, view):
+        if view.settings().get('sublimelinter') is not True:
+            erase_highlight_colors(view)
+            return
+
         queue_highlight_colors(view)
 
     def on_load(self, view):
-        if view.is_scratch() or view.settings().get('colorhighlighter') is False or view.settings().get('colorhighlighter') == 'save-only':
+        if view.settings().get('colorhighlighter') in (False, 'save-only'):
             return
 
         queue_highlight_colors(view, event='on_load')
 
     def on_post_save(self, view):
-        if view.is_scratch() or view.settings().get('colorhighlighter') is False:
+        if view.settings().get('colorhighlighter') is False:
             return
 
         queue_highlight_colors(view, preemptive=True, event='on_post_save')
 
     def on_selection_modified(self, view):
-        if view.is_scratch():
-            return
         delay_queue(1000)  # on movement, delay queue (to make movement responsive)
 
 
@@ -329,7 +331,7 @@ def highlight_colors(view, **kwargs):
                     continue
             else:
                 a = 1.0
-            col = tohex(col0, None, None, a)
+            col = tohex(r, g, b, a)
         else:
             # In the form of rgba(white, 20%) or rgba(#FFFFFF, 0.4):
             col0 = col[0]
@@ -351,7 +353,7 @@ def highlight_colors(view, **kwargs):
                     continue
             else:
                 a = 1.0
-            col = tohex(r, g, b, a)
+            col = tohex(col0, None, None, a)
         name = htmlGen.add_color(col)
         if name not in words:
             words[name] = [ranges[i]]
@@ -361,17 +363,14 @@ def highlight_colors(view, **kwargs):
     if htmlGen.need_update():
         htmlGen.update(view)
 
-    global all_regs
-    for s in all_regs:
-        view.erase_regions(s)
-    all_regs = []
+    all_regs = erase_highlight_colors(view)
 
     for name, w in words.items():
+        view.add_regions(name, list(w), name)
         all_regs.append(name)
-        view.add_regions(name, w, name)
 
-    end = time.time()
-    TIMES[vid] = (end - start) * 1000  # Keep how long it took to color highlight
+    TIMES[vid] = (time.time() - start) * 1000  # Keep how long it took to color highlight
+    # print 'highlight took', TIMES[vid]
 
 
 ################################################################################
