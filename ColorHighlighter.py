@@ -20,9 +20,6 @@ hex_digits = string.digits + "ABCDEF"
 
 loglist = ["Version: " + version]
 PREFIX = "mcol_"
-sets_name = "ColorHighlighter.sublime-settings"
-
-ch_settings = sublime.load_settings(sets_name)
 
 
 def log(s):
@@ -54,13 +51,45 @@ def read_file(fl):
 # rgba(white, 20%)
 # 0xFFFFFF
 
-color_names_re = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'(?:#|0x)[0-9a-f]{8}\b|(?:#|0x)[0-9a-f]{6}\b|#[0-9a-f]{3}\b')
-colors_re = r'%s|%s|%s' % (
-    r'rgba\((?:([0-9]+),\s*([0-9]+),\s*([0-9]+)|(%s)),\s*([0-9]+(?:\.\d+)?%%?)\)' % color_names_re,
+
+_ALL_HEX_COLORS = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'(?:#|0x)[0-9a-f]{8}\b|(?:#|0x)[0-9a-f]{6}\b|#[0-9a-f]{3}\b')
+_ALL_HEX_COLORS = r'%s|%s|%s' % (
+    r'rgba\((?:([0-9]+),\s*([0-9]+),\s*([0-9]+)|(%s)),\s*([0-9]+(?:\.\d+)?%%?)\)' % _ALL_HEX_COLORS,
     r'rgb\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)',
-    r'(%s)' % color_names_re,
+    r'(%s)' % _ALL_HEX_COLORS,
 )
-colors_re_capture = r'\1\4\6\9,\2\7,\3\8,\5'
+_ALL_HEX_COLORS_CAPTURE = r'\1\4\6\9,\2\7,\3\8,\5'
+
+_XHEX_COLORS = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'0x[0-9a-f]{8}\b|0x[0-9a-f]{6}\b')
+_XHEX_COLORS = r'%s|%s|%s' % (
+    r'rgba\((?:([0-9]+),\s*([0-9]+),\s*([0-9]+)|(%s)),\s*([0-9]+(?:\.\d+)?%%?)\)' % _XHEX_COLORS,
+    r'rgb\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)',
+    r'(%s)' % _XHEX_COLORS,
+)
+_XHEX_COLORS_CAPTURE = r'\1\4\6\9,\2\7,\3\8,\5'
+
+_HEX_COLORS = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'#[0-9a-f]{8}\b|#[0-9a-f]{6}\b|#[0-9a-f]{3}\b')
+_HEX_COLORS = r'%s|%s|%s' % (
+    r'rgba\((?:([0-9]+),\s*([0-9]+),\s*([0-9]+)|(%s)),\s*([0-9]+(?:\.\d+)?%%?)\)' % _HEX_COLORS,
+    r'rgb\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)',
+    r'(%s)' % _HEX_COLORS,
+)
+_HEX_COLORS_CAPTURE = r'\1\4\6\9,\2\7,\3\8,\5'
+
+_NO_HEX_COLORS = r'\b%s\b' % (r'\b|\b'.join(names_to_hex.keys()),)
+_NO_HEX_COLORS = r'%s|%s|%s' % (
+    r'rgba\((?:([0-9]+),\s*([0-9]+),\s*([0-9]+)|(%s)),\s*([0-9]+(?:\.\d+)?%%?)\)' % _NO_HEX_COLORS,
+    r'rgb\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)',
+    r'(%s)' % _NO_HEX_COLORS,
+)
+_NO_HEX_COLORS_CAPTURE = r'\1\4\6\9,\2\7,\3\8,\5'
+
+COLORS_RE = {
+    (False, False): (_NO_HEX_COLORS, _NO_HEX_COLORS_CAPTURE,),
+    (False, True): (_XHEX_COLORS, _XHEX_COLORS_CAPTURE),
+    (True, False): (_HEX_COLORS, _HEX_COLORS_CAPTURE),
+    (True, True): (_ALL_HEX_COLORS, _ALL_HEX_COLORS_CAPTURE),
+}
 
 
 def tohex(r, g, b, a):
@@ -200,25 +229,131 @@ class HtmlGen:
 
 htmlGen = HtmlGen()
 
+
+ALL_SETTINGS = [
+    'colorhighlighter',
+    'colorhighlighter_0x_hex_values',
+    'colorhighlighter_hex_values',
+]
+
+
+def settings_changed():
+    for window in sublime.windows():
+        for view in window.views():
+            reload_settings(view)
+
+
+def reload_settings(view):
+    '''Restores user settings.'''
+    settings = sublime.load_settings(__name__ + '.sublime-settings')
+    settings.clear_on_change(__name__)
+    settings.add_on_change(__name__, settings_changed)
+
+    for setting in ALL_SETTINGS:
+        if settings.get(setting) is not None:
+            view.settings().set(setting, settings.get(setting))
+
+    if view.settings().get('colorhighlighter') is None:
+        view.settings().set('colorhighlighter', True)
+
 # Commands
 
-# # treat hex vals as colors
-# class HexValsAsColorsCommand(sublime_plugin.WindowCommand):
-#   def run(self):
-#       ch_settings.set("hex_values", not ch_settings.get("hex_values"))
-#       sublime.save_settings(sets_name)
 
-#   def is_checked(self):
-#       return ch_settings.get("hex_values")
+# treat hex vals as colors
+class ColorHighlighterCommand(sublime_plugin.WindowCommand):
+    def run_(self, args={}):
+        view = self.window.active_view()
+        action = args.get('action', '')
+        if view and action:
+            view.run_command('highlight', action)
 
-# # treat hex vals as colors
-# class XHexValsAsColorsCommand(sublime_plugin.WindowCommand):
-#   def run(self):
-#       ch_settings.set("0x_hex_values", not ch_settings.get("0x_hex_values"))
-#       sublime.save_settings(sets_name)
+    def is_enabled(self):
+        view = self.window.active_view()
+        return bool(view.settings().get("colorhighlighter"))
 
-#   def is_checked(self):
-#       return ch_settings.get("0x_hex_values")
+
+class ColorHighlighterHighlightCommand(ColorHighlighterCommand):
+    def is_enabled(self):
+        return True
+
+
+class ColorHighlighterEnableLoadSaveCommand(ColorHighlighterCommand):
+    def is_enabled(self):
+        enabled = super(ColorHighlighterEnableLoadSaveCommand, self).is_enabled()
+
+        if enabled:
+            view = self.window.active_view()
+
+            if view and view.settings().get('colorhighlighter') == 'load-save':
+                return False
+
+        return enabled
+
+
+class ColorHighlighterEnableSaveOnlyCommand(ColorHighlighterCommand):
+    def is_enabled(self):
+        enabled = super(ColorHighlighterEnableSaveOnlyCommand, self).is_enabled()
+
+        if enabled:
+            view = self.window.active_view()
+
+            if view and view.settings().get('colorhighlighter') == 'save-only':
+                return False
+
+        return enabled
+
+
+class ColorHighlighterDisableCommand(ColorHighlighterCommand):
+    def is_enabled(self):
+        enabled = super(ColorHighlighterDisableCommand, self).is_enabled()
+
+        if enabled:
+            view = self.window.active_view()
+
+            if view and view.settings().get('colorhighlighter') is False:
+                return False
+
+        return enabled
+
+
+class ColorHighlighterEnableCommand(ColorHighlighterCommand):
+    def is_enabled(self):
+        view = self.window.active_view()
+
+        if view and view.settings().get('colorhighlighter') is not False:
+            return False
+
+        return True
+
+
+# treat hex vals as colors
+class ColorHighlighterHexValsAsColorsCommand(ColorHighlighterCommand):
+    def is_enabled(self):
+        enabled = super(ColorHighlighterHexValsAsColorsCommand, self).is_enabled()
+
+        if enabled:
+            view = self.window.active_view()
+
+            if view and view.settings().get("colorhighlighter_hex_values") is False:
+                return False
+
+        return enabled
+    is_checked = is_enabled
+
+
+# treat hex vals as colors
+class ColorHighlighterXHexValsAsColorsCommand(ColorHighlighterCommand):
+    def is_enabled(self):
+        enabled = super(ColorHighlighterXHexValsAsColorsCommand, self).is_enabled()
+
+        if enabled:
+            view = self.window.active_view()
+
+            if view and view.settings().get("colorhighlighter_0x_hex_values") is False:
+                return False
+
+        return enabled
+    is_checked = is_enabled
 
 
 # command to print log
@@ -242,7 +377,88 @@ all_regs = []
 inited = False
 
 
-class ColorSelection(sublime_plugin.EventListener):
+class HighlightCommand(sublime_plugin.TextCommand):
+    '''command to interact with linters'''
+
+    def __init__(self, view):
+        self.view = view
+        self.help_called = False
+
+    def run_(self, action):
+        '''method called by default via view.run_command;
+           used to dispatch to appropriate method'''
+        if not action:
+            return
+
+        try:
+            lc_action = action.lower()
+        except AttributeError:
+            return
+
+        if lc_action == 'reset':
+            self.reset()
+        elif lc_action == 'off':
+            self.off()
+        elif lc_action == 'on':
+            self.on()
+        elif lc_action == 'load-save':
+            self.enable_load_save()
+        elif lc_action == 'save-only':
+            self.enable_save_only()
+        elif lc_action == 'hex':
+            self.toggle_hex_values()
+        elif lc_action == 'xhex':
+            self.toggle_xhex_values()
+        else:
+            highlight_colors(self.view)
+
+    def toggle_hex_values(self):
+        ch_settings = sublime.load_settings(__name__ + '.sublime-settings')
+        ch_settings.set("colorhighlighter_hex_values", not self.view.settings().get("colorhighlighter_hex_values"))
+        sublime.save_settings(__name__ + '.sublime-settings')
+        queue_highlight_colors(self.view, preemptive=True)
+
+    def toggle_xhex_values(self):
+        ch_settings = sublime.load_settings(__name__ + '.sublime-settings')
+        ch_settings.set("colorhighlighter_0x_hex_values", not self.view.settings().get("colorhighlighter_0x_hex_values"))
+        sublime.save_settings(__name__ + '.sublime-settings')
+        queue_highlight_colors(self.view, preemptive=True)
+
+    def reset(self):
+        '''Removes existing lint marks and restores user settings.'''
+        erase_highlight_colors(self.view)
+        reload_settings(self.view)
+
+    def on(self):
+        '''Turns background linting on.'''
+        ch_settings = sublime.load_settings(__name__ + '.sublime-settings')
+        ch_settings.set('colorhighlighter', True)
+        sublime.save_settings(__name__ + '.sublime-settings')
+        queue_highlight_colors(self.view, preemptive=True)
+
+    def enable_load_save(self):
+        '''Turns load-save linting on.'''
+        ch_settings = sublime.load_settings(__name__ + '.sublime-settings')
+        ch_settings.set('colorhighlighter', 'load-save')
+        sublime.save_settings(__name__ + '.sublime-settings')
+        erase_highlight_colors(self.view)
+
+    def enable_save_only(self):
+        '''Turns save-only linting on.'''
+        ch_settings = sublime.load_settings(__name__ + '.sublime-settings')
+        ch_settings.set('colorhighlighter', 'save-only')
+        sublime.save_settings(__name__ + '.sublime-settings')
+        erase_highlight_colors(self.view)
+
+    def off(self):
+        '''Turns background linting off.'''
+        ch_settings = sublime.load_settings(__name__ + '.sublime-settings')
+        ch_settings.set('colorhighlighter', False)
+        sublime.save_settings(__name__ + '.sublime-settings')
+        erase_highlight_colors(self.view)
+
+
+class BackgroundColorHighlighter(sublime_plugin.EventListener):
     def on_new(self, view):
         global inited
         if inited:
@@ -260,13 +476,15 @@ class ColorSelection(sublime_plugin.EventListener):
     #   htmlGen.restore_color_scheme()
 
     def on_modified(self, view):
-        if view.settings().get('sublimelinter') is not True:
+        if view.settings().get('colorhighlighter') is not True:
             erase_highlight_colors(view)
             return
 
         queue_highlight_colors(view)
 
     def on_load(self, view):
+        reload_settings(view)
+
         if view.settings().get('colorhighlighter') in (False, 'save-only'):
             return
 
@@ -303,6 +521,9 @@ def highlight_colors(view, **kwargs):
 
     words = {}
     found = []
+    _hex_values = bool(view.settings().get('colorhighlighter_hex_values'))
+    _xhex_values = bool(view.settings().get('colorhighlighter_0x_hex_values'))
+    colors_re, colors_re_capture = COLORS_RE[(_hex_values, _xhex_values)]
     ranges = view.find_all(colors_re, sublime.IGNORECASE, colors_re_capture, found)
     for i, col in enumerate(found):
         col = col.rstrip(',')
