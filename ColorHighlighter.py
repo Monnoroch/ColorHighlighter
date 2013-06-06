@@ -49,27 +49,35 @@ def read_file(fl):
 # #FFFFFF
 # #FFF
 # rgb(255,255,255)
-# words
+# rgba(255, 255, 255, 1)
 # black
+# rgba(white, 20%)
+# 0xFFFFFF
 
-colors_re = r'(\b%s\b|%s)|%s|%s' % (
-    r'\b|\b'.join(names_to_hex.keys()),
-    r'#[0-9a-f]{8}\b|#[0-9a-f]{6}\b|#[0-9a-f]{3}\b',
+color_names_re = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'(?:#|0x)[0-9a-f]{8}\b|(?:#|0x)[0-9a-f]{6}\b|#[0-9a-f]{3}\b')
+colors_re = r'%s|%s|%s' % (
+    r'rgba\((?:([0-9]+),\s*([0-9]+),\s*([0-9]+)|(%s)),\s*([0-9]+(?:\.\d+)?%%?)\)' % color_names_re,
     r'rgb\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)',
-    r'rgba\(([0-9]+),\s*([0-9]+),\s*([0-9]+),\s*([0-9]+(\.\d+)?)\)',
+    r'(%s)' % color_names_re,
 )
+colors_re_capture = r'\1\4\6\9,\2\7,\3\8,\5'
 
 
 def tohex(r, g, b, a):
-    sr = '%X' % r
-    if len(sr) == 1:
-        sr = '0' + sr
-    sg = '%X' % g
-    if len(sg) == 1:
-        sg = '0' + sg
-    sb = '%X' % b
-    if len(sb) == 1:
-        sb = '0' + sb
+    if g and b:
+        sr = '%X' % r
+        if len(sr) == 1:
+            sr = '0' + sr
+        sg = '%X' % g
+        if len(sg) == 1:
+            sg = '0' + sg
+        sb = '%X' % b
+        if len(sb) == 1:
+            sb = '0' + sb
+    else:
+        sr = r[1:3]
+        sg = r[3:5]
+        sb = r[5:7]
     sa = '%X' % int(a * 255)
     if len(sa) == 1:
         sa = '0' + sa
@@ -276,24 +284,40 @@ TIMES = {}       # collects how long it took the color highlighter to complete
 COLOR_HIGHLIGHTS = {}  # Highlighted regions
 
 
+def erase_highlight_colors(view):
+    vid = view.id()
+
+    if vid in COLOR_HIGHLIGHTS:
+        for name in COLOR_HIGHLIGHTS[vid]:
+            view.erase_regions(name)
+    COLOR_HIGHLIGHTS[vid] = []
+
+    return COLOR_HIGHLIGHTS[vid]
+
+
 def highlight_colors(view, **kwargs):
     vid = view.id()
     start = time.time()
 
     words = {}
     found = []
-    ranges = view.find_all(colors_re, sublime.IGNORECASE, r'\1\2\5,\3\6,\4\7,\8', found)
+    ranges = view.find_all(colors_re, sublime.IGNORECASE, colors_re_capture, found)
     for i, col in enumerate(found):
         col = col.rstrip(',')
         col = col.split(',')
         if len(col) == 1:
-            col = col[0]
-            col = names_to_hex.get(col.lower(), col.upper())
-            if len(col) == 4:
-                col = '#' + col[1] * 2 + col[2] * 2 + col[3] * 2 + 'FF'
-            elif len(col) == 7:
-                col += 'FF'
-        else:
+            # In the form of color name black or #FFFFFFFF or 0xFFFFFF:
+            col0 = col[0]
+            col0 = names_to_hex.get(col0.lower(), col0.upper())
+            if col0.startswith('0X'):
+                col0 = '#' + col0[2:]
+            if len(col0) == 4:
+                col0 = '#' + col0[1] * 2 + col0[2] * 2 + col0[3] * 2 + 'FF'
+            elif len(col0) == 7:
+                col0 += 'FF'
+            col = col0
+        elif col[1] and col[2]:
+            # In the form of rgb(255, 255, 255) or rgba(255, 255, 255, 1.0):
             r = int(col[0])
             g = int(col[1])
             b = int(col[2])
@@ -301,6 +325,28 @@ def highlight_colors(view, **kwargs):
                 continue
             if len(col) == 4:
                 a = float(col[3])
+                if a > 1.0:
+                    continue
+            else:
+                a = 1.0
+            col = tohex(col0, None, None, a)
+        else:
+            # In the form of rgba(white, 20%) or rgba(#FFFFFF, 0.4):
+            col0 = col[0]
+            col0 = names_to_hex.get(col0.lower(), col0.upper())
+            if col0.startswith('0X'):
+                col0 = '#' + col0[2:]
+            if len(col0) == 4:
+                col0 = '#' + col0[1] * 2 + col0[2] * 2 + col0[3] * 2 + 'FF'
+            elif len(col0) == 7:
+                col0 += 'FF'
+            if len(col) == 4:
+                col3 = col[3]
+                if col3.endswith('%'):
+                    col3 = col3[:-1]
+                    a = float(col3) / 100
+                else:
+                    a = float(col3)
                 if a > 1.0:
                     continue
             else:
