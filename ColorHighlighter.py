@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import time
 import threading
 from functools import partial
@@ -9,7 +11,7 @@ import sublime
 import sublime_plugin
 
 # TODO: import ColorHighlighter.colors for ST3
-from colors import names_to_hex
+from .colors import names_to_hex
 
 version = "3.0"
 
@@ -649,10 +651,7 @@ def _update_view(view, filename, **kwargs):
     if not valid_view or view.is_loading() or (view.file_name() or '').encode('utf-8') != filename:
         return
 
-    try:
-        highlight_colors(view, **kwargs)
-    except RuntimeError, ex:
-        print ex
+    highlight_colors(view, **kwargs)
 
 
 def queue_highlight_colors(view, timeout=-1, preemptive=False, event=None):
