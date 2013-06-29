@@ -52,7 +52,7 @@ def read_file(fl):
 # 0xFFFFFF
 
 
-_ALL_HEX_COLORS = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'(?:#|0x)[0-9a-f]{8}\b|(?:#|0x)[0-9a-f]{6}\b|#[0-9a-f]{3}\b')
+_ALL_HEX_COLORS = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'(?:#|0x)[0-9a-fA-F]{8}\b|(?:#|0x)[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b')
 _ALL_HEX_COLORS = r'%s|%s|%s' % (
     r'rgba\((?:([0-9]+),\s*([0-9]+),\s*([0-9]+)|(%s)),\s*([0-9]+(?:\.\d+)?%%?)\)' % _ALL_HEX_COLORS,
     r'rgb\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)',
@@ -60,7 +60,7 @@ _ALL_HEX_COLORS = r'%s|%s|%s' % (
 )
 _ALL_HEX_COLORS_CAPTURE = r'\1\4\6\9,\2\7,\3\8,\5'
 
-_XHEX_COLORS = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'0x[0-9a-f]{8}\b|0x[0-9a-f]{6}\b')
+_XHEX_COLORS = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'0x[0-9a-fA-F]{8}\b|0x[0-9a-fA-F]{6}\b')
 _XHEX_COLORS = r'%s|%s|%s' % (
     r'rgba\((?:([0-9]+),\s*([0-9]+),\s*([0-9]+)|(%s)),\s*([0-9]+(?:\.\d+)?%%?)\)' % _XHEX_COLORS,
     r'rgb\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)',
@@ -68,7 +68,7 @@ _XHEX_COLORS = r'%s|%s|%s' % (
 )
 _XHEX_COLORS_CAPTURE = r'\1\4\6\9,\2\7,\3\8,\5'
 
-_HEX_COLORS = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'#[0-9a-f]{8}\b|#[0-9a-f]{6}\b|#[0-9a-f]{3}\b')
+_HEX_COLORS = r'\b%s\b|%s' % (r'\b|\b'.join(names_to_hex.keys()), r'#[0-9a-fA-F]{8}\b|#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b')
 _HEX_COLORS = r'%s|%s|%s' % (
     r'rgba\((?:([0-9]+),\s*([0-9]+),\s*([0-9]+)|(%s)),\s*([0-9]+(?:\.\d+)?%%?)\)' % _HEX_COLORS,
     r'rgb\(([0-9]+),\s*([0-9]+),\s*([0-9]+)\)',
@@ -524,7 +524,7 @@ def highlight_colors(view, **kwargs):
     _hex_values = bool(view.settings().get('colorhighlighter_hex_values'))
     _xhex_values = bool(view.settings().get('colorhighlighter_0x_hex_values'))
     colors_re, colors_re_capture = COLORS_RE[(_hex_values, _xhex_values)]
-    ranges = view.find_all(colors_re, sublime.IGNORECASE, colors_re_capture, found)
+    ranges = view.find_all(colors_re, 0, colors_re_capture, found)
     for i, col in enumerate(found):
         col = col.rstrip(',')
         col = col.split(',')
