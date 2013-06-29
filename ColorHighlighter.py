@@ -93,7 +93,7 @@ COLORS_RE = {
 
 
 def tohex(r, g, b, a):
-    if g and b:
+    if g is not None and b is not None:
         sr = '%X' % r
         if len(sr) == 1:
             sr = '0' + sr
