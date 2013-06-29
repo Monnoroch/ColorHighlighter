@@ -269,7 +269,9 @@ class ColorHighlighterCommand(sublime_plugin.WindowCommand):
 
     def is_enabled(self):
         view = self.window.active_view()
-        return bool(view.settings().get("colorhighlighter"))
+        if view:
+            return bool(view.settings().get("colorhighlighter"))
+        return False
 
 
 class ColorHighlighterHighlightCommand(ColorHighlighterCommand):
