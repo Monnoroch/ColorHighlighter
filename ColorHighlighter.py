@@ -551,7 +551,10 @@ def highlight_colors(view, **kwargs):
             if r >= 256 or g >= 256 or b >= 256:
                 continue
             if len(col) == 4:
-                a = float(col[3])
+                if col[3].endswith('%'):
+                    a = float(col[3][:-1]) / 100.0
+                else:
+                    a = float(col[3])
                 if a > 1.0:
                     continue
             else:
@@ -570,8 +573,7 @@ def highlight_colors(view, **kwargs):
             if len(col) == 4:
                 col3 = col[3]
                 if col3.endswith('%'):
-                    col3 = col3[:-1]
-                    a = float(col3) / 100
+                    a = float(col3[:-1]) / 100.0
                 else:
                     a = float(col3)
                 if a > 1.0:
