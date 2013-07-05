@@ -465,6 +465,7 @@ class HighlightCommand(sublime_plugin.TextCommand):
 class BackgroundColorHighlighter(sublime_plugin.EventListener):
     def on_new(self, view):
         global inited
+        reload_settings(view)
         if inited:
             return
         inited = True
