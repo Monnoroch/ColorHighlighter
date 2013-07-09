@@ -533,6 +533,9 @@ def highlight_colors(view, selection=False, **kwargs):
     vid = view.id()
     start = time.time()
 
+    if len(view.sel()) > 20:
+        selection = False
+
     words = {}
     found = []
     _hex_values = bool(view.settings().get('colorhighlighter_hex_values'))
