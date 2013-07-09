@@ -492,7 +492,21 @@ class BackgroundColorHighlighter(sublime_plugin.EventListener):
         selection = view.command_history(0, True)[0] != 'paste'
         queue_highlight_colors(view, selection=selection)
 
-    def on_load(self, view):
+    def on_close(self, view):
+        vid = view.id()
+        if vid in TIMES:
+            del TIMES[vid]
+        if vid in COLOR_HIGHLIGHTS:
+            del COLOR_HIGHLIGHTS[vid]
+
+    def on_activated(self, view):
+        if view.file_name() is None:
+            return
+        vid = view.id()
+        if vid in TIMES:
+            return
+        TIMES[vid] = 100
+
         reload_settings(view)
 
         if view.settings().get('colorhighlighter') in (False, 'save-only'):
