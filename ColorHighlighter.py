@@ -541,8 +541,8 @@ def highlight_colors(view, selection=False, **kwargs):
     _hex_values = bool(view.settings().get('colorhighlighter_hex_values'))
     _xhex_values = bool(view.settings().get('colorhighlighter_0x_hex_values'))
     if selection:
-        selected_lines = list(view.full_line(r) for r in view.sel())
         colors_re, colors_re_capture = COLORS_RE[(_hex_values, _xhex_values)]
+        selected_lines = list(ln for r in view.sel() for ln in view.lines(r))
         matches = [colors_re.finditer(view.substr(l)) for l in selected_lines]
         matches = [(sublime.Region(selected_lines[i].begin() + m.start(), selected_lines[i].begin() + m.end()), m.groups()) if m else (None, None) for i, am in enumerate(matches) for m in am]
         matches = [(rg, ''.join(gr[ord(g) - 1] or '' if ord(g) < 10 else g for g in colors_re_capture)) for rg, gr in matches if rg]
