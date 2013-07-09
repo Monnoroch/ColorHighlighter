@@ -489,7 +489,8 @@ class BackgroundColorHighlighter(sublime_plugin.EventListener):
             erase_highlight_colors(view)
             return
 
-        queue_highlight_colors(view, selection=True)
+        selection = view.command_history(0, True)[0] != 'paste'
+        queue_highlight_colors(view, selection=selection)
 
     def on_load(self, view):
         reload_settings(view)
