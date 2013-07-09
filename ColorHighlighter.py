@@ -498,7 +498,7 @@ class BackgroundColorHighlighter(sublime_plugin.EventListener):
         if view.settings().get('colorhighlighter') in (False, 'save-only'):
             return
 
-        queue_highlight_colors(view, event='on_load')
+        queue_highlight_colors(view, preemptive=True, event='on_load')
 
     def on_post_save(self, view):
         if view.settings().get('colorhighlighter') is False:
