@@ -4,6 +4,7 @@ import time
 import threading
 from functools import partial
 
+import re
 import os
 import string
 
@@ -86,12 +87,15 @@ _NO_HEX_COLORS = r'%s|%s|%s' % (
 )
 _NO_HEX_COLORS_CAPTURE = r'\1\4\6\9,\2\7,\3\8,\5'
 
-COLORS_RE = {
+COLORS_REGEX = {
     (False, False): (_NO_HEX_COLORS, _NO_HEX_COLORS_CAPTURE,),
     (False, True): (_XHEX_COLORS, _XHEX_COLORS_CAPTURE),
     (True, False): (_HEX_COLORS, _HEX_COLORS_CAPTURE),
     (True, True): (_ALL_HEX_COLORS, _ALL_HEX_COLORS_CAPTURE),
 }
+
+_R_RE = re.compile(r'\\([0-9])')
+COLORS_RE = dict((k, (re.compile(v[0]), _R_RE.sub(lambda m: chr(int(m.group(1))), v[1]))) for k, v in COLORS_REGEX.items())
 
 
 def tohex(r, g, b, a):
@@ -485,7 +489,7 @@ class BackgroundColorHighlighter(sublime_plugin.EventListener):
             erase_highlight_colors(view)
             return
 
-        queue_highlight_colors(view)
+        queue_highlight_colors(view, selection=True)
 
     def on_load(self, view):
         reload_settings(view)
@@ -509,18 +513,22 @@ TIMES = {}       # collects how long it took the color highlighter to complete
 COLOR_HIGHLIGHTS = {}  # Highlighted regions
 
 
-def erase_highlight_colors(view):
+def erase_highlight_colors(view, exclude=[], include=None):
     vid = view.id()
 
     if vid in COLOR_HIGHLIGHTS:
         for name in COLOR_HIGHLIGHTS[vid]:
+            if name in exclude:
+                continue
+            if include is not None and name not in include:
+                continue
             view.erase_regions(name)
     COLOR_HIGHLIGHTS[vid] = []
 
     return COLOR_HIGHLIGHTS[vid]
 
 
-def highlight_colors(view, **kwargs):
+def highlight_colors(view, selection=False, **kwargs):
     vid = view.id()
     start = time.time()
 
@@ -528,8 +536,20 @@ def highlight_colors(view, **kwargs):
     found = []
     _hex_values = bool(view.settings().get('colorhighlighter_hex_values'))
     _xhex_values = bool(view.settings().get('colorhighlighter_0x_hex_values'))
-    colors_re, colors_re_capture = COLORS_RE[(_hex_values, _xhex_values)]
-    ranges = view.find_all(colors_re, 0, colors_re_capture, found)
+    if selection:
+        selected_lines = list(view.full_line(r) for r in view.sel())
+        colors_re, colors_re_capture = COLORS_RE[(_hex_values, _xhex_values)]
+        matches = [colors_re.finditer(view.substr(l)) for l in selected_lines]
+        matches = [(sublime.Region(selected_lines[i].begin() + m.start(), selected_lines[i].begin() + m.end()), m.groups()) if m else (None, None) for i, am in enumerate(matches) for m in am]
+        matches = [(rg, ''.join(gr[ord(g) - 1] or '' if ord(g) < 10 else g for g in colors_re_capture)) for rg, gr in matches if rg]
+        if matches:
+            ranges, found = zip(*[q for q in matches if q])
+        else:
+            ranges = []
+    else:
+        selected_lines = None
+        colors_re, colors_re_capture = COLORS_REGEX[(_hex_values, _xhex_values)]
+        ranges = view.find_all(colors_re, 0, colors_re_capture, found)
     for i, col in enumerate(found):
         col = col.rstrip(',')
         col = col.split(',')
@@ -591,10 +611,16 @@ def highlight_colors(view, **kwargs):
     if htmlGen.need_update():
         htmlGen.update(view)
 
-    all_regs = erase_highlight_colors(view)
+    all_regs = erase_highlight_colors(view, exclude=words.keys(), include=[] if selection else None)
 
     for name, w in words.items():
-        view.add_regions(name, list(w), name)
+        if selection:
+            for q in view.get_regions(name):
+                for r in selected_lines:
+                    if r.contains(q):
+                        continue
+                w.append(q)
+        view.add_regions(name, w, name)
         all_regs.append(name)
 
     TIMES[vid] = (time.time() - start) * 1000  # Keep how long it took to color highlight
@@ -657,7 +683,7 @@ def _update_view(view, filename, **kwargs):
     highlight_colors(view, **kwargs)
 
 
-def queue_highlight_colors(view, timeout=-1, preemptive=False, event=None):
+def queue_highlight_colors(view, timeout=-1, preemptive=False, event=None, **kwargs):
     '''Put the current view in a queue to be examined by a color highlighter'''
 
     if preemptive:
@@ -667,7 +693,7 @@ def queue_highlight_colors(view, timeout=-1, preemptive=False, event=None):
     else:
         busy_timeout = timeout
 
-    kwargs = {'timeout': timeout, 'busy_timeout': busy_timeout, 'preemptive': preemptive, 'event': event}
+    kwargs.update({'timeout': timeout, 'busy_timeout': busy_timeout, 'preemptive': preemptive, 'event': event})
     queue(view, partial(_update_view, view, (view.file_name() or '').encode('utf-8'), **kwargs), kwargs)
 
 
