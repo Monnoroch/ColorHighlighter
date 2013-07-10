@@ -528,26 +528,19 @@ TIMES = {}       # collects how long it took the color highlighter to complete
 COLOR_HIGHLIGHTS = {}  # Highlighted regions
 
 
-def erase_highlight_colors(view, exclude=[], include=None):
+def erase_highlight_colors(view):
     vid = view.id()
-
     if vid in COLOR_HIGHLIGHTS:
         for name in COLOR_HIGHLIGHTS[vid]:
-            if name in exclude:
-                continue
-            if include is not None and name not in include:
-                continue
             view.erase_regions(name)
-    COLOR_HIGHLIGHTS[vid] = []
-
-    return COLOR_HIGHLIGHTS[vid]
+    COLOR_HIGHLIGHTS[vid] = set()
 
 
 def highlight_colors(view, selection=False, **kwargs):
     vid = view.id()
     start = time.time()
 
-    if len(view.sel()) > 20:
+    if len(view.sel()) > 100:
         selection = False
 
     words = {}
@@ -629,17 +622,34 @@ def highlight_colors(view, selection=False, **kwargs):
     if htmlGen.need_update():
         htmlGen.update(view)
 
-    all_regs = erase_highlight_colors(view, exclude=words.keys(), include=[] if selection else None)
+    if selection:
+        if vid not in COLOR_HIGHLIGHTS:
+            COLOR_HIGHLIGHTS[vid] = set()
+        for name in COLOR_HIGHLIGHTS[vid]:
+            ranges = []
+            affected_line = False
+            for _range in view.get_regions(name):
+                _line_range = False
+                for _line in selected_lines:
+                    if _line.contains(_range):
+                        _line_range = True
+                        break
+                if _line_range:
+                    affected_line = True
+                else:
+                    ranges.append(_range)
+            if affected_line or name in words:
+                if name not in words:
+                    words[name] = ranges
+                else:
+                    words[name].extend(ranges)
+    else:
+        erase_highlight_colors(view)
+    all_regs = COLOR_HIGHLIGHTS[vid]
 
     for name, w in words.items():
-        if selection:
-            for q in view.get_regions(name):
-                for r in selected_lines:
-                    if r.contains(q):
-                        continue
-                w.append(q)
-        view.add_regions(name, w, name)
-        all_regs.append(name)
+        view.add_regions(name, w, name, '', sublime.PERSISTENT)
+        all_regs.add(name)
 
     TIMES[vid] = (time.time() - start) * 1000  # Keep how long it took to color highlight
     # print 'highlight took', TIMES[vid]
