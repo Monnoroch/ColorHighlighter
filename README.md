@@ -1,6 +1,7 @@
 #ColorHighlighter
 
 _ColorHighlighter is a simple plugin for the Sublime Text 2, which unobtrusively previews hexadecimal color values by underlaying the selected hex codes._
+![Description](http://f.cl.ly/items/0b471K1T0X3b3e1m2j1r/Screen%20Shot%202013-08-07%20at%2012.52.01%20PM.jpg)
 
 **Installation :**
 
