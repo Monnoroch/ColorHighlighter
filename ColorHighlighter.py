@@ -12,7 +12,7 @@ import sublime
 import sublime_plugin
 
 # TODO: import ColorHighlighter.colors for ST3
-from colors import names_to_hex
+from .colors import names_to_hex
 
 version = "3.0"
 
@@ -251,23 +251,27 @@ def settings_changed():
 
 def reload_settings(view):
     '''Restores user settings.'''
-    settings = sublime.load_settings(__name__ + '.sublime-settings')
-    settings.clear_on_change(__name__)
-    settings.add_on_change(__name__, settings_changed)
+    settings_name = 'ColorHighlighter'
+    settings = sublime.load_settings(settings_name + '.sublime-settings')
+    settings.clear_on_change(settings_name)
+    settings.add_on_change(settings_name, settings_changed)
 
+    view_settings = view.settings()
     for setting in ALL_SETTINGS:
         if settings.get(setting) is not None:
-            view.settings().set(setting, settings.get(setting))
+            view_settings.set(setting, settings.get(setting))
 
-    if view.settings().get('colorhighlighter') is None:
-        view.settings().set('colorhighlighter', True)
+    if view_settings.get('colorhighlighter') is None:
+        view_settings.set('colorhighlighter', True)
+
+    return view_settings
 
 # Commands
 
 
 # treat hex vals as colors
 class ColorHighlighterCommand(sublime_plugin.WindowCommand):
-    def run_(self, args={}):
+    def run_(self, edit_token, args={}):
         view = self.window.active_view()
         action = args.get('action', '')
         if view and action:
@@ -392,7 +396,7 @@ class HighlightCommand(sublime_plugin.TextCommand):
         self.view = view
         self.help_called = False
 
-    def run_(self, action):
+    def run_(self, edit_token, action):
         '''method called by default via view.run_command;
            used to dispatch to appropriate method'''
         if not action:
