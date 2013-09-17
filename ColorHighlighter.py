@@ -17,8 +17,6 @@ from .colors import names_to_hex
 version = "3.0"
 
 # Constants
-PACKAGES_PATH = sublime.packages_path()
-
 hex_digits = string.digits + "ABCDEF"
 
 loglist = ["Version: " + version]
@@ -28,7 +26,7 @@ PREFIX = "mcol_"
 def log(s):
     global loglist
     loglist.append(s)
-    #print s
+    # print(s)
 
 
 def write_file(fl, s):
@@ -183,12 +181,13 @@ class HtmlGen:
         # extract name
         cs = cs[cs.find('/'):]
         cont = None
-        if os.path.exists(PACKAGES_PATH + cs + ".chback"):
-            cont = read_file(PACKAGES_PATH + cs + ".chback")
+        packages_path = sublime.packages_path()
+        if os.path.exists(packages_path + cs + ".chback"):
+            cont = read_file(packages_path + cs + ".chback")
             log("Already backuped")
         else:
-            cont = read_file(PACKAGES_PATH + cs)
-            write_file(PACKAGES_PATH + cs + ".chback", cont)  # backup
+            cont = read_file(packages_path + cs)
+            write_file(packages_path + cs + ".chback", cont)  # backup
             log("Backup done")
 
         # edit cont
@@ -198,7 +197,7 @@ class HtmlGen:
         except UnicodeDecodeError:
             cont = cont[:n] + self.string.encode("utf-8") + cont[n:]
 
-        write_file(PACKAGES_PATH + cs, cont)
+        write_file(packages_path + cs, cont)
         self.need_restore = True
 
     def restore_color_scheme(self):
@@ -212,10 +211,11 @@ class HtmlGen:
             return
         # extract name
         cs = cs[cs.find('/'):]
-        if os.path.exists(PACKAGES_PATH + cs + ".chback"):
+        packages_path = sublime.packages_path()
+        if os.path.exists(packages_path + cs + ".chback"):
             log("Starting restore scheme: " + cs)
             # TODO: move to other thread
-            write_file(PACKAGES_PATH + cs, read_file(PACKAGES_PATH + cs + ".chback"))
+            write_file(packages_path + cs, read_file(packages_path + cs + ".chback"))
             self.colors = []
             self.string = ""
             log("Restore done.")
@@ -386,7 +386,7 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
         htmlGen.restore_color_scheme()
 
 all_regs = []
-inited = False
+inited = 0
 
 
 class HighlightCommand(sublime_plugin.TextCommand):
@@ -474,19 +474,13 @@ class BackgroundColorHighlighter(sublime_plugin.EventListener):
     def on_new(self, view):
         global inited
         reload_settings(view)
-        if inited:
-            return
-        inited = True
-        sets = view.settings()
-        htmlGen.set_color_scheme(view)
-        sets.add_on_change('color_scheme', lambda self=self, view=view: htmlGen.change_color_scheme(view))
-        # htmlGen.change_color_scheme(view)
+        if not inited:
+            htmlGen.set_color_scheme(view)
+        inited += 1
+        view.settings().add_on_change('color_scheme', lambda self=self, view=view: htmlGen.change_color_scheme(view))
 
     def on_clone(self, view):
         self.on_new(view)
-
-    # def on_close(self, view):
-    #   htmlGen.restore_color_scheme()
 
     def on_modified(self, view):
         if view.settings().get('colorhighlighter') is not True:
@@ -497,11 +491,15 @@ class BackgroundColorHighlighter(sublime_plugin.EventListener):
         queue_highlight_colors(view, selection=selection)
 
     def on_close(self, view):
+        global inited
         vid = view.id()
         if vid in TIMES:
             del TIMES[vid]
         if vid in COLOR_HIGHLIGHTS:
             del COLOR_HIGHLIGHTS[vid]
+        inited -= 1
+        # if inited <= 0:
+        #     htmlGen.restore_color_scheme()
 
     def on_activated(self, view):
         if view.file_name() is None:
@@ -656,7 +654,7 @@ def highlight_colors(view, selection=False, **kwargs):
         all_regs.add(name)
 
     TIMES[vid] = (time.time() - start) * 1000  # Keep how long it took to color highlight
-    # print 'highlight took', TIMES[vid]
+    # print('highlight took %s' % TIMES[vid])
 
 
 ################################################################################
@@ -737,7 +735,7 @@ def background_color_highlighter():
     __lock_.acquire()
 
     try:
-        callbacks = QUEUE.values()
+        callbacks = list(QUEUE.values())
         QUEUE.clear()
     finally:
         __lock_.release()
@@ -760,11 +758,11 @@ def queue_loop():
     global __signaled_, __signaled_first_
 
     while __loop_:
-        #print 'acquire...'
+        # print('acquire...')
         __semaphore_.acquire()
         __signaled_first_ = 0
         __signaled_ = 0
-        #print 'DISPATCHING!', len(QUEUE)
+        # print('DISPATCHING!', len(QUEUE))
         queue_dispatcher()
 
 
@@ -784,10 +782,9 @@ def queue(view, callback, kwargs):
         __signaled_ = now
         _delay_queue(timeout, kwargs['preemptive'])
 
+        # print('%s queued in %s' % ('' if __signaled_first_ else 'first ', __signaled_ - now))
         if not __signaled_first_:
             __signaled_first_ = __signaled_
-            #print 'first',
-        #print 'queued in', (__signaled_ - now)
     finally:
         __lock_.release()
 
@@ -813,7 +810,7 @@ def _delay_queue(timeout, preemptive):
 
     if __signaled_ >= now - 0.01 and (preemptive or new__signaled_ >= __signaled_ - 0.01):
         __signaled_ = new__signaled_
-        #print 'delayed to', (preemptive, __signaled_ - now)
+        # print('delayed to %s' % (preemptive, __signaled_ - now))
 
         def _signal():
             if time.time() < __signaled_:
