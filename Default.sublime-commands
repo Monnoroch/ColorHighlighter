@@ -1,0 +1,32 @@
+[
+    {
+        "caption": "ColorHighlighter: Color Highlight Current File",
+        "command": "color_highlighter_highlight",
+        "args": {"action": "highlight"}
+    },
+    {
+        "caption": "ColorHighlighter: Background Color Highlighting",
+        "command": "color_highlighter_enable",
+        "args": {"action": "on"}
+    },
+    {
+        "caption": "ColorHighlighter: Load-Save Color Highlighting",
+        "command": "color_highlighter_enable_load_save",
+        "args": {"action": "load-save"}
+    },
+    {
+        "caption": "ColorHighlighter: Save-Only Color Highlighting",
+        "command": "color_highlighter_enable_save_only",
+        "args": {"action": "save-only"}
+    },
+    {
+        "caption": "ColorHighlighter: Disable Color Highlighting",
+        "command": "color_highlighter_disable",
+        "args": {"action": "off"}
+    },
+    {
+        "caption": "ColorHighlighter: Reset",
+        "command": "color_highlighter",
+        "args": {"action": "reset"}
+    }
+]
