@@ -116,9 +116,9 @@ def isInColorS(s, pos):
 def get_current_word(view, sel):
 	n = sel.begin() - 1
 	k = sel.end()
-	while k - n <= max_len and view.substr(n).isalpha():
+	while k - n <= max_len and (view.substr(n).isalpha() or view.substr(n) == "-"):
 		n -= 1
-	while k - n <= max_len and view.substr(k).isalpha():
+	while k - n <= max_len and (view.substr(k).isalpha() or view.substr(k) == "-"):
 		k += 1
 	return sublime.Region(n + 1, k)
 
