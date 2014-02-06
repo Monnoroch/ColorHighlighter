@@ -29,16 +29,25 @@ def log(s):
     # print(s)
 
 
-def write_file(fl, s):
-    f = open(fl, 'w')
+def write_file(pp, fl, s):
+    rf = pp + fl
+    dn = os.path.dirname(rf)
+    if not os.path.exists(dn):
+        os.makedirs(dn)
+    f = open(rf, 'w')
     f.write(s)
     f.close()
 
 
-def read_file(fl):
-    f = open(fl, 'r')
-    res = f.read()
-    f.close()
+def read_file(pp, fl):
+    rf = pp + fl
+    if os.path.exists(rf):
+        f = open(rf, 'r')
+        res = f.read()
+        f.close()
+    else:
+        rf = 'Packages' + fl
+        res = sublime.load_resource(rf)
     return res
 
 
@@ -183,11 +192,11 @@ class HtmlGen:
         cont = None
         packages_path = sublime.packages_path()
         if os.path.exists(packages_path + cs + ".chback"):
-            cont = read_file(packages_path + cs + ".chback")
+            cont = read_file(packages_path, cs + ".chback")
             log("Already backuped")
         else:
-            cont = read_file(packages_path + cs)
-            write_file(packages_path + cs + ".chback", cont)  # backup
+            cont = read_file(packages_path, cs)
+            write_file(packages_path, cs + ".chback", cont)  # backup
             log("Backup done")
 
         # edit cont
@@ -197,7 +206,7 @@ class HtmlGen:
         except UnicodeDecodeError:
             cont = cont[:n] + self.string.encode("utf-8") + cont[n:]
 
-        write_file(packages_path + cs, cont)
+        write_file(packages_path, cs, cont)
         self.need_restore = True
 
     def restore_color_scheme(self):
@@ -215,7 +224,7 @@ class HtmlGen:
         if os.path.exists(packages_path + cs + ".chback"):
             log("Starting restore scheme: " + cs)
             # TODO: move to other thread
-            write_file(packages_path + cs, read_file(packages_path + cs + ".chback"))
+            write_file(packages_path, cs, read_file(packages_path, cs + ".chback"))
             self.colors = []
             self.string = ""
             log("Restore done.")
