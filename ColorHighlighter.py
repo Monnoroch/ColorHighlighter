@@ -4,7 +4,10 @@ import re
 import string
 
 # TODO: import ColorHighlighter.colors for ST3
-import colors
+try:
+    import colors
+except ImportError:
+    import ColorHighlighter.colors as colors
 
 version = "3.0"
 
@@ -67,7 +70,7 @@ def tohex(r,g,b):
 
 def isInColorS(s, pos):
 	m = regex1.search(s)
-	if m != None and m.group(0) != None and m.start(0) <= pos and m.end(0) >= pos:
+	if m is not None and m.group(0) is not None and m.start(0) <= pos and m.end(0) >= pos:
 		s = m.group(0)
 		s = s[3+1:-1]
 		n = s.find(",")
@@ -80,7 +83,7 @@ def isInColorS(s, pos):
 		return sublime.Region(m.start(0), m.end(0)), tohex(int(r), int(g), int(b))
 
 	m = regex5.search(s)
-	if m != None and m.group(0) != None and m.start(0) <= pos and m.end(0) >= pos:
+	if m is not None and m.group(0) is not None and m.start(0) <= pos and m.end(0) >= pos:
 		s = m.group(0)
 		s = s[4+1:-1]
 		n = s.find(",")
@@ -97,17 +100,17 @@ def isInColorS(s, pos):
 
 	# check #FFFFFFFF
 	m = regex2.search(s)
-	if m != None and m.group(0) != None and m.start(0) <= pos and m.end(0) >= pos:
+	if m is not None and m.group(0) is not None and m.start(0) <= pos and m.end(0) >= pos:
 		return sublime.Region(m.start(0), m.end(0)), m.group(0)
 
 	# check #FFFFFF
 	m = regex3.search(s)
-	if m != None and m.group(0) != None and m.start(0) <= pos and m.end(0) >= pos:
+	if m is not None and m.group(0) is not None and m.start(0) <= pos and m.end(0) >= pos:
 		return sublime.Region(m.start(0), m.end(0)), m.group(0) + "FF"
 
 	# check #FFF
 	m = regex4.search(s)
-	if m != None and m.group(0) != None and m.start(0) <= pos and m.end(0) >= pos:
+	if m is not None and m.group(0) is not None and m.start(0) <= pos and m.end(0) >= pos:
 		s = m.group(0)
 		return sublime.Region(m.start(0), m.end(0)), s[0] + s[1]*2 + s[2]*2 + s[3]*2 + "FF"
 
@@ -129,19 +132,19 @@ def isInColor(view, sel):
 
 	wd = get_current_word(view, sel)
 	res = colors.names_to_hex.get(view.substr(wd))
-	if res != None:
+	if res is not None:
 		return wd, res
 
 	lwd, lres = None, None
 	for i in range(1, max_len):
 		s = view.substr(sublime.Region(b - i, b + i))
 		wd, res = isInColorS(s, i)
-		if res == None and lres != None:
+		if res is None and lres is not None:
 			i = i - 1
 			return sublime.Region(lwd.begin() + (b - i), lwd.end() + (b - i)), lres
 		lwd, lres = wd, res
 
-	if lres == None:
+	if lres is None:
 		return None, None
 		
 	i = max_len - 1
@@ -198,7 +201,7 @@ class HtmlGen:
 		self.need_upd = False
 
 		cs = self.color_scheme
-		if cs == None:
+		if cs is None:
 			self.color_scheme = view.settings().get('color_scheme')
 			cs = self.color_scheme
 		# do not support empty color scheme
@@ -320,7 +323,7 @@ class ColorSelection(sublime_plugin.EventListener):
 		words = []
 		for s in selection:
 			wd, col = isInColor(view, s)
-			if col != None:
+			if col is not None:
 				htmlGen.add_color(col)
 				words.append((wd, col))
 
