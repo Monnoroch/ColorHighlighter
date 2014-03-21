@@ -7,12 +7,8 @@ import sys
 try:
 	import colors
 except ImportError:
-	# add Color Highlighter package to PYTHONPATH so colors will be found
-	# this is required when the package is zipped in ST3 by Package Control
-	package_path = os.path.abspath(os.path.join(__file__, os.pardir))
-	sys.path.insert(0, package_path)
-	import colors
-	
+	ColorHighlighter = __import__('Color Highlighter', fromlist=['colors'])
+	colors = ColorHighlighter.colors
 
 version = "3.0"
 
