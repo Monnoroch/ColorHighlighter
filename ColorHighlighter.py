@@ -2,18 +2,29 @@ import sublime, sublime_plugin
 import os
 import re
 import string
-
+import sys
 
 try:
-    import colors
+	import colors
 except ImportError:
-    ColorHighlighter = __import__('Color Highlighter', fromlist=['colors'])
-    colors = ColorHighlighter.colors
+	# add Color Highlighter package to PYTHONPATH so colors will be found
+	# this is required when the package is zipped in ST3 by Package Control
+	package_path = os.path.abspath(os.path.join(__file__, os.pardir))
+	sys.path.insert(0, package_path)
+	import colors
+	
 
 version = "3.0"
 
 # Constants
 PACKAGES_PATH = sublime.packages_path()
+
+# sublime.packages_path() is not available during module load if 
+# this is a zipped package (ST3), so we set PACKAGES_PATH here
+def plugin_loaded():
+	global PACKAGES_PATH
+	if not PACKAGES_PATH:
+		PACKAGES_PATH = sublime.packages_path()
 
 hex_digits = string.digits + "ABCDEF"
 
@@ -202,14 +213,12 @@ class HtmlGen:
 
 		cs = self.color_scheme
 		if cs is None:
-			self.color_scheme = view.settings().get('color_scheme')
-			cs = self.color_scheme
+			cs = self.color_scheme = self.current_color_scheme(view)
 		# do not support empty color scheme
 		if cs == "":
 			log("Empty scheme, can't backup")
 			return
 		# extract name
-		print("!!!" + cs)
 		cs = cs[cs.find('/'):]
 		cont = None
 		if os.path.exists(PACKAGES_PATH + cs + ".chback"):
@@ -229,6 +238,38 @@ class HtmlGen:
 
 		write_file(PACKAGES_PATH + cs, cont)
 		self.need_restore = True
+
+	def current_color_scheme(self, view):
+		cs = view.settings().get("color_scheme")
+
+		# Copy the current theme to the user packages folder.
+		# We need a workaround for ST3 since the themes are zippend
+		# and we cannot write into that package.
+		if int(sublime.version()) > 3000 and cs and not cs.startswith('Packages/User'):
+			print('invalid scheme path')
+			path_parts = os.path.split(cs)
+			file_name = path_parts[-1]
+			target = os.path.join(PACKAGES_PATH, 'User', file_name)
+			log("looking for" + target)
+
+			# check if file exists before copy it to the user folder
+			if not os.path.exists(target):
+				log("copy the current theme to " + target)
+				cs_content = sublime.load_resource(cs)
+				write_file(target, cs_content)
+
+			# use the color scheme from the user path
+			if os.path.exists(target):
+				log("using " + target)
+				relative_scheme_path = os.path.join('Packages', 'User', file_name)
+
+				# update global color_scheme settings (all view.settings derrive from it)
+				preferences = sublime.load_settings('Preferences.sublime-settings')
+				preferences.set("color_scheme", relative_scheme_path)
+				sublime.save_settings('Preferences.sublime-settings')
+				cs = relative_scheme_path
+
+		return cs
 
 	def restore_color_scheme(self):
 		if not self.need_restore: return
