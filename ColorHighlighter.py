@@ -2,7 +2,6 @@ import sublime, sublime_plugin
 import os
 import re
 import string
-import sys
 
 try:
 	import colors
