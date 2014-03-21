@@ -209,7 +209,6 @@ class HtmlGen:
 			log("Empty scheme, can't backup")
 			return
 		# extract name
-		print("!!!" + cs)
 		cs = cs[cs.find('/'):]
 		cont = None
 		if os.path.exists(PACKAGES_PATH + cs + ".chback"):
