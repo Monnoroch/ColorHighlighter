@@ -3,11 +3,12 @@ import os
 import re
 import string
 
-# TODO: import ColorHighlighter.colors for ST3
+
 try:
     import colors
 except ImportError:
-    import ColorHighlighter.colors as colors
+    ColorHighlighter = __import__('Color Highlighter', fromlist=['colors'])
+    colors = ColorHighlighter.colors
 
 version = "3.0"
 
@@ -37,7 +38,6 @@ def read_file(fl):
 	res = f.read()
 	f.close()
 	return res
-
 
 # Color formats:
 # #FFFFFFFF
@@ -146,7 +146,7 @@ def isInColor(view, sel):
 
 	if lres is None:
 		return None, None
-		
+
 	i = max_len - 1
 	return sublime.Region(lwd.begin() + (b - i), lwd.end() + (b - i)), lres
 
@@ -209,6 +209,7 @@ class HtmlGen:
 			log("Empty scheme, can't backup")
 			return
 		# extract name
+		print("!!!" + cs)
 		cs = cs[cs.find('/'):]
 		cont = None
 		if os.path.exists(PACKAGES_PATH + cs + ".chback"):
