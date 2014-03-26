@@ -218,29 +218,18 @@ class HtmlGen:
         self.need_upd = False
         return True
 
-    def do_restore(self):
-        print("do_restore()")
-        self.colors = []
-        self.string = ""
-        path = os.path.join(sublime.packages_path(), self.fake_scheme)
-        if os.path.exists(path):
-            os.remove(path)
-
-
-
     def set_scheme(self, view, cs):
         print("set_scheme(%d, %s)" % (view.id(), cs))
         set_scheme(view, cs)
         global_logic.on_selection_modified(view)
 
-    def restore_color_scheme(self, view):
-        if view is not None:
-            print("restore_color_scheme(%d)" % (view.id()))
-        else:
-            print("restore_color_scheme(None)")
-        self.do_restore()
-        if view is not None:
-            self.set_scheme(view, self.color_scheme)
+    def restore_color_scheme(self):
+        print("restore_color_scheme()")
+        self.colors = []
+        self.string = ""
+        path = os.path.join(sublime.packages_path(), self.fake_scheme)
+        if os.path.exists(path):
+            os.remove(path)
 
     def set_color_scheme(self, cs):
         print("set_color_scheme(%s)" % (cs))
@@ -252,7 +241,7 @@ class HtmlGen:
         print("change_color_scheme([...], %s)" % (cs))
         if cs == self.color_scheme:
             return
-        self.do_restore()
+        self.restore_color_scheme()
         self.set_color_scheme(cs)
         for v in views:
             self.set_scheme(v, self.color_scheme)
@@ -263,7 +252,7 @@ htmlGen = HtmlGen()
 # command to restore color scheme
 class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        htmlGen.restore_color_scheme(None)
+        htmlGen.restore_color_scheme()
 
 class Logic:
     regions = {}
@@ -303,7 +292,6 @@ class Logic:
             htmlGen.add_color(col)
             words.append((wd, col))
         return words
-
 
     def on_new(self, view):
         print("on_new(%d)" % (view.id()))
