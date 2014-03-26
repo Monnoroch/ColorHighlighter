@@ -3,6 +3,7 @@ import os
 import re
 import string
 import shutil
+import colorsys
 
 try:
     import colors
@@ -39,7 +40,7 @@ def read_file(fl):
 # rgb(255,255,255)
 # words
 # black
-
+#888888
 max_len = max(len("#FFB"), len("#FFFFFF"), len("#FFFFFFAA"), len("rgb(199, 255, 255)"), len("rgba(255, 255, 255, 0.555)"))
 
 regex1 = re.compile("[r][g][b][(]\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d{1,3}[)]")
@@ -143,14 +144,14 @@ def isInColor(view, sel):
     i = max_len - 1
     return sublime.Region(lwd.begin() + (b - i), lwd.end() + (b - i)), lres
 
-
-def get_y(col):
-        return (0.3 * int(col[1:3],16) + 0.59 * int(col[3:5],16) + 0.11 * int(col[5:7],16)) * (int(col[7:9],16) / 255.0)
-
 def get_cont_col(col):
-    if get_y(col) > 255.0/2:
-        return "#000000FF"
-    return "#FFFFFFFF"
+    (h, s, v) = colorsys.rgb_to_hsv(int(col[1:3],16)/255.0, int(col[3:5],16)/255.0, int(col[5:7],16)/255.0)
+    v1 = v * (s - 1) + 1
+    s1 = 0
+    if abs(v1) > 1e-10:
+        s1 = v * s / v1
+    (r, g, b) = colorsys.hsv_to_rgb(h >= 0.5 and h - 0.5 or h + 0.5, s1, v1)
+    return "#%02x%02x%02xFF" % (int(r * 255), int(g * 255), int(b * 255)) # true complementary
 
 def region_name(s):
     return PREFIX + s[1:]
@@ -238,7 +239,7 @@ class HtmlGen:
 
     def change_color_scheme(self):
         cs = sublime.load_settings('Preferences.sublime-settings').get("color_scheme")
-        print("change_color_scheme([...], %s)" % (cs))
+        print("change_color_scheme(%s)" % (cs))
         if cs == self.color_scheme:
             return
         self.restore_color_scheme()
@@ -331,3 +332,9 @@ class ColorSelection(sublime_plugin.EventListener):
 
     def on_activated(self, view):
         global_logic.on_activated(view)
+
+
+def plugin_loaded():
+    path = os.path.join(sublime.packages_path(), "Color Highlighter")
+    if not os.path.exists(path):
+        os.mkdir(path)
