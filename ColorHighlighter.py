@@ -236,15 +236,14 @@ class HtmlGen:
         self.color_scheme = cs
         self.fake_scheme = os.path.join('Color Highlighter', os.path.split(self.color_scheme)[-1])
 
-    def change_color_scheme(self, views):
+    def change_color_scheme(self):
         cs = sublime.load_settings('Preferences.sublime-settings').get("color_scheme")
         print("change_color_scheme([...], %s)" % (cs))
         if cs == self.color_scheme:
             return
         self.restore_color_scheme()
         self.set_color_scheme(cs)
-        for v in views:
-            self.set_scheme(v, self.color_scheme)
+        self.set_scheme(sublime.active_window().active_view(), self.color_scheme)
 
 
 htmlGen = HtmlGen()
@@ -257,21 +256,15 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
 class Logic:
     regions = {}
     inited = False
-    views = []
-    views_ids = []
 
     def init(self, view):
-        if view.id() not in self.views_ids:
-            self.views.append(view)
-            self.views_ids.append(view.id())
-
         if self.inited:
             return
 
         print("do init()")
         sets = sublime.load_settings('Preferences.sublime-settings')
         htmlGen.set_color_scheme(sublime.load_settings('Preferences.sublime-settings').get("color_scheme"))
-        sublime.load_settings('Preferences.sublime-settings').add_on_change("color_scheme", lambda v = self.views: htmlGen.change_color_scheme(v))
+        sublime.load_settings('Preferences.sublime-settings').add_on_change("color_scheme", lambda: htmlGen.change_color_scheme())
         self.inited = True
 
     def init_regions(self, view):
