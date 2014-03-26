@@ -2,6 +2,7 @@ import sublime, sublime_plugin
 import os
 import re
 import string
+import shutil
 
 try:
     import colors
@@ -9,17 +10,8 @@ except ImportError:
     ColorHighlighter = __import__('Color Highlighter', fromlist=['colors'])
     colors = ColorHighlighter.colors
 
-version = "3.0"
+version = "4.0"
 
-# Constants
-PACKAGES_PATH = sublime.packages_path()
-
-# sublime.packages_path() is not available during module load if 
-# this is a zipped package (ST3), so we set PACKAGES_PATH here
-def plugin_loaded():
-    global PACKAGES_PATH
-    if not PACKAGES_PATH:
-        PACKAGES_PATH = sublime.packages_path()
 
 hex_digits = string.digits + "ABCDEF"
 
@@ -28,11 +20,6 @@ PREFIX = "mcol_"
 sets_name = "ColorHighlighter.sublime-settings"
 
 ch_settings = sublime.load_settings(sets_name)
-
-def log(s):
-    global loglist
-    loglist.append(s)
-    #print s
 
 def write_file(fl, s):
     f = open(fl, 'w')
@@ -156,12 +143,30 @@ def isInColor(view, sel):
     i = max_len - 1
     return sublime.Region(lwd.begin() + (b - i), lwd.end() + (b - i)), lres
 
+
+def get_y(col):
+        return (0.3 * int(col[1:3],16) + 0.59 * int(col[3:5],16) + 0.11 * int(col[5:7],16)) * (int(col[7:9],16) / 255.0)
+
+def get_cont_col(col):
+    if get_y(col) > 255.0/2:
+        return "#000000FF"
+    return "#FFFFFFFF"
+
+def region_name(s):
+    return PREFIX + s[1:]
+
+def set_scheme(view, cs):
+    print("g set_scheme(%d, %s)" % (view.id(), cs))
+    sets = view.settings()
+    if sets.get("color_scheme") != cs:
+        sets.set("color_scheme", cs)
+
+
 class HtmlGen:
     colors = []
     color_scheme = None
+    fake_scheme = None
     need_upd = False
-    need_restore = False
-    need_backup = False
     string = ""
     gen_string = """
 <dict>
@@ -181,201 +186,167 @@ class HtmlGen:
 </dict>\n
 """
 
-    def get_y(self, col):
-        return (0.3 * int(col[1:3],16) + 0.59 * int(col[3:5],16) + 0.11 * int(col[5:7],16)) * (int(col[7:9],16) / 255.0)
-
-    def get_cont_col(self, col):
-        if self.get_y(col) > 255.0/2:
-            return "#000000FF"
-        return "#FFFFFFFF"
-
-    def region_name(self, s):
-        return PREFIX + s[1:]
-
     def add_color(self, col):
         if col in self.colors: return
         self.colors.append(col)
-        cont = self.get_cont_col(col)
-        self.string += self.gen_string % (self.region_name(col), col, cont, cont)
+        cont = get_cont_col(col)
+        self.string += self.gen_string % (region_name(col), col, cont, cont)
         self.need_upd = True
 
-    def need_update(self):
-        return self.need_upd
+    def update_view(self, view):
+        print("update_view(%d)" % (view.id()))
+        if not os.path.exists(os.path.join(sublime.packages_path(), self.fake_scheme)):
+            set_scheme(view, self.color_scheme)
+        else:
+            set_scheme(view, os.path.join('Packages', self.fake_scheme))
 
     def update(self, view):
-        if not self.need_upd: return
-        self.need_upd = False
+        # print("update(%d)" % (view.id()))
+        if not self.need_upd:
+            return False
+        print("do update(%d)" % (view.id()))
 
-        cs = self.color_scheme
-        if cs is None:
-            cs = self.color_scheme = self.current_color_scheme(view)
-        # do not support empty color scheme
-        if cs == "":
-            log("Empty scheme, can't backup")
-            return
-        # extract name
-        cs = cs[cs.find('/'):]
-        cont = None
-        if os.path.exists(PACKAGES_PATH + cs + ".chback"):
-            cont = read_file(PACKAGES_PATH + cs + ".chback")
-            log("Already backuped")
-        else:
-            cont = read_file(PACKAGES_PATH + cs)
-            write_file(PACKAGES_PATH + cs + ".chback", cont) # backup
-            log("Backup done")
-
-        # edit cont
+        cont = sublime.load_resource(self.color_scheme)
         n = cont.find("<array>") + len("<array>")
         try:
             cont = cont[:n] + self.string + cont[n:]
         except UnicodeDecodeError:
             cont = cont[:n] + self.string.encode("utf-8") + cont[n:]
 
-        write_file(PACKAGES_PATH + cs, cont)
-        self.need_restore = True
+        write_file(os.path.join(sublime.packages_path(), self.fake_scheme), cont)
 
-    def current_color_scheme(self, view):
-        cs = view.settings().get("color_scheme")
+        self.need_upd = False
+        return True
 
-        # Copy the current theme to the user packages folder.
-        # We need a workaround for ST3 since the themes are zippend
-        # and we cannot write into that package.
-        if int(sublime.version()) > 3000 and cs and not cs.startswith('Packages/User'):
-            print('invalid scheme path')
-            path_parts = os.path.split(cs)
-            file_name = path_parts[-1]
-            target = os.path.join(PACKAGES_PATH, 'User', file_name)
-            log("looking for" + target)
+    def do_restore(self):
+        print("do_restore()")
+        self.colors = []
+        self.string = ""
+        path = os.path.join(sublime.packages_path(), self.fake_scheme)
+        if os.path.exists(path):
+            os.remove(path)
 
-            # check if file exists before copy it to the user folder
-            if not os.path.exists(target):
-                log("copy the current theme to " + target)
-                cs_content = sublime.load_resource(cs)
-                write_file(target, cs_content)
 
-            # use the color scheme from the user path
-            if os.path.exists(target):
-                log("using " + target)
-                relative_scheme_path = os.path.join('Packages', 'User', file_name)
 
-                # update global color_scheme settings (all view.settings derrive from it)
-                preferences = sublime.load_settings('Preferences.sublime-settings')
-                preferences.set("color_scheme", relative_scheme_path)
-                sublime.save_settings('Preferences.sublime-settings')
-                cs = relative_scheme_path
+    def set_scheme(self, view, cs):
+        print("set_scheme(%d, %s)" % (view.id(), cs))
+        set_scheme(view, cs)
+        global_logic.on_selection_modified(view)
 
-        return cs
-
-    def restore_color_scheme(self):
-        if not self.need_restore: return
-        self.need_restore = False
-        cs = self.color_scheme
-        # do not support empty color scheme
-        if cs == "":
-            log("Empty scheme, can't restore")
-            return
-        # extract name
-        cs = cs[cs.find('/'):]
-        if os.path.exists(PACKAGES_PATH + cs + ".chback"):
-            log("Starting restore scheme: " + cs)
-            # TODO: move to other thread
-            write_file(PACKAGES_PATH + cs, read_file(PACKAGES_PATH + cs + ".chback"))
-            self.colors = []
-            self.string = ""
-            log("Restore done.")
+    def restore_color_scheme(self, view):
+        if view is not None:
+            print("restore_color_scheme(%d)" % (view.id()))
         else:
-            log("No backup :(")
+            print("restore_color_scheme(None)")
+        self.do_restore()
+        if view is not None:
+            self.set_scheme(view, self.color_scheme)
 
-    def set_color_scheme(self, view):
-        self.color_scheme = view.settings().get('color_scheme')
-        self.need_backup = True
+    def set_color_scheme(self, cs):
+        print("set_color_scheme(%s)" % (cs))
+        self.color_scheme = cs
+        self.fake_scheme = os.path.join('Color Highlighter', os.path.split(self.color_scheme)[-1])
 
+    def change_color_scheme(self, views):
+        cs = sublime.load_settings('Preferences.sublime-settings').get("color_scheme")
+        print("change_color_scheme([...], %s)" % (cs))
+        if cs == self.color_scheme:
+            return
+        self.do_restore()
+        self.set_color_scheme(cs)
+        for v in views:
+            self.set_scheme(v, self.color_scheme)
 
-    def change_color_scheme(self, view):
-        cs = view.settings().get('color_scheme')
-        if cs != self.color_scheme:
-            self.restore_color_scheme()
-            self.set_color_scheme(view)
-            self.update(view)
 
 htmlGen = HtmlGen()
-
-# Commands
-
-# # treat hex vals as colors
-# class HexValsAsColorsCommand(sublime_plugin.WindowCommand):
-#   def run(self):
-#       ch_settings.set("hex_values", not ch_settings.get("hex_values"))
-#       sublime.save_settings(sets_name)
-
-#   def is_checked(self):
-#       return ch_settings.get("hex_values")
-
-# # treat hex vals as colors
-# class XHexValsAsColorsCommand(sublime_plugin.WindowCommand):
-#   def run(self):
-#       ch_settings.set("0x_hex_values", not ch_settings.get("0x_hex_values"))
-#       sublime.save_settings(sets_name)
-
-#   def is_checked(self):
-#       return ch_settings.get("0x_hex_values")
-
-# command to print log
-class chlogCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        res = ""
-        for l in loglist:
-            res += l + "\n"
-        if res == "":
-            return
-        log("Log printed.")
-        #self.view.insert(edit, 0, res + "\n\n\n")
 
 # command to restore color scheme
 class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        htmlGen.restore_color_scheme()
+        htmlGen.restore_color_scheme(None)
 
-all_regs = []
-inited = False
+class Logic:
+    regions = {}
+    inited = False
+    views = []
+    views_ids = []
+
+    def init(self, view):
+        if view.id() not in self.views_ids:
+            self.views.append(view)
+            self.views_ids.append(view.id())
+
+        if self.inited:
+            return
+
+        print("do init()")
+        sets = sublime.load_settings('Preferences.sublime-settings')
+        htmlGen.set_color_scheme(sublime.load_settings('Preferences.sublime-settings').get("color_scheme"))
+        sublime.load_settings('Preferences.sublime-settings').add_on_change("color_scheme", lambda v = self.views: htmlGen.change_color_scheme(v))
+        self.inited = True
+
+    def init_regions(self, view):
+        if view.id() not in self.regions.keys():
+            self.regions[view.id()] = []
+
+    def clean_regions(self, view):
+        for s in self.regions[view.id()]:
+            view.erase_regions(s)
+        self.regions[view.id()] = []
+
+    def get_words(self, view):
+        words = []
+        for s in view.sel():
+            wd, col = isInColor(view, s)
+            if col is None:
+                continue
+            htmlGen.add_color(col)
+            words.append((wd, col))
+        return words
+
+
+    def on_new(self, view):
+        print("on_new(%d)" % (view.id()))
+        self.init(view)
+        self.init_regions(view)
+
+    def on_activated(self, view):
+        print("on_activated(%d)" % (view.id()))
+        self.init(view)
+        htmlGen.update_view(view)
+        self.on_selection_modified(view)
+
+    def on_clone(self, view):
+        print("on_clone(%d)" % (view.id()))
+        self.on_new(view)
+
+    def on_selection_modified(self, view):
+        # print("on_selection_modified(%d)" % (view.id()))
+        self.init(view)
+        self.init_regions(view)
+        self.clean_regions(view)
+        words = self.get_words(view)
+        if htmlGen.update(view):
+            htmlGen.update_view(view)
+        i = 0
+        for w, c in words:
+            i += 1
+            s = "mon_CH_" + str(i)
+            self.regions[view.id()].append(s)
+            view.add_regions(s, [w], region_name(c))
+
+
+global_logic = Logic()
 
 class ColorSelection(sublime_plugin.EventListener):
     def on_new(self, view):
-        global inited
-        if inited: return
-        inited = True
-        sets = view.settings()
-        htmlGen.set_color_scheme(view)
-        sets.add_on_change("color_scheme", lambda self = self, view = view : htmlGen.change_color_scheme(view))
-        # htmlGen.change_color_scheme(view)
+        global_logic.on_new(view)
 
     def on_clone(self, view):
-        self.on_new(view)
-
-    # def on_close(self, view):
-    #   htmlGen.restore_color_scheme()
+        global_logic.on_clone(view)
 
     def on_selection_modified(self, view):
-        selection = view.sel()
-        words = []
-        for s in selection:
-            wd, col = isInColor(view, s)
-            if col is not None:
-                htmlGen.add_color(col)
-                words.append((wd, col))
+        global_logic.on_selection_modified(view)
 
-        if htmlGen.need_update():
-            htmlGen.update(view)
-
-        global all_regs
-        for s in all_regs:
-            view.erase_regions(s)
-        all_regs = []
-
-        i = 0
-        for wd in words:
-            w, c = wd
-            i += 1
-            s = "mon_CH" + str(i)
-            all_regs.append(s)
-            view.add_regions(s, [w], htmlGen.region_name(c))
+    def on_activated(self, view):
+        global_logic.on_activated(view)
