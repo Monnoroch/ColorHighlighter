@@ -1,9 +1,8 @@
 import sublime, sublime_plugin
 import os
 import re
-import string
-import shutil
 import colorsys
+import subprocess
 
 try:
     import colors
@@ -12,15 +11,6 @@ except ImportError:
     colors = ColorHighlighter.colors
 
 version = "4.0"
-
-
-hex_digits = string.digits + "ABCDEF"
-
-loglist = ["Version: " + version]
-PREFIX = "mcol_"
-sets_name = "ColorHighlighter.sublime-settings"
-
-ch_settings = sublime.load_settings(sets_name)
 
 def write_file(fl, s):
     f = open(fl, 'w')
@@ -50,17 +40,36 @@ regex4 = re.compile("[#][\dA-F]{3}")
 regex5 = re.compile("[r][g][b][a][(]\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d{1,3}[,][ ]*(\d+|\d*\.\d+)[)]")
 
 
-def tohex(r,g,b):
-    sr = "%X" % r
-    if len(sr) == 1:
-        sr = '0' + sr
-    sg = "%X" % g
-    if len(sg) == 1:
-        sg = '0' + sg
-    sb = "%X" % b
-    if len(sb) == 1:
-        sb = '0' + sb
-    return "#%s%s%sFF" % (sr,sg,sb)
+colors_by_view = {}
+
+def conv_to_hex(view, col):
+    if col is None or len(col) == 0:
+        return None
+
+    if col[0] == "#":
+        l = len(col)
+        if l == 4:
+            return "#" + col[1]*2 + col[2]*2 + col[3]*2 + "FF"
+        elif l == 7:
+            return col + "FF"
+        elif l == 9:
+            return col
+        else:
+            return None
+
+    res = colors.names_to_hex.get(col)
+    if res is not None:
+        return conv_to_hex(view, res)
+
+    global colors_by_view
+    cs = colors_by_view.get(view.id())
+    if cs is None:
+        return None
+
+    return conv_to_hex(view, cs.get(col))
+
+def tohex(r, g, b):
+    return "#%02X%02X%02XFF" % (r, g, b)
 
 def isInColorS(s, pos):
     m = regex1.search(s)
@@ -124,11 +133,20 @@ def isInColor(view, sel):
     if b != sel.end():
         return None, None
 
-    wd = get_current_word(view, sel)
-    res = colors.names_to_hex.get(view.substr(wd))
+    # just color
+    word = view.word(b)
+    res = conv_to_hex(view, view.substr(word))
     if res is not None:
-        return wd, res
+        return word, res
 
+    # sass/less variable
+    if view.substr(word.begin() - 1) in ["@", "$"]:
+        word1 = sublime.Region(word.begin() - 1, word.end())
+        res = conv_to_hex(view, view.substr(word1))
+        if res is not None:
+            return word1, res
+
+    wd = get_current_word(view, sel)
     lwd, lres = None, None
     for i in range(1, max_len):
         s = view.substr(sublime.Region(b - i, b + i))
@@ -151,10 +169,10 @@ def get_cont_col(col):
     if abs(v1) > 1e-10:
         s1 = v * s / v1
     (r, g, b) = colorsys.hsv_to_rgb(h >= 0.5 and h - 0.5 or h + 0.5, s1, v1)
-    return "#%02x%02x%02xFF" % (int(r * 255), int(g * 255), int(b * 255)) # true complementary
+    return tohex(int(r * 255), int(g * 255), int(b * 255)) # true complementary
 
 def region_name(s):
-    return PREFIX + s[1:]
+    return "mcol_" + s[1:]
 
 def set_scheme(view, cs):
     print("g set_scheme(%d, %s)" % (view.id(), cs))
@@ -249,6 +267,53 @@ class HtmlGen:
 
 htmlGen = HtmlGen()
 
+def find_sass_vars(view, text):
+    cols = {}
+    for line in map(lambda s: s.strip(), text.split("\n")):
+        if len(line) < 2 or line[0] != "$":
+            continue
+
+        pos = line.find(":")
+        if pos == -1:
+            continue
+
+        var = line[:pos]
+        col = line[pos+2:]
+        cols[var] = col
+    global colors_by_view
+    colors_by_view[view.id()] = cols
+
+def find_less_vars(view, text):
+    cols = {}
+    for line in map(lambda s: s.strip(), text.split("\n")):
+        if len(line) < 2 or line[0] != "@":
+            continue
+
+        pos = line.find(":")
+        if pos == -1:
+            continue
+
+        var = line[:pos]
+        col = line[pos+2:-1]
+        cols[var] = col
+
+    global colors_by_view
+    colors_by_view[view.id()] = cols
+
+
+def parse_stylesheet(view):
+    nm = view.file_name()
+    if nm is None:
+        return
+
+    name, ext = os.path.splitext(nm)
+    text = view.substr(sublime.Region(0, 9999999))
+    if ext in [".sass", ".scss"]:
+        find_sass_vars(view, text)
+    elif ext in [".less"]:
+        find_less_vars(view, text)
+
+
 # command to restore color scheme
 class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -294,6 +359,7 @@ class Logic:
 
     def on_activated(self, view):
         print("on_activated(%d)" % (view.id()))
+        parse_stylesheet(view)
         self.init(view)
         htmlGen.update_view(view)
         self.on_selection_modified(view)
@@ -338,3 +404,7 @@ def plugin_loaded():
     path = os.path.join(sublime.packages_path(), "Color Highlighter")
     if not os.path.exists(path):
         os.mkdir(path)
+
+    # just to be sure
+    global colors_by_view
+    colors_by_view = {}
