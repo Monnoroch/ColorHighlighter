@@ -23,8 +23,17 @@ def read_file(fl):
     f.close()
     return res
 
+
+def tohex(r, g, b):
+    return "#%02X%02X%02XFF" % (r, g, b)
+
+def tohexa(r, g, b, a):
+    return "#%02X%02X%02X%02X" % (r, g, b, a)
+
+
 regex_rgb = re.compile("[r][g][b][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]")
 regex_rgba = re.compile("[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*(?:\d{1,3}|[0]?\.\d+)[ ]*[)]")
+
 
 colors_by_view = {}
 
@@ -36,6 +45,8 @@ def conv_to_hex(view, col):
         l = len(col)
         if l == 4:
             return "#" + col[1]*2 + col[2]*2 + col[3]*2 + "FF"
+        if l == 5:
+            return "#" + col[1]*2 + col[2]*2 + col[3]*2 + col[4]*2
         elif l == 7:
             return col + "FF"
         elif l == 9:
@@ -53,11 +64,6 @@ def conv_to_hex(view, col):
 
     return conv_to_hex(view, cs.get(col))
 
-def tohex(r, g, b):
-    return "#%02X%02X%02XFF" % (r, g, b)
-
-def tohexa(r, g, b, a):
-    return "#%02X%02X%02X%02X" % (r, g, b, a)
 
 def parse_col_rgb(col):
     vals = list(map(lambda s: int(s.strip()), col[4:-1].split(",")))
@@ -88,7 +94,7 @@ def isInColor(view, sel):
             return word1, res
         return None, None
     # hex colors
-    elif view.substr(word.begin() - 1) == "#": # and view.substr(word.begin() - 2) in [" ", ":"]:
+    elif view.substr(word.begin() - 1) == "#" and view.substr(word.begin() - 2) not in ["&"]:
         word1 = sublime.Region(word.begin() - 1, word.end())
         res = conv_to_hex(view, view.substr(word1))
         if res is not None:
@@ -223,8 +229,8 @@ class HtmlGen:
         self.set_color_scheme(cs)
         self.set_scheme(sublime.active_window().active_view(), self.color_scheme)
 
-
 htmlGen = HtmlGen()
+
 
 def extract_sass_name_val(line):
     pos = line.find(":")
@@ -332,11 +338,6 @@ def parse_stylesheet(view):
     colors_by_view[view.id()] = cols
 
 
-# command to restore color scheme
-class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        htmlGen.restore_color_scheme()
-
 class Logic:
     regions = {}
     inited = False
@@ -400,7 +401,6 @@ class Logic:
             self.regions[view.id()].append(s)
             view.add_regions(s, [w], region_name(c))
 
-
 global_logic = Logic()
 
 
@@ -416,6 +416,12 @@ class ColorSelection(sublime_plugin.EventListener):
 
     def on_activated(self, view):
         global_logic.on_activated(view)
+
+
+# command to restore color scheme
+class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        htmlGen.restore_color_scheme()
 
 
 def plugin_loaded():
