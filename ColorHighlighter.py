@@ -146,6 +146,13 @@ def isInColor(view, sel):
         if res is not None:
             return word1, res
 
+    # less variable interpolation
+    if view.substr(word.begin() - 1) == "{" and view.substr(word.begin() - 2) == "@" and view.substr(word.end()) == "}":
+        word2 = sublime.Region(word.begin() - 2, word.end() + 1)
+        res = conv_to_hex(view, "@" + view.substr(word))
+        if res is not None:
+            return word2, res
+
     wd = get_current_word(view, sel)
     lwd, lres = None, None
     for i in range(1, max_len):
@@ -267,38 +274,93 @@ class HtmlGen:
 
 htmlGen = HtmlGen()
 
-def find_sass_vars(view, text):
-    cols = {}
+def extract_sass_name_val(line):
+    pos = line.find(":")
+    if pos == -1:
+        return None, None
+
+    var = line[:pos].rstrip()
+    col = line[pos+1:].lstrip()
+    return var, col
+
+def _extract_sass_fname(name):
+    if not name.endswith(".sass"):
+        name += ".sass"
+    name = os.path.join(os.path.dirname(nm), name)
+    if not os.path.exists(name):
+        return None
+    return name
+
+def _extract_scss_fname(name):
+    if not name.endswith(".scss"):
+        name += ".scss"
+    name = os.path.join(os.path.dirname(nm), name)
+    if not os.path.exists(name):
+        return None
+    return name
+
+def extract_sass_fname(view, line):
+    nm = view.file_name()
+    if nm is None:
+        return None
+
+    line = line[8:-1].strip()[1:-1]
+    name = _extract_sass_fname(line)
+    if name is None:
+        name = _extract_scss_fname(line)
+    return name
+
+def find_sass_vars(view, text, cols):
     for line in map(lambda s: s.strip(), text.split("\n")):
         if len(line) < 2 or line[0] != "$":
             continue
 
-        pos = line.find(":")
-        if pos == -1:
+        if line.startswith("@import"):
+            name = extract_sass_fname(view, line)
+            if name != None:
+                find_sass_vars(view, read_file(name), cols)
             continue
 
-        var = line[:pos]
-        col = line[pos+2:]
-        cols[var] = col
-    global colors_by_view
-    colors_by_view[view.id()] = cols
+        var, col = extract_sass_name_val(line)
+        if var != None:
+            cols[var] = col
 
-def find_less_vars(view, text):
-    cols = {}
+
+def extract_less_name_val(line):
+    pos = line.find(":")
+    if pos == -1:
+        return None, None
+
+    var = line[:pos].rstrip()
+    col = line[pos+1:-1].strip()
+    return var, col
+
+def extract_less_fname(view, line):
+    nm = view.file_name()
+    if nm is None:
+        return None
+    name = line[8:-1].strip()[1:-1]
+    if not name.endswith(".less"):
+        name += ".less"
+    name = os.path.join(os.path.dirname(nm), name)
+    if not os.path.exists(name):
+        return None
+    return name
+
+def find_less_vars(view, text, cols):
     for line in map(lambda s: s.strip(), text.split("\n")):
         if len(line) < 2 or line[0] != "@":
             continue
 
-        pos = line.find(":")
-        if pos == -1:
+        if line.startswith("@import"):
+            name = extract_less_fname(view, line)
+            if name != None:
+                find_less_vars(view, read_file(name), cols)
             continue
 
-        var = line[:pos]
-        col = line[pos+2:-1]
-        cols[var] = col
-
-    global colors_by_view
-    colors_by_view[view.id()] = cols
+        var, col = extract_less_name_val(line)
+        if var != None:
+            cols[var] = col
 
 
 def parse_stylesheet(view):
@@ -308,10 +370,14 @@ def parse_stylesheet(view):
 
     name, ext = os.path.splitext(nm)
     text = view.substr(sublime.Region(0, 9999999))
+    cols = {}
     if ext in [".sass", ".scss"]:
-        find_sass_vars(view, text)
+        find_sass_vars(view, text, cols)
     elif ext in [".less"]:
-        find_less_vars(view, text)
+        find_less_vars(view, text, cols)
+
+    global colors_by_view
+    colors_by_view[view.id()] = cols
 
 
 # command to restore color scheme
