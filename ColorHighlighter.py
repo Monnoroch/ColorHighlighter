@@ -7,38 +7,24 @@ import subprocess
 try:
     import colors
 except ImportError:
-    ColorHighlighter = __import__('Color Highlighter', fromlist=['colors'])
+    ColorHighlighter = __import__("Color Highlighter", fromlist=["colors"])
     colors = ColorHighlighter.colors
 
 version = "4.0"
 
 def write_file(fl, s):
-    f = open(fl, 'w')
+    f = open(fl, "w")
     f.write(s)
     f.close()
 
 def read_file(fl):
-    f = open(fl, 'r')
+    f = open(fl, "r")
     res = f.read()
     f.close()
     return res
 
-# Color formats:
-# #FFFFFFFF
-# #FFFFFF
-# #FFF
-# rgb(255,255,255)
-# words
-# black
-#888888
-max_len = max(len("#FFB"), len("#FFFFFF"), len("#FFFFFFAA"), len("rgb(199, 255, 255)"), len("rgba(255, 255, 255, 0.555)"))
-
-regex1 = re.compile("[r][g][b][(]\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d{1,3}[)]")
-regex2 = re.compile("[#][\dA-F]{8}")
-regex3 = re.compile("[#][\dA-F]{6}")
-regex4 = re.compile("[#][\dA-F]{3}")
-regex5 = re.compile("[r][g][b][a][(]\d{1,3}[,][ ]*\d{1,3}[,][ ]*\d{1,3}[,][ ]*(\d+|\d*\.\d+)[)]")
-
+regex_rgb = re.compile("[r][g][b][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]")
+regex_rgba = re.compile("[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*(?:\d{1,3}|[0]?\.\d+)[ ]*[)]")
 
 colors_by_view = {}
 
@@ -61,7 +47,6 @@ def conv_to_hex(view, col):
     if res is not None:
         return conv_to_hex(view, res)
 
-    global colors_by_view
     cs = colors_by_view.get(view.id())
     if cs is None:
         return None
@@ -71,103 +56,68 @@ def conv_to_hex(view, col):
 def tohex(r, g, b):
     return "#%02X%02X%02XFF" % (r, g, b)
 
-def isInColorS(s, pos):
-    m = regex1.search(s)
-    if m is not None and m.group(0) is not None and m.start(0) <= pos and m.end(0) >= pos:
-        s = m.group(0)
-        s = s[3+1:-1]
-        n = s.find(",")
-        r = s[0:n]
-        s = s[n+1:]
-        n = s.find(",")
-        g = s[0:n]
-        s = s[n+1:]
-        b = s
-        return sublime.Region(m.start(0), m.end(0)), tohex(int(r), int(g), int(b))
+def tohexa(r, g, b, a):
+    return "#%02X%02X%02X%02X" % (r, g, b, a)
 
-    m = regex5.search(s)
-    if m is not None and m.group(0) is not None and m.start(0) <= pos and m.end(0) >= pos:
-        s = m.group(0)
-        s = s[4+1:-1]
-        n = s.find(",")
-        r = s[0:n]
-        s = s[n+1:]
-        n = s.find(",")
-        g = s[0:n]
-        s = s[n+1:]
-        n = s.find(",")
-        b = s[0:n]
-        return sublime.Region(m.start(0), m.end(0)), tohex(int(r), int(g), int(b))
+def parse_col_rgb(col):
+    vals = list(map(lambda s: int(s.strip()), col[4:-1].split(",")))
+    return tohex(vals[0], vals[1], vals[2])
 
-    s = s.upper()
-
-    # check #FFFFFFFF
-    m = regex2.search(s)
-    if m is not None and m.group(0) is not None and m.start(0) <= pos and m.end(0) >= pos:
-        return sublime.Region(m.start(0), m.end(0)), m.group(0)
-
-    # check #FFFFFF
-    m = regex3.search(s)
-    if m is not None and m.group(0) is not None and m.start(0) <= pos and m.end(0) >= pos:
-        return sublime.Region(m.start(0), m.end(0)), m.group(0) + "FF"
-
-    # check #FFF
-    m = regex4.search(s)
-    if m is not None and m.group(0) is not None and m.start(0) <= pos and m.end(0) >= pos:
-        s = m.group(0)
-        return sublime.Region(m.start(0), m.end(0)), s[0] + s[1]*2 + s[2]*2 + s[3]*2 + "FF"
-
-    return None, None
-
-def get_current_word(view, sel):
-    n = sel.begin() - 1
-    k = sel.end()
-    while k - n <= max_len and (view.substr(n).isalpha() or view.substr(n) == "-"):
-        n -= 1
-    while k - n <= max_len and (view.substr(k).isalpha() or view.substr(k) == "-"):
-        k += 1
-    return sublime.Region(n + 1, k)
+def parse_col_rgba(col):
+    vals = list(map(lambda s: s.strip(), col[5:-1].split(",")))
+    return tohexa(int(vals[0]), int(vals[1]), int(vals[2]), vals[3].find(".") != -1 and int(float(vals[3]) * 255) or int(vals[3]))
 
 def isInColor(view, sel):
     b = sel.begin()
     if b != sel.end():
         return None, None
 
-    # just color
     word = view.word(b)
-    res = conv_to_hex(view, view.substr(word))
-    if res is not None:
-        return word, res
-
     # sass/less variable
     if view.substr(word.begin() - 1) in ["@", "$"]:
         word1 = sublime.Region(word.begin() - 1, word.end())
         res = conv_to_hex(view, view.substr(word1))
         if res is not None:
             return word1, res
-
+        return None, None
     # less variable interpolation
-    if view.substr(word.begin() - 1) == "{" and view.substr(word.begin() - 2) == "@" and view.substr(word.end()) == "}":
-        word2 = sublime.Region(word.begin() - 2, word.end() + 1)
+    elif view.substr(word.begin() - 1) == "{" and view.substr(word.begin() - 2) == "@" and view.substr(word.end()) == "}":
+        word1 = sublime.Region(word.begin() - 2, word.end() + 1)
         res = conv_to_hex(view, "@" + view.substr(word))
         if res is not None:
-            return word2, res
-
-    wd = get_current_word(view, sel)
-    lwd, lres = None, None
-    for i in range(1, max_len):
-        s = view.substr(sublime.Region(b - i, b + i))
-        wd, res = isInColorS(s, i)
-        if res is None and lres is not None:
-            i = i - 1
-            return sublime.Region(lwd.begin() + (b - i), lwd.end() + (b - i)), lres
-        lwd, lres = wd, res
-
-    if lres is None:
+            return word1, res
+        return None, None
+    # hex colors
+    elif view.substr(word.begin() - 1) == "#": # and view.substr(word.begin() - 2) in [" ", ":"]:
+        word1 = sublime.Region(word.begin() - 1, word.end())
+        res = conv_to_hex(view, view.substr(word1))
+        if res is not None:
+            return word1, res
         return None, None
 
-    i = max_len - 1
-    return sublime.Region(lwd.begin() + (b - i), lwd.end() + (b - i)), lres
+    # just color
+    res = conv_to_hex(view, view.substr(word))
+    if res is not None:
+        return word, res
+
+    # rgb(...)
+    line = view.line(b)
+    line_txt = view.substr(line)
+    for m in regex_rgb.findall(line_txt):
+        start = line_txt.find(m) + line.begin()
+        end = start + len(m)
+        if b > start and b < end:
+            return sublime.Region(start, end), parse_col_rgb(m)
+
+    # rgba(...)
+    for m in regex_rgba.findall(line_txt):
+        start = line_txt.find(m) + line.begin()
+        end = start + len(m)
+        if b > start and b < end:
+            return sublime.Region(start, end), parse_col_rgba(m)
+
+    return None, None
+
 
 def get_cont_col(col):
     (h, s, v) = colorsys.rgb_to_hsv(int(col[1:3],16)/255.0, int(col[3:5],16)/255.0, int(col[5:7],16)/255.0)
@@ -178,8 +128,10 @@ def get_cont_col(col):
     (r, g, b) = colorsys.hsv_to_rgb(h >= 0.5 and h - 0.5 or h + 0.5, s1, v1)
     return tohex(int(r * 255), int(g * 255), int(b * 255)) # true complementary
 
+
 def region_name(s):
     return "mcol_" + s[1:]
+
 
 def set_scheme(view, cs):
     print("g set_scheme(%d, %s)" % (view.id(), cs))
@@ -224,7 +176,7 @@ class HtmlGen:
         if not os.path.exists(os.path.join(sublime.packages_path(), self.fake_scheme)):
             set_scheme(view, self.color_scheme)
         else:
-            set_scheme(view, os.path.join('Packages', self.fake_scheme))
+            set_scheme(view, os.path.join("Packages", self.fake_scheme))
 
     def update(self, view):
         # print("update(%d)" % (view.id()))
@@ -260,10 +212,10 @@ class HtmlGen:
     def set_color_scheme(self, cs):
         print("set_color_scheme(%s)" % (cs))
         self.color_scheme = cs
-        self.fake_scheme = os.path.join('Color Highlighter', os.path.split(self.color_scheme)[-1])
+        self.fake_scheme = os.path.join("Color Highlighter", os.path.split(self.color_scheme)[-1])
 
     def change_color_scheme(self):
-        cs = sublime.load_settings('Preferences.sublime-settings').get("color_scheme")
+        cs = sublime.load_settings("Preferences.sublime-settings").get("color_scheme")
         print("change_color_scheme(%s)" % (cs))
         if cs == self.color_scheme:
             return
@@ -394,9 +346,9 @@ class Logic:
             return
 
         print("do init()")
-        sets = sublime.load_settings('Preferences.sublime-settings')
-        htmlGen.set_color_scheme(sublime.load_settings('Preferences.sublime-settings').get("color_scheme"))
-        sublime.load_settings('Preferences.sublime-settings').add_on_change("color_scheme", lambda: htmlGen.change_color_scheme())
+        sets = sublime.load_settings("Preferences.sublime-settings")
+        htmlGen.set_color_scheme(sublime.load_settings("Preferences.sublime-settings").get("color_scheme"))
+        sublime.load_settings("Preferences.sublime-settings").add_on_change("color_scheme", lambda: htmlGen.change_color_scheme())
         self.inited = True
 
     def init_regions(self, view):
@@ -421,7 +373,6 @@ class Logic:
     def on_new(self, view):
         print("on_new(%d)" % (view.id()))
         self.init(view)
-        self.init_regions(view)
 
     def on_activated(self, view):
         print("on_activated(%d)" % (view.id()))
@@ -451,6 +402,7 @@ class Logic:
 
 
 global_logic = Logic()
+
 
 class ColorSelection(sublime_plugin.EventListener):
     def on_new(self, view):
