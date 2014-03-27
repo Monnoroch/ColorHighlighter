@@ -31,6 +31,7 @@ def tohexa(r, g, b, a):
 
 regex_rgb = re.compile("[r][g][b][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]")
 regex_rgba = re.compile("[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*(?:\d{1,3}|[0]?\.\d+)[ ]*[)]")
+regex_array = re.compile("[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}(?:[ ]*|[,][ ]*(?:\d{1,3}|[0]?\.\d+)[ ]*)[\]]")
 
 
 colors_by_view = {}
@@ -71,7 +72,14 @@ def parse_col_rgba(col):
     vals = list(map(lambda s: s.strip(), col[5:-1].split(",")))
     return tohexa(int(vals[0]), int(vals[1]), int(vals[2]), vals[3].find(".") != -1 and int(float(vals[3]) * 255) or int(vals[3]))
 
-def isInColor(view, sel):
+def parse_col_array(col):
+    vals = col[1:-1].split(",")
+    if len(vals) == 3:
+        return tohex(int(vals[0]), int(vals[1]), int(vals[2]))
+    elif len(vals) == 4:
+        return tohexa(int(vals[0]), int(vals[1]), int(vals[2]), vals[3].find(".") != -1 and int(float(vals[3]) * 255) or int(vals[3]))
+
+def isInColor(view, sel, array_format):
     b = sel.begin()
     if b != sel.end():
         return None, None
@@ -119,6 +127,13 @@ def isInColor(view, sel):
         end = start + len(m)
         if b > start and b < end:
             return sublime.Region(start, end), parse_col_rgba(m)
+
+    if array_format:
+        for m in regex_array.findall(line_txt):
+            start = line_txt.find(m) + line.begin()
+            end = start + len(m)
+            if b > start and b < end:
+                return sublime.Region(start, end), parse_col_array(m)
 
     return None, None
 
@@ -362,7 +377,13 @@ class Logic:
     def get_words(self, view):
         words = []
         for s in view.sel():
-            wd, col = isInColor(view, s)
+            array_format = False
+            nm = view.file_name()
+            if nm is not None:
+                name, ext = os.path.splitext(nm)
+                if ext in [".sublime-theme"]:
+                    array_format = True
+            wd, col = isInColor(view, s, array_format=array_format)
             if col is None:
                 continue
             htmlGen.add_color(col)
