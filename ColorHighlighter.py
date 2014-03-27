@@ -2,13 +2,11 @@ import sublime, sublime_plugin
 import os
 import re
 import colorsys
-import subprocess
 
 try:
     import colors
 except ImportError:
-    ColorHighlighter = __import__("Color Highlighter", fromlist=["colors"])
-    colors = ColorHighlighter.colors
+    colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 version = "4.0"
 
@@ -140,7 +138,7 @@ def region_name(s):
 
 
 def set_scheme(view, cs):
-    print("g set_scheme(%d, %s)" % (view.id(), cs))
+    # print("g set_scheme(%d, %s)" % (view.id(), cs))
     sets = view.settings()
     if sets.get("color_scheme") != cs:
         sets.set("color_scheme", cs)
@@ -178,17 +176,17 @@ class HtmlGen:
         self.need_upd = True
 
     def update_view(self, view):
-        print("update_view(%d)" % (view.id()))
+        # print("update_view(%d)" % (view.id()))
         if not os.path.exists(os.path.join(sublime.packages_path(), self.fake_scheme)):
             set_scheme(view, self.color_scheme)
         else:
             set_scheme(view, os.path.join("Packages", self.fake_scheme))
 
     def update(self, view):
-        # print("update(%d)" % (view.id()))
+        # # print("update(%d)" % (view.id()))
         if not self.need_upd:
             return False
-        print("do update(%d)" % (view.id()))
+        # print("do update(%d)" % (view.id()))
 
         cont = sublime.load_resource(self.color_scheme)
         n = cont.find("<array>") + len("<array>")
@@ -203,12 +201,12 @@ class HtmlGen:
         return True
 
     def set_scheme(self, view, cs):
-        print("set_scheme(%d, %s)" % (view.id(), cs))
+        # print("set_scheme(%d, %s)" % (view.id(), cs))
         set_scheme(view, cs)
         global_logic.on_selection_modified(view)
 
     def restore_color_scheme(self):
-        print("restore_color_scheme()")
+        # print("restore_color_scheme()")
         self.colors = []
         self.string = ""
         path = os.path.join(sublime.packages_path(), self.fake_scheme)
@@ -216,13 +214,13 @@ class HtmlGen:
             os.remove(path)
 
     def set_color_scheme(self, cs):
-        print("set_color_scheme(%s)" % (cs))
+        # print("set_color_scheme(%s)" % (cs))
         self.color_scheme = cs
         self.fake_scheme = os.path.join("Color Highlighter", os.path.split(self.color_scheme)[-1])
 
     def change_color_scheme(self):
         cs = sublime.load_settings("Preferences.sublime-settings").get("color_scheme")
-        print("change_color_scheme(%s)" % (cs))
+        # print("change_color_scheme(%s)" % (cs))
         if cs == self.color_scheme:
             return
         self.restore_color_scheme()
@@ -346,7 +344,7 @@ class Logic:
         if self.inited:
             return
 
-        print("do init()")
+        # print("do init()")
         sets = sublime.load_settings("Preferences.sublime-settings")
         htmlGen.set_color_scheme(sublime.load_settings("Preferences.sublime-settings").get("color_scheme"))
         sublime.load_settings("Preferences.sublime-settings").add_on_change("color_scheme", lambda: htmlGen.change_color_scheme())
@@ -372,22 +370,22 @@ class Logic:
         return words
 
     def on_new(self, view):
-        print("on_new(%d)" % (view.id()))
+        # print("on_new(%d)" % (view.id()))
         self.init(view)
 
     def on_activated(self, view):
-        print("on_activated(%d)" % (view.id()))
+        # print("on_activated(%d)" % (view.id()))
         parse_stylesheet(view)
         self.init(view)
         htmlGen.update_view(view)
         self.on_selection_modified(view)
 
     def on_clone(self, view):
-        print("on_clone(%d)" % (view.id()))
+        # print("on_clone(%d)" % (view.id()))
         self.on_new(view)
 
     def on_selection_modified(self, view):
-        # print("on_selection_modified(%d)" % (view.id()))
+        # # print("on_selection_modified(%d)" % (view.id()))
         self.init(view)
         self.init_regions(view)
         self.clean_regions(view)
@@ -428,7 +426,3 @@ def plugin_loaded():
     path = os.path.join(sublime.packages_path(), "Color Highlighter")
     if not os.path.exists(path):
         os.mkdir(path)
-
-    # just to be sure
-    global colors_by_view
-    colors_by_view = {}
