@@ -11,23 +11,6 @@
                         "caption": "Restore color scheme",
                         "command": "restore_color_scheme",
                         "mnemonic": "R"
-                    },
-                    {
-                        "caption": "Print log",
-                        "command": "chlog",
-                        "mnemonic": "L"
-                    },
-                    {
-                        "command": "hex_vals_as_colors",
-                        "caption": "Hex values as colors",
-                        "mnemonic": "H",
-                        "checkbox": true
-                    },
-                    {
-                        "command": "x_hex_vals_as_colors",
-                        "caption": "0x hex values as colors",
-                        "mnemonic": "X",
-                        "checkbox": true
                     }
                 ]
             }
