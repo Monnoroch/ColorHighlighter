@@ -2,6 +2,7 @@ import sublime, sublime_plugin
 import os
 import re
 import colorsys
+import subprocess
 
 try:
     import colors
@@ -82,7 +83,7 @@ def parse_col_array(col):
 def isInColor(view, sel, array_format):
     b = sel.begin()
     if b != sel.end():
-        return None, None
+        return None, None, None
 
     word = view.word(b)
     # sass/less variable
@@ -90,27 +91,27 @@ def isInColor(view, sel, array_format):
         word1 = sublime.Region(word.begin() - 1, word.end())
         res = conv_to_hex(view, view.substr(word1))
         if res is not None:
-            return word1, res
-        return None, None
+            return word1, res, True
+        return None, None, None
     # less variable interpolation
     elif view.substr(word.begin() - 1) == "{" and view.substr(word.begin() - 2) == "@" and view.substr(word.end()) == "}":
         word1 = sublime.Region(word.begin() - 2, word.end() + 1)
         res = conv_to_hex(view, "@" + view.substr(word))
         if res is not None:
-            return word1, res
-        return None, None
+            return word1, res, True
+        return None, None, None
     # hex colors
     elif view.substr(word.begin() - 1) == "#" and view.substr(word.begin() - 2) not in ["&"]:
         word1 = sublime.Region(word.begin() - 1, word.end())
         res = conv_to_hex(view, view.substr(word1))
         if res is not None:
-            return word1, res
-        return None, None
+            return word1, res, False
+        return None, None, None
 
     # just color
     res = conv_to_hex(view, view.substr(word))
     if res is not None:
-        return word, res
+        return word, res, False
 
     # rgb(...)
     line = view.line(b)
@@ -119,23 +120,23 @@ def isInColor(view, sel, array_format):
         start = line_txt.find(m) + line.begin()
         end = start + len(m)
         if b > start and b < end:
-            return sublime.Region(start, end), parse_col_rgb(m)
+            return sublime.Region(start, end), parse_col_rgb(m), False
 
     # rgba(...)
     for m in regex_rgba.findall(line_txt):
         start = line_txt.find(m) + line.begin()
         end = start + len(m)
         if b > start and b < end:
-            return sublime.Region(start, end), parse_col_rgba(m)
+            return sublime.Region(start, end), parse_col_rgba(m), False
 
     if array_format:
         for m in regex_array.findall(line_txt):
             start = line_txt.find(m) + line.begin()
             end = start + len(m)
             if b > start and b < end:
-                return sublime.Region(start, end), parse_col_array(m)
+                return sublime.Region(start, end), parse_col_array(m), False
 
-    return None, None
+    return None, None, None
 
 
 def get_cont_col(col):
@@ -383,11 +384,11 @@ class Logic:
                 name, ext = os.path.splitext(nm)
                 if ext in [".sublime-theme"]:
                     array_format = True
-            wd, col = isInColor(view, s, array_format=array_format)
+            wd, col, var = isInColor(view, s, array_format=array_format)
             if col is None:
                 continue
             htmlGen.add_color(col)
-            words.append((wd, col))
+            words.append((wd, col, var))
         return words
 
     def on_new(self, view):
@@ -414,7 +415,7 @@ class Logic:
         if htmlGen.update(view):
             htmlGen.update_view(view)
         i = 0
-        for w, c in words:
+        for w, c, _ in words:
             i += 1
             s = "mon_CH_" + str(i)
             self.regions[view.id()].append(s)
@@ -447,3 +448,82 @@ def plugin_loaded():
     path = os.path.join(sublime.packages_path(), "Color Highlighter")
     if not os.path.exists(path):
         os.mkdir(path)
+
+
+def get_format(col):
+    if col is None or len(col) == 0:
+        return None
+
+    if col[0] == "#":
+        l = len(col)
+        if l in [4, 5, 7, 9]:
+            return "#%d" % l
+        return None
+
+    if col.startswith("rgb("):
+        return "rgb"
+    if col.startswith("rgba("):
+        return col.find(".") == -1 and "rgbad" or "rgbaf"
+    if col.startswith("["):
+        return "arr"
+
+    if colors.names_to_hex.get(col):
+        return "named"
+    return None
+
+def conv_to_format(base, col):
+    fmt = get_format(base)
+    if fmt is None:
+        return None
+
+    if fmt[0] == "#" or fmt == "named":
+        return col
+
+    if fmt == "rgb":
+        return "rgb(%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
+    if fmt == "rgbad":
+        return "rgba(%d,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
+    if fmt == "rgbaf":
+        return "rgba(%d,%d,%d,%f)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
+
+
+def get_ext():
+    plat = sublime.platform()
+    res = plat + "_" + sublime.arch()
+    if plat == "win":
+        res += ".exe"
+    return res
+
+
+
+class ColorPickerCommand(sublime_plugin.TextCommand):
+    words = []
+    col = None
+    ext = get_ext()
+
+    def run(self, edit):
+        path = os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker_" + self.ext)
+        words = global_logic.get_words(self.view)
+        print(self.col)
+        output = str(subprocess.Popen([path, self.col[1:-2]], stdout=subprocess.PIPE).stdout.read())[2:-1]
+        if output == self.col or output == "#000000FF":
+            return
+
+        for w, c, v in self.words:
+            if w is None or v:
+                continue
+            new_col = conv_to_format(self.view.substr(w), output)
+            if new_col is None:
+                continue
+            self.view.replace(edit, w, new_col)
+
+    def is_enabled(self):
+        self.words = global_logic.get_words(self.view)
+        wd = None
+        self.col = None
+        for w, c, v in self.words:
+            if w is not None and not v:
+                wd, self.col = w, c
+                break
+
+        return wd is not None and self.col is not None
