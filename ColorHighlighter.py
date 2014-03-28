@@ -457,9 +457,11 @@ def plugin_loaded():
 
     bins = ["ColorPicker_linux_x64"]
     for bin in bins:
+        fpath = os.path.join(path, bin)
+        if os.path.exists(fpath):
+            continue
         data = sublime.load_binary_resource(os.path.join("Packages", "Color Highlighter", bin))
         if len(data) != 0:
-            fpath = os.path.join(path, bin)
             write_bin_file(fpath, data)
             os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
 
