@@ -1,5 +1,6 @@
 import sublime, sublime_plugin
 import os
+import stat
 import re
 import colorsys
 import subprocess
@@ -13,6 +14,11 @@ version = "4.0"
 
 def write_file(fl, s):
     f = open(fl, "w")
+    f.write(s)
+    f.close()
+
+def write_bin_file(fl, s):
+    f = open(fl, "wb")
     f.write(s)
     f.close()
 
@@ -449,6 +455,14 @@ def plugin_loaded():
     if not os.path.exists(path):
         os.mkdir(path)
 
+    bins = ["ColorPicker_linux_x64"]
+    for bin in bins:
+        data = sublime.load_binary_resource(os.path.join("Packages", "Color Highlighter", bin))
+        if len(data) != 0:
+            fpath = os.path.join(path, bin)
+            write_bin_file(fpath, data)
+            os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+
 
 def get_format(col):
     if col is None or len(col) == 0:
@@ -493,7 +507,6 @@ def get_ext():
     if plat == "win":
         res += ".exe"
     return res
-
 
 
 class ColorPickerCommand(sublime_plugin.TextCommand):
