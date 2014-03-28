@@ -22,6 +22,7 @@ Two color representations are currently supported:
 - Less/sass/scss variables (supports importing from another files).
 
 **Color picker usage:**
+
 Just put the cursor (or multiple cursors) on the color code and select "Choose color" in context menu. Select the color in a popup color picker and all color codes under your cursors will change. The change will preserve code format, so if you select two codes "#FFF" and "rgb(255,255,255)" and choose color #FF0000, in the end you get two codes like that: "#FF00FF" and "rgb(255,0,0)".
 
 
