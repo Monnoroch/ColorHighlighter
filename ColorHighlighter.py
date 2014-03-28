@@ -450,20 +450,27 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
         htmlGen.restore_color_scheme()
 
 
+def get_ext():
+    plat = sublime.platform()
+    res = plat + "_" + sublime.arch()
+    if plat == "win":
+        res += ".exe"
+    return res
+
+
 def plugin_loaded():
     path = os.path.join(sublime.packages_path(), "Color Highlighter")
     if not os.path.exists(path):
         os.mkdir(path)
 
-    bins = ["ColorPicker_linux_x64"]
-    for bin in bins:
-        fpath = os.path.join(path, bin)
-        if os.path.exists(fpath):
-            continue
-        data = sublime.load_binary_resource(os.path.join("Packages", "Color Highlighter", bin))
-        if len(data) != 0:
-            write_bin_file(fpath, data)
-            os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+    bin = "ColorPicker_" + get_ext()
+    fpath = os.path.join(path, bin)
+    if os.path.exists(fpath):
+        continue
+    data = sublime.load_binary_resource(os.path.join("Packages", "Color Highlighter", bin))
+    if len(data) != 0:
+        write_bin_file(fpath, data)
+        os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
 
 
 def get_format(col):
@@ -501,14 +508,6 @@ def conv_to_format(base, col):
         return "rgba(%d,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
     if fmt == "rgbaf":
         return "rgba(%d,%d,%d,%f)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
-
-
-def get_ext():
-    plat = sublime.platform()
-    res = plat + "_" + sublime.arch()
-    if plat == "win":
-        res += ".exe"
-    return res
 
 
 class ColorPickerCommand(sublime_plugin.TextCommand):
