@@ -1,4 +1,6 @@
 {
     "enabled": true,
-    "style": "default"
+    "style": "default",
+    "highlight_all": false,
+    "ha_style": "default"
 }
