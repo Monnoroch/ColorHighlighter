@@ -223,7 +223,8 @@ class HtmlGen:
         except UnicodeDecodeError:
             cont = cont[:n] + self.string.encode("utf-8") + cont[n:]
 
-        write_bin_file(os.path.join(sublime.packages_path(), self.fake_scheme), cont)
+
+        write_bin_file(os.path.join(sublime.packages_path(), self.fake_scheme), cont.encode("utf-8"))
 
         self.need_upd = False
         return True
@@ -533,6 +534,10 @@ def conv_to_format(base, col):
         return "rgba(%d,%d,%d,%f)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
 
 
+def print_error(err):
+    print(err.replace("\\n", "\n"))
+
+
 class ColorPickerCommand(sublime_plugin.TextCommand):
     words = []
     col = None
@@ -541,8 +546,14 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         path = os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker_" + self.ext)
         words = global_logic.get_words(self.view)
-        print(self.col)
-        output = str(subprocess.Popen([path, self.col[1:-2]], stdout=subprocess.PIPE).stdout.read())[2:-1]
+        popen = subprocess.Popen([path, self.col[1:-2]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        err = str(popen.stderr.read())[2:-1]
+        if err is not None and len(err) != 0:
+            print_error("Color Picker error:\n" + err)
+            return
+
+        output = str(popen.stdout.read())[2:-1]
         if output == self.col or output == "#000000FF":
             return
 
@@ -564,3 +575,4 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
                 break
 
         return wd is not None and self.col is not None
+
