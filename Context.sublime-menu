@@ -1,4 +1,4 @@
 [
     { "caption": "-", "id": "Color Highlighter" },
-    { "command": "color_picker", "caption": "Choose color"  },
+    { "command": "color_picker", "caption": "Choose color"}
 ]
