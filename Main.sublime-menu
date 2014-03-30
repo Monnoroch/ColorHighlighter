@@ -17,10 +17,10 @@
                         "caption": "Disable",
                         "command": "ch_set_setting",
                         "args": {"setting": "enabled", "value": false},
-                        "mnemonic": "D"
+                        "mnemonic": "E"
                     },
                     {
-                        "caption": "Highlite style",
+                        "caption": "Highlit style",
                         "mnemonic": "S",
                         "children":
                         [
@@ -48,6 +48,49 @@
                                 "caption": "Underlined (squiggly)",
                                 "command": "ch_set_setting",
                                 "args": {"setting": "style", "value": "underlined_squiggly"}
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "Highlit all",
+                        "command": "ch_set_setting",
+                        "args": {"setting": "highlight_all", "value": true},
+                        "mnemonic": "A"
+                    },
+                    {
+                        "caption": "Do not highlit all",
+                        "command": "ch_set_setting",
+                        "args": {"setting": "highlight_all", "value": false},
+                        "mnemonic": "A"
+                    },
+                    {
+                        "caption": "Highlit all style",
+                        "children":
+                        [
+                            {
+                                "caption": "Filled",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "ha_style", "value": "filled"}
+                            },
+                            {
+                                "caption": "Outlined",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "ha_style", "value": "outlined"}
+                            },
+                            {
+                                "caption": "Underlined (solid)",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "ha_style", "value": "underlined_solid"}
+                            },
+                            {
+                                "caption": "Underlined (strippled)",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "ha_style", "value": "underlined_strippled"}
+                            },
+                            {
+                                "caption": "Underlined (squiggly)",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "ha_style", "value": "underlined_squiggly"}
                             }
                         ]
                     },
