@@ -8,6 +8,18 @@
                 "children":
                 [
                     {
+                        "caption": "Enable",
+                        "command": "ch_set_setting",
+                        "args": {"setting": "enabled", "value": true},
+                        "mnemonic": "E"
+                    },
+                    {
+                        "caption": "Disable",
+                        "command": "ch_set_setting",
+                        "args": {"setting": "enabled", "value": false},
+                        "mnemonic": "D"
+                    },
+                    {
                         "caption": "Highlite style",
                         "mnemonic": "S",
                         "children":
