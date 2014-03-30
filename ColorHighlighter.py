@@ -384,6 +384,10 @@ class Logic:
     regions = {}
     inited = False
 
+    enabled = True
+    def set_enabled(self):
+        self.enabled = sublime.load_settings("ColorHighlighter.sublime-settings").get("enabled")
+
     def init(self, view):
         if self.inited:
             return
@@ -392,7 +396,9 @@ class Logic:
         sets = sublime.load_settings("Preferences.sublime-settings")
         htmlGen.set_color_scheme(sublime.load_settings("Preferences.sublime-settings").get("color_scheme"))
         sublime.load_settings("Preferences.sublime-settings").add_on_change("color_scheme", lambda: htmlGen.change_color_scheme())
-        sublime.load_settings("ColorHighlighter.sublime-settings").add_on_change("style", lambda v=view: self.on_selection_modified(v))
+        chsets = sublime.load_settings("ColorHighlighter.sublime-settings")
+        chsets.add_on_change("style", lambda v=view: self.on_selection_modified(v))
+        chsets.add_on_change("enabled", lambda: self.set_enabled())
         self.inited = True
 
     def init_regions(self, view):
@@ -428,6 +434,8 @@ class Logic:
         # print("on_activated(%d)" % (view.id()))
         parse_stylesheet(view)
         self.init(view)
+        if not self.enabled:
+            return
         htmlGen.update_view(view)
         self.on_selection_modified(view)
 
@@ -440,6 +448,8 @@ class Logic:
         self.init(view)
         self.init_regions(view)
         self.clean_regions(view)
+        if not self.enabled:
+            return
         words = self.get_words(view)
         if htmlGen.update(view):
             htmlGen.update_view(view)
@@ -459,10 +469,13 @@ class ChSetSetting(sublime_plugin.TextCommand):
         sublime.save_settings("ColorHighlighter.sublime-settings")
 
     def is_visible(self, **args):
-        if args["setting"] == "style":
+        setting = args["setting"]
+        if setting == "style":
             if get_version() >= 3000:
                 return True
             return args["value"] in ["default", "filled", "outlined"]
+        elif setting == "enabled":
+            return args["value"] != global_logic.enabled
         return True
 
 
@@ -523,6 +536,8 @@ def plugin_loaded():
     else:
         if os.path.exists(fpath):
             os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+
+    global_logic.enabled = sublime.load_settings("ColorHighlighter.sublime-settings").get("enabled")
 
 if get_version() < 3000:
     plugin_loaded()
