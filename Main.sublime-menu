@@ -8,6 +8,38 @@
                 "children":
                 [
                     {
+                        "caption": "Highlite style",
+                        "mnemonic": "S",
+                        "children":
+                        [
+                            {
+                                "caption": "Filled",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "style", "value": "filled"}
+                            },
+                            {
+                                "caption": "Outlined",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "style", "value": "outlined"}
+                            },
+                            {
+                                "caption": "Underlined (solid)",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "style", "value": "underlined_solid"}
+                            },
+                            {
+                                "caption": "Underlined (strippled)",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "style", "value": "underlined_strippled"}
+                            },
+                            {
+                                "caption": "Underlined (squiggly)",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "style", "value": "underlined_squiggly"}
+                            }
+                        ]
+                    },
+                    {
                         "caption": "Restore color scheme",
                         "command": "restore_color_scheme",
                         "mnemonic": "R"
