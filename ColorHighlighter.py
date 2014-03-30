@@ -37,9 +37,14 @@ def tohexa(r, g, b, a):
     return "#%02X%02X%02X%02X" % (r, g, b, a)
 
 
-regex_rgb = re.compile("[r][g][b][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]")
-regex_rgba = re.compile("[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*(?:\d{1,3}|[0|1]?\.\d+)[ ]*[)]")
-regex_array = re.compile("[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}(?:[ ]*|[,][ ]*(?:\d{1,3}|[0|1]?\.\d+)[ ]*)[\]]")
+regex_rgb_s = "[r][g][b][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]"
+regex_rgba_s = "[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*(?:\d{1,3}|[0|1]?\.\d+)[ ]*[)]"
+regex_array_s = "[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}(?:[ ]*|[,][ ]*(?:\d{1,3}|[0|1]?\.\d+)[ ]*)[\]]"
+regex_all_s = "((?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s))" % ("[#][0-9a-fA-F]{8}", "[#][0-9a-fA-F]{6}", "[#][0-9a-fA-F]{4}", "[#][0-9a-fA-F]{3}", regex_rgb_s, regex_rgba_s, regex_array_s)
+regex_rgb = re.compile(regex_rgb_s)
+regex_rgba = re.compile(regex_rgba_s)
+regex_array = re.compile(regex_array_s)
+regex_all = re.compile(regex_all_s)
 
 
 colors_by_view = {}
@@ -70,6 +75,31 @@ def conv_to_hex(view, col):
         return None
 
     return conv_to_hex(view, cs.get(col))
+
+def to_hex_fmt(col):
+    if col is None or len(col) == 0:
+        return None
+
+    if col[0] == "#":
+        l = len(col)
+        if l == 4:
+            return "#" + col[1]*2 + col[2]*2 + col[3]*2 + "FF"
+        if l == 5:
+            return "#" + col[1]*2 + col[2]*2 + col[3]*2 + col[4]*2
+        elif l == 7:
+            return col + "FF"
+        elif l == 9:
+            return col
+        else:
+            return None
+
+    if col.startswith("rgb("):
+        return parse_col_rgb(col)
+
+    if col.startswith("rgba("):
+        return parse_col_rgba(col)
+    
+    return colors.names_to_hex.get(col)
 
 
 def parse_col_rgb(col):
@@ -161,10 +191,8 @@ def region_name(s):
 
 
 def set_scheme(view, cs):
-    # print("g set_scheme(%d, %s)" % (view.id(), cs))
     cs = cs.replace("\\", "/")
     sets = view.settings()
-    # print sets.get("color_scheme"), cs
     if sets.get("color_scheme") != cs:
         sets.set("color_scheme", cs)
 
@@ -201,7 +229,6 @@ class HtmlGen:
         self.need_upd = True
 
     def update_view(self, view):
-        # print("update_view(%d)" % (view.id()))
         path = os.path.join(sublime.packages_path(), self.fake_scheme)
         if not os.path.exists(path):
             set_scheme(view, self.color_scheme)
@@ -209,10 +236,8 @@ class HtmlGen:
             set_scheme(view, os.path.join("Packages", self.fake_scheme))
 
     def update(self, view):
-        # # print("update(%d)" % (view.id()))
         if not self.need_upd:
             return False
-        # print("do update(%d)" % (view.id()))
 
         if get_version() >= 3000:
             cont = sublime.load_resource(self.color_scheme)
@@ -226,12 +251,10 @@ class HtmlGen:
         return True
 
     def set_scheme(self, view, cs):
-        # print("set_scheme(%d, %s)" % (view.id(), cs))
         set_scheme(view, cs)
         global_logic.on_selection_modified(view)
 
     def restore_color_scheme(self):
-        # print("restore_color_scheme()")
         self.colors = []
         self.string = ""
         path = os.path.join(sublime.packages_path(), self.fake_scheme)
@@ -239,13 +262,11 @@ class HtmlGen:
             os.remove(path)
 
     def set_color_scheme(self, cs):
-        # print("set_color_scheme(%s)" % (cs))
         self.color_scheme = cs
         self.fake_scheme = os.path.join("Color Highlighter", os.path.split(cs)[-1])
 
     def change_color_scheme(self):
         cs = sublime.load_settings("Preferences.sublime-settings").get("color_scheme")
-        # print("change_color_scheme(%s)" % (cs))
         if cs == self.color_scheme:
             return
         self.restore_color_scheme()
@@ -343,13 +364,17 @@ def find_less_vars(view, text, cols):
             cols[var] = col
 
 
+def get_doc_text(view):
+    return view.substr(sublime.Region(0, 9999999)) # TODO: better way to select all document
+
+
 def parse_stylesheet(view):
     nm = view.file_name()
     if nm is None:
         return
 
     name, ext = os.path.splitext(nm)
-    text = view.substr(sublime.Region(0, 9999999)) # TODO: better way to select all document
+    text = get_doc_text(view)
     cols = {}
     if ext in [".sass", ".scss"]:
         find_sass_vars(view, text, cols)
@@ -360,9 +385,7 @@ def parse_stylesheet(view):
     colors_by_view[view.id()] = cols
 
 
-def get_regions_flags():
-    sets = sublime.load_settings("ColorHighlighter.sublime-settings")
-    style = sets.get("style")
+def _get_regions_flags(style):
     if style == "default" or style == "filled":
         return 0
     if get_version() < 3000:
@@ -379,36 +402,67 @@ def get_regions_flags():
             return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_SQUIGGLY_UNDERLINE
     return 0
 
+def get_regions_flags():
+    return _get_regions_flags(sublime.load_settings("ColorHighlighter.sublime-settings").get("style"))
+
+def get_regions_ha_flags():
+    return _get_regions_flags(sublime.load_settings("ColorHighlighter.sublime-settings").get("ha_style"))
+
 
 class Logic:
     regions = {}
+    hl_all_regions = {}
     inited = False
 
     enabled = True
     def set_enabled(self):
         self.enabled = sublime.load_settings("ColorHighlighter.sublime-settings").get("enabled")
+        self.update_view()
+
+    highlight_all = False
+    def set_highlight_all(self):
+        self.highlight_all = sublime.load_settings("ColorHighlighter.sublime-settings").get("highlight_all")
+        self.on_activated(sublime.active_window().active_view())
+
+    def update_view(self):
+        self.on_selection_modified(sublime.active_window().active_view())
+
+    def on_cs_change(self):
+        htmlGen.change_color_scheme()
 
     def init(self, view):
         if self.inited:
             return
 
-        # print("do init()")
+        self.enabled = sublime.load_settings("ColorHighlighter.sublime-settings").get("enabled")
+        self.highlight_all = sublime.load_settings("ColorHighlighter.sublime-settings").get("highlight_all")
         sets = sublime.load_settings("Preferences.sublime-settings")
         htmlGen.set_color_scheme(sublime.load_settings("Preferences.sublime-settings").get("color_scheme"))
-        sublime.load_settings("Preferences.sublime-settings").add_on_change("color_scheme", lambda: htmlGen.change_color_scheme())
+        sublime.load_settings("Preferences.sublime-settings").add_on_change("color_scheme", lambda: self.on_cs_change())
         chsets = sublime.load_settings("ColorHighlighter.sublime-settings")
-        chsets.add_on_change("style", lambda v=view: self.on_selection_modified(v))
+        chsets.add_on_change("style", lambda: self.update_view())
+        chsets.add_on_change("ha_style", lambda: self.on_activated(sublime.active_window().active_view()))
         chsets.add_on_change("enabled", lambda: self.set_enabled())
+        chsets.add_on_change("highlight_all", lambda: self.set_highlight_all())
         self.inited = True
 
     def init_regions(self, view):
         if view.id() not in self.regions.keys():
             self.regions[view.id()] = []
 
+    def init_hl_all_regions(self, view):
+        if view.id() not in self.hl_all_regions.keys():
+            self.hl_all_regions[view.id()] = []
+
     def clean_regions(self, view):
         for s in self.regions[view.id()]:
             view.erase_regions(s)
         self.regions[view.id()] = []
+
+    def clean_hl_all_regions(self, view):
+        for s in self.hl_all_regions[view.id()]:
+            view.erase_regions(s)
+        self.hl_all_regions[view.id()] = []
 
     def get_words(self, view):
         words = []
@@ -427,24 +481,32 @@ class Logic:
         return words
 
     def on_new(self, view):
-        # print("on_new(%d)" % (view.id()))
         self.init(view)
-        
+
     def on_activated(self, view):
-        # print("on_activated(%d)" % (view.id()))
         parse_stylesheet(view)
         self.init(view)
-        if not self.enabled:
-            return
-        htmlGen.update_view(view)
-        self.on_selection_modified(view)
+        if self.enabled:
+            htmlGen.update_view(view)
+            self.on_selection_modified(view)
+
+        self.init_hl_all_regions(view)
+        self.clean_hl_all_regions(view)
+        if self.highlight_all:
+            res = find_all(regex_all, get_doc_text(view))
+            if htmlGen.update(view):
+                htmlGen.update_view(view)
+            i = 0
+            for s, e, col in res:
+                i += 1
+                st = "mon_CH_ALL_" + str(i)
+                self.hl_all_regions[view.id()].append(st)
+                view.add_regions(st, [sublime.Region(s, e)], region_name(col), "", get_regions_ha_flags())
 
     def on_clone(self, view):
-        # print("on_clone(%d)" % (view.id()))
         self.on_new(view)
 
     def on_selection_modified(self, view):
-        # # print("on_selection_modified(%d)" % (view.id()))
         self.init(view)
         self.init_regions(view)
         self.clean_regions(view)
@@ -463,6 +525,18 @@ class Logic:
 global_logic = Logic()
 
 
+def find_all(regex, text):
+    res = []
+    m = regex.search(text)
+    while m:
+        col = to_hex_fmt(text[m.start():m.end()])
+        if col is not None:
+            res.append((m.start(), m.end(), col))
+            htmlGen.add_color(col)
+        m = regex.search(text, m.end())
+    return res
+
+
 class ChSetSetting(sublime_plugin.TextCommand):
     def run(self, edit, **args):
         sublime.load_settings("ColorHighlighter.sublime-settings").set(args["setting"], args["value"])
@@ -474,9 +548,15 @@ class ChSetSetting(sublime_plugin.TextCommand):
             if get_version() >= 3000:
                 return True
             return args["value"] in ["default", "filled", "outlined"]
+        elif setting == "ha_style":
+            if get_version() >= 3000:
+                return True
+            return args["value"] in ["default", "filled", "outlined"]
         elif setting == "enabled":
             return args["value"] != global_logic.enabled
-        return True
+        elif setting == "highlight_all":
+            return args["value"] != global_logic.highlight_all
+        return False
 
 
 class ColorSelection(sublime_plugin.EventListener):
@@ -536,8 +616,6 @@ def plugin_loaded():
     else:
         if os.path.exists(fpath):
             os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
-
-    global_logic.enabled = sublime.load_settings("ColorHighlighter.sublime-settings").get("enabled")
 
 if get_version() < 3000:
     plugin_loaded()
