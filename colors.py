@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 names_to_hex = {     'aliceblue': '#f0f8ffFF',
                      'antiquewhite': '#faebd7FF',
                      'aqua': '#00ffffFF',
