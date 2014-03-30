@@ -360,6 +360,26 @@ def parse_stylesheet(view):
     colors_by_view[view.id()] = cols
 
 
+def get_regions_flags():
+    sets = sublime.load_settings("ColorHighlighter.sublime-settings")
+    style = sets.get("style")
+    if style == "default" or style == "filled":
+        return 0
+    if get_version() < 3000:
+        if style == "outlined":
+            return sublime.DRAW_OUTLINED
+    else:
+        if style == "outlined":
+            return sublime.DRAW_NO_FILL
+        if style == "underlined" or style == "underlined_solid":
+            return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_SOLID_UNDERLINE
+        elif style == "underlined_strippled":
+            return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_STIPPLED_UNDERLINE
+        elif style == "underlined_squiggly":
+            return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_SQUIGGLY_UNDERLINE
+    return 0
+
+
 class Logic:
     regions = {}
     inited = False
@@ -372,6 +392,7 @@ class Logic:
         sets = sublime.load_settings("Preferences.sublime-settings")
         htmlGen.set_color_scheme(sublime.load_settings("Preferences.sublime-settings").get("color_scheme"))
         sublime.load_settings("Preferences.sublime-settings").add_on_change("color_scheme", lambda: htmlGen.change_color_scheme())
+        sublime.load_settings("ColorHighlighter.sublime-settings").add_on_change("style", lambda v=view: self.on_selection_modified(v))
         self.inited = True
 
     def init_regions(self, view):
@@ -427,9 +448,22 @@ class Logic:
             i += 1
             s = "mon_CH_" + str(i)
             self.regions[view.id()].append(s)
-            view.add_regions(s, [w], region_name(c))
+            view.add_regions(s, [w], region_name(c), "", get_regions_flags())
 
 global_logic = Logic()
+
+
+class ChSetSetting(sublime_plugin.TextCommand):
+    def run(self, edit, **args):
+        sublime.load_settings("ColorHighlighter.sublime-settings").set(args["setting"], args["value"])
+        sublime.save_settings("ColorHighlighter.sublime-settings")
+
+    def is_visible(self, **args):
+        if args["setting"] == "style":
+            if get_version() >= 3000:
+                return True
+            return args["value"] in ["default", "filled", "outlined"]
+        return True
 
 
 class ColorSelection(sublime_plugin.EventListener):
@@ -572,4 +606,3 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
                 break
 
         return wd is not None and self.col is not None
-
