@@ -37,8 +37,8 @@ def tohexa(r, g, b, a):
 
 
 regex_rgb = re.compile("[r][g][b][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]")
-regex_rgba = re.compile("[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*(?:\d{1,3}|[0]?\.\d+)[ ]*[)]")
-regex_array = re.compile("[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}(?:[ ]*|[,][ ]*(?:\d{1,3}|[0]?\.\d+)[ ]*)[\]]")
+regex_rgba = re.compile("[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*(?:\d{1,3}|[0|1]?\.\d+)[ ]*[)]")
+regex_array = re.compile("[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}(?:[ ]*|[,][ ]*(?:\d{1,3}|[0|1]?\.\d+)[ ]*)[\]]")
 
 
 colors_by_view = {}
@@ -158,7 +158,7 @@ def get_cont_col(col):
 def region_name(s):
     return "mcol_" + s[1:]
 
-#FFFF00
+
 def set_scheme(view, cs):
     # print("g set_scheme(%d, %s)" % (view.id(), cs))
     cs = cs.replace("\\", "/")
@@ -206,7 +206,7 @@ class HtmlGen:
             set_scheme(view, self.color_scheme)
         else:
             set_scheme(view, os.path.join("Packages", self.fake_scheme))
-#FFF
+
     def update(self, view):
         # # print("update(%d)" % (view.id()))
         if not self.need_upd:
@@ -309,7 +309,6 @@ def find_sass_vars(view, text, cols):
         if var != None:
             cols[var] = col
 
-
 def extract_less_name_val(line):
     pos = line.find(":")
     if pos == -1:
@@ -353,7 +352,7 @@ def parse_stylesheet(view):
         return
 
     name, ext = os.path.splitext(nm)
-    text = view.substr(sublime.Region(0, 9999999))
+    text = view.substr(sublime.Region(0, 9999999)) # TODO: better way to select all document
     cols = {}
     if ext in [".sass", ".scss"]:
         find_sass_vars(view, text, cols)
@@ -459,11 +458,13 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
 def get_version():
     return int(sublime.version())
 
+
 def get_platform():
     plat = sublime.platform()
     if plat == "windows":
         plat = "win"
     return plat
+
 
 def get_ext():
     plat = get_platform()
