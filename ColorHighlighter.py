@@ -554,7 +554,7 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
             return
 
         output = str(popen.stdout.read())[2:-1]
-        if output == self.col or output == "#000000FF":
+        if output is None or len(output) == 0 or output == self.col or output == "#000000FF":
             return
 
         for w, c, v in self.words:
