@@ -216,14 +216,9 @@ class HtmlGen:
         if get_version() >= 3000:
             cont = sublime.load_resource(self.color_scheme)
         else:
-            cont = read_file(os.path.join(sublime.packages_path(), self.color_scheme[9:]))
+            cont = read_file(os.path.join(sublime.packages_path(), self.color_scheme[9:])).decode("utf-8")
         n = cont.find("<array>") + len("<array>")
-        try:
-            cont = cont[:n] + self.string + cont[n:]
-        except UnicodeDecodeError:
-            cont = cont[:n] + self.string.encode("utf-8") + cont[n:]
-
-
+        cont = cont[:n] + self.string + cont[n:]
         write_bin_file(os.path.join(sublime.packages_path(), self.fake_scheme), cont.encode("utf-8"))
 
         self.need_upd = False
