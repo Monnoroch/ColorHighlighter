@@ -491,7 +491,8 @@ def plugin_loaded():
             write_bin_file(fpath, data)
             os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
     else:
-        os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+        if os.path.exists(fpath):
+            os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
 
 if get_version() < 3000:
     plugin_loaded()
