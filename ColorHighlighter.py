@@ -158,10 +158,12 @@ def get_cont_col(col):
 def region_name(s):
     return "mcol_" + s[1:]
 
-
+#FFFF00
 def set_scheme(view, cs):
     # print("g set_scheme(%d, %s)" % (view.id(), cs))
+    cs = cs.replace("\\", "/")
     sets = view.settings()
+    # print sets.get("color_scheme"), cs
     if sets.get("color_scheme") != cs:
         sets.set("color_scheme", cs)
 
@@ -199,25 +201,29 @@ class HtmlGen:
 
     def update_view(self, view):
         # print("update_view(%d)" % (view.id()))
-        if not os.path.exists(os.path.join(sublime.packages_path(), self.fake_scheme)):
+        path = os.path.join(sublime.packages_path(), self.fake_scheme)
+        if not os.path.exists(path):
             set_scheme(view, self.color_scheme)
         else:
             set_scheme(view, os.path.join("Packages", self.fake_scheme))
-
+#FFF
     def update(self, view):
         # # print("update(%d)" % (view.id()))
         if not self.need_upd:
             return False
         # print("do update(%d)" % (view.id()))
 
-        cont = sublime.load_resource(self.color_scheme)
+        if get_version() >= 3000:
+            cont = sublime.load_resource(self.color_scheme)
+        else:
+            cont = read_file(os.path.join(sublime.packages_path(), self.color_scheme[9:]))
         n = cont.find("<array>") + len("<array>")
         try:
             cont = cont[:n] + self.string + cont[n:]
         except UnicodeDecodeError:
             cont = cont[:n] + self.string.encode("utf-8") + cont[n:]
 
-        write_file(os.path.join(sublime.packages_path(), self.fake_scheme), cont)
+        write_bin_file(os.path.join(sublime.packages_path(), self.fake_scheme), cont)
 
         self.need_upd = False
         return True
@@ -238,7 +244,7 @@ class HtmlGen:
     def set_color_scheme(self, cs):
         # print("set_color_scheme(%s)" % (cs))
         self.color_scheme = cs
-        self.fake_scheme = os.path.join("Color Highlighter", os.path.split(self.color_scheme)[-1])
+        self.fake_scheme = os.path.join("Color Highlighter", os.path.split(cs)[-1])
 
     def change_color_scheme(self):
         cs = sublime.load_settings("Preferences.sublime-settings").get("color_scheme")
@@ -400,7 +406,7 @@ class Logic:
     def on_new(self, view):
         # print("on_new(%d)" % (view.id()))
         self.init(view)
-
+        
     def on_activated(self, view):
         # print("on_activated(%d)" % (view.id()))
         parse_stylesheet(view)
@@ -450,8 +456,17 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
         htmlGen.restore_color_scheme()
 
 
-def get_ext():
+def get_version():
+    return int(sublime.version())
+
+def get_platform():
     plat = sublime.platform()
+    if plat == "windows":
+        plat = "win"
+    return plat
+
+def get_ext():
+    plat = get_platform()
     res = plat + "_" + sublime.arch()
     if plat == "win":
         res += ".exe"
@@ -460,17 +475,24 @@ def get_ext():
 
 def plugin_loaded():
     path = os.path.join(sublime.packages_path(), "Color Highlighter")
-    if not os.path.exists(path):
-        os.mkdir(path)
+    if get_version() >= 3000:
+        if not os.path.exists(path):
+            os.mkdir(path)
 
     bin = "ColorPicker_" + get_ext()
     fpath = os.path.join(path, bin)
-    if os.path.exists(fpath):
-        return
-    data = sublime.load_binary_resource(os.path.join("Packages", "Color Highlighter", bin))
-    if len(data) != 0:
-        write_bin_file(fpath, data)
+    if get_version() >= 3000:
+        if os.path.exists(fpath):
+            return
+        data = sublime.load_binary_resource(os.path.join("Packages", "Color Highlighter", bin))
+        if len(data) != 0:
+            write_bin_file(fpath, data)
+            os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+    else:
         os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+
+if get_version() < 3000:
+    plugin_loaded()
 
 
 def get_format(col):
