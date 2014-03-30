@@ -38,5 +38,3 @@ Just put the cursor (or multiple cursors) on the color code and select "Choose c
 
 Color picker works only on linux x64 and win64 with installed Qt (just for a couple of days, untill we build it on other systems).
 
-**TODO :**
-- Highlighting all the colors at once.
