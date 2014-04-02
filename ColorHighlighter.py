@@ -146,9 +146,10 @@ def isInColor(view, sel, array_format):
         return None, None, None
 
     # just color
-    res = conv_to_hex(view, view.substr(word))
-    if res is not None:
-        return word, res, False
+    if view.substr(word.begin() - 1) in [" ", ":"]:
+        res = conv_to_hex(view, view.substr(word))
+        if res is not None:
+            return word, res, False
 
     # rgb(...)
     line = view.line(b)
