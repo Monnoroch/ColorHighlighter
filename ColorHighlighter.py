@@ -366,7 +366,7 @@ def find_less_vars(view, text, cols):
 
 
 def get_doc_text(view):
-    return view.substr(sublime.Region(0, 9999999)) # TODO: better way to select all document
+    return view.substr(sublime.Region(0, view.size())) # TODO: better way to select all document
 
 
 def parse_stylesheet(view):
