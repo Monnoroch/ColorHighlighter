@@ -257,7 +257,7 @@ class HtmlGen:
 
     def __init__(self, cs):
         self.color_scheme = cs
-        self.fake_scheme = os.path.join("Color Highlighter", os.path.split(cs)[-1])
+        self.fake_scheme = os.path.join("Color Highlighter", os.path.split(os.path.normpath(cs))[-1])
 
     def load(self, htmlGen):
         self.colors = htmlGen.colors[:]
@@ -289,7 +289,7 @@ class HtmlGen:
         if get_version() >= 3000:
             cont = sublime.load_resource(self.color_scheme)
         else:
-            cont = read_file(os.path.join(sublime.packages_path(), self.color_scheme[9:])).decode("utf-8")
+            cont = read_file(os.path.join(sublime.packages_path(), os.path.normpath(self.color_scheme[9:]))).decode("utf-8")
         n = cont.find("<array>") + len("<array>")
         cont = cont[:n] + self.string + cont[n:]
         write_bin_file(os.path.join(sublime.packages_path(), self.fake_scheme), cont.encode("utf-8"))
@@ -528,16 +528,23 @@ class Logic:
         sets.clear_on_change("ColorHighlighter")
         sets.add_on_change("ColorHighlighter", lambda: self.on_g_settings_change())
 
+        for w in sublime.windows():
+            for v in w.views():
+                self.init_view(v)
+
         self.inited = True
 
     def init_view(self, view):
         if view.id() in self.views.keys():
-            return
+            return True
         sets = view.settings()
         cs = sets.get("color_scheme")
+        if cs is None:
+            return False # ST2 hack
         htmlGen = self.get_html_gen(cs)
         self.views[view.id()] = {"view": view, "colors": {}, "regions": [], "hl_all_regions": [], "settings" : {"color_scheme": cs}, "html_gen": htmlGen}
         self.update_view(view, htmlGen)
+        return True
 
 
     def on_new(self, view):
@@ -556,7 +563,8 @@ class Logic:
 
     def on_activated(self, view):
         self.init()
-        self.init_view(view)
+        if not self.init_view(view):
+            return
 
         view_obj = self.views[view.id()]
 
@@ -584,7 +592,8 @@ class Logic:
 
     def on_selection_modified(self, view):
         self.init()
-        self.init_view(view)
+        if not self.init_view(view):
+            return
 
         self.clean_regions(view)
         if not self.settings["enabled"]:
