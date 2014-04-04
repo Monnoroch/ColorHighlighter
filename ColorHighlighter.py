@@ -11,6 +11,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
+
 version = "5.0"
 
 hex_letters = "0123456789ABCDEFabcdef"
@@ -226,7 +227,7 @@ def set_scheme(view, cs):
     cs = cs.replace("\\", "/")
     sets = view.settings()
     if sets.get("color_scheme") != cs:
-        print("set_scheme", sets.get("color_scheme"), cs)
+        print("set_scheme(%d)" % (view.id()), sets.get("color_scheme"), cs)
         sets.set("color_scheme", cs)
 
 
@@ -258,6 +259,11 @@ class HtmlGen:
         self.color_scheme = cs
         self.fake_scheme = os.path.join("Color Highlighter", os.path.split(cs)[-1])
 
+    def load(self, htmlGen):
+        self.colors = htmlGen.colors[:]
+        self.string = htmlGen.string
+        self.need_upd = self.string != ""
+
     def add_color(self, col):
         if col in self.colors:
             return
@@ -265,6 +271,9 @@ class HtmlGen:
         cont = get_cont_col(col)
         self.string += self.gen_string % (region_name(col), col, cont, cont)
         self.need_upd = True
+
+    def dirty(self):
+        return os.path.exists(os.path.join(sublime.packages_path(), self.fake_scheme))
 
     def update_view(self, view):
         path = os.path.join(sublime.packages_path(), self.fake_scheme)
@@ -413,10 +422,34 @@ class Logic:
             self.color_schemes[cs] = HtmlGen(cs)
         return self.color_schemes[cs]
 
+    def need_change_cs(self, view):
+        w = view.window()
+        if w is None:
+            return False
+        grp, _ = w.get_view_index(view)
+        return grp != -1
 
     def on_g_settings_change(self):
-        # sets = sublime.load_settings("Preferences.sublime-settings")
-        pass
+        sets = sublime.load_settings("Preferences.sublime-settings")
+        cs = sets.get("color_scheme")
+        print("on_settings_change()", self.settings["color_scheme"], cs)
+        if cs != self.settings["color_scheme"]:
+            self.settings["color_scheme"] = cs
+            print("CHANGE ALL TO:", cs)
+            for i in self.views:
+                vo = self.views[i]
+                if self.need_change_cs(vo["view"]):
+                    self.set_scheme_view(vo, cs)
+
+    def set_scheme_view(self, view_obj, cs):
+        vsets = view_obj["settings"]
+        if vsets["color_scheme"] == cs:
+            return
+        vsets["color_scheme"] = cs
+        view = view_obj["view"]
+        self.set_gen(view, cs)
+        self.on_selection_modified(view)
+        
 
     def on_ch_settings_change(self):
         sets = sublime.load_settings(settings_file)
@@ -444,15 +477,35 @@ class Logic:
     def on_settings_change_view(self, view):
         sets = view.settings()
         cs = sets.get("color_scheme")
-        print("on_settings_change_view(%d)" % (view.id()), self.settings["color_scheme"], cs)
-        if cs.endswith(".tmTheme") and not cs.startswith(os.path.join("Packages", "Color Highlighter")) and cs != self.settings["color_scheme"]:
-            self.views[view.id()]["settings"]["color_scheme"] = cs
+        view_obj = self.views[view.id()]
+        vsets = view_obj["settings"]
+        print("on_settings_change_view(%d)" % (view.id()), self.settings["color_scheme"], vsets["color_scheme"], cs)
+        if cs != vsets["color_scheme"]:
+            vsets["color_scheme"] = cs
             print("New Color Scheme: " + cs)
-            htmlGen = self.get_html_gen(cs)
-            self.views[view.id()]["html_gen"] = htmlGen
-            htmlGen.update_view(view)
+            self.set_gen(view, cs)
             
-#FFF
+
+    def set_gen(self, view, cs):
+        view_obj = self.views[view.id()]
+        htmlGen = self.get_html_gen(cs)
+        htmlGen.load(view_obj["html_gen"])
+        view_obj["html_gen"] = htmlGen
+        self.update_view(view, htmlGen)
+
+
+    def update_view(self, view, htmlGen):
+        self.clear_cs_view_cb(view)
+        htmlGen.update_view(view)
+        self.set_cs_view_cb(view)
+
+    def set_cs_view_cb(self, view):
+        view.settings().add_on_change("ColorHighlighter", lambda v=view: self.on_settings_change_view(v))
+
+    def clear_cs_view_cb(self, view):
+        view.settings().clear_on_change("ColorHighlighter")
+            
+
     inited = False
     def init(self):
         if self.inited:
@@ -483,10 +536,8 @@ class Logic:
         sets = view.settings()
         cs = sets.get("color_scheme")
         htmlGen = self.get_html_gen(cs)
-        htmlGen.update_view(view)
         self.views[view.id()] = {"view": view, "colors": {}, "regions": [], "hl_all_regions": [], "settings" : {"color_scheme": cs}, "html_gen": htmlGen}
-        sets.clear_on_change("ColorHighlighter")
-        sets.add_on_change("ColorHighlighter", lambda v=view: self.on_settings_change_view(v))
+        self.update_view(view, htmlGen)
 
 
     def on_new(self, view):
@@ -520,7 +571,7 @@ class Logic:
 
         res = self.find_all(regex_all, get_doc_text(view), view, htmlGen, view_obj["colors"])
         if htmlGen.update(view):
-            htmlGen.update_view(view)
+            self.update_view(view, htmlGen)
 
         i = 0
         flags = self.get_regions_ha_flags()
@@ -544,7 +595,7 @@ class Logic:
 
         words = self.get_words(view, htmlGen, view_obj["colors"])
         if htmlGen.update(view):
-            htmlGen.update_view(view)
+            self.update_view(view, htmlGen)
 
         i = 0
         flags = self.get_regions_flags()
