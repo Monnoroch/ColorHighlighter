@@ -466,6 +466,15 @@ class Logic:
             view.erase_regions(s)
         self.hl_all_regions[view.id()] = []
 
+    def get_arr_fmt(self, view):
+        array_format = False
+        nm = view.file_name()
+        if nm is not None:
+            name, ext = os.path.splitext(nm)
+            if ext in [".sublime-theme"]:
+                array_format = True
+        return array_format
+
     def get_words(self, view):
         words = []
         for s in view.sel():
@@ -475,7 +484,7 @@ class Logic:
                 name, ext = os.path.splitext(nm)
                 if ext in [".sublime-theme"]:
                     array_format = True
-            wd, col, var = isInColor(view, s, array_format=array_format)
+            wd, col, var = isInColor(view, s, array_format=self.get_arr_fmt(view))
             if col is None:
                 continue
             htmlGen.add_color(col)
@@ -500,6 +509,9 @@ class Logic:
                 htmlGen.update_view(view)
             i = 0
             for s, e, col in res:
+                wd, col, var = isInColor(view, sublime.Region(s + 1, s + 1), array_format=self.get_arr_fmt(view))
+                if col is None:
+                    continue
                 i += 1
                 st = "mon_CH_ALL_" + str(i)
                 self.hl_all_regions[view.id()].append(st)
@@ -630,6 +642,9 @@ def get_format(col):
     if col[0] == "#":
         l = len(col)
         if l in [4, 5, 7, 9]:
+            for c in col[1:]:
+                if c not in "0123456789ABCDEFabcdef":
+                    return None
             return "#%d" % l
         return None
 
@@ -662,7 +677,6 @@ def conv_to_format(base, col):
 
 def print_error(err):
     print(err.replace("\\n", "\n"))
-
 
 class ColorPickerCommand(sublime_plugin.TextCommand):
     words = []
