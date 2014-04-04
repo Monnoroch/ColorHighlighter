@@ -105,7 +105,7 @@ def to_hex_fmt(col):
 
     if col.startswith("rgba("):
         return parse_col_rgba(col)
-    
+
     return colors.names_to_hex.get(col)
 
 
@@ -414,7 +414,7 @@ class Logic:
     views_ids = []
     views = {}
     settings = {}
-    
+
 
     color_schemes = {}
     def get_html_gen(self, cs):
@@ -449,7 +449,7 @@ class Logic:
         view = view_obj["view"]
         self.set_gen(view, cs)
         self.on_selection_modified(view)
-        
+
 
     def on_ch_settings_change(self):
         sets = sublime.load_settings(settings_file)
@@ -484,7 +484,7 @@ class Logic:
             vsets["color_scheme"] = cs
             print("New Color Scheme: " + cs)
             self.set_gen(view, cs)
-            
+
 
     def set_gen(self, view, cs):
         view_obj = self.views[view.id()]
@@ -504,7 +504,7 @@ class Logic:
 
     def clear_cs_view_cb(self, view):
         view.settings().clear_on_change("ColorHighlighter")
-            
+
 
     inited = False
     def init(self):
@@ -551,7 +551,8 @@ class Logic:
         self.on_new(view)
 
     def on_close(self, view):
-        del(self.views[view.id()])
+        if view.id() in self.views.keys():
+            del(self.views[view.id()])
 
     def on_activated(self, view):
         self.init()
@@ -563,23 +564,23 @@ class Logic:
         parse_stylesheet(view, view_obj["colors"])
 
         self.clean_hl_all_regions(view)
-        if not self.settings["highlight_all"]:
-            return
-        
-        htmlGen = view_obj["html_gen"]
-        regs = view_obj["hl_all_regions"]
+        if self.settings["highlight_all"]:
+            htmlGen = view_obj["html_gen"]
+            regs = view_obj["hl_all_regions"]
 
-        res = self.find_all(regex_all, get_doc_text(view), view, htmlGen, view_obj["colors"])
-        if htmlGen.update(view):
-            self.update_view(view, htmlGen)
+            res = self.find_all(regex_all, get_doc_text(view), view, htmlGen, view_obj["colors"])
+            if htmlGen.update(view):
+                self.update_view(view, htmlGen)
 
-        i = 0
-        flags = self.get_regions_ha_flags()
-        for s, e, col in res:
-            i += 1
-            st = "mon_CH_ALL_" + str(i)
-            regs.append(st)
-            view.add_regions(st, [sublime.Region(s, e)], region_name(col), "", flags)
+            i = 0
+            flags = self.get_regions_ha_flags()
+            for s, e, col in res:
+                i += 1
+                st = "mon_CH_ALL_" + str(i)
+                regs.append(st)
+                view.add_regions(st, [sublime.Region(s, e)], region_name(col), "", flags)
+
+        self.on_selection_modified(view)
 
     def on_selection_modified(self, view):
         self.init()
@@ -591,6 +592,7 @@ class Logic:
 
         view_obj = self.views[view.id()]
         htmlGen = view_obj["html_gen"]
+        print(htmlGen.color_scheme)
         regs = view_obj["regions"]
 
         words = self.get_words(view, htmlGen, view_obj["colors"])
@@ -604,7 +606,7 @@ class Logic:
             s = "mon_CH_" + str(i)
             regs.append(s)
             view.add_regions(s, [w], region_name(col), "", flags)
-        
+
 
     def find_all(self, regex, text, view, htmlGen, colors):
         res = []
@@ -806,7 +808,7 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
         path = os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker_" + self.ext)
         words = global_logic.get_words_pub(self.view)
         popen = subprocess.Popen([path, self.col[1:-2]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
+
         err = str(popen.stderr.read())[2:-1]
         if err is not None and len(err) != 0:
             print_error("Color Picker error:\n" + err)
