@@ -493,6 +493,18 @@ class Logic:
 
     def on_new(self, view):
         self.init(view)
+        
+    def find_all(self, regex, text, view, array_format):
+        res = []
+        m = regex.search(text)
+        while m:
+            wd, col, var = isInColor(view, sublime.Region(m.start()+1, m.start()+1), array_format=array_format)
+            if col is not None:
+                res.append((wd.begin(), wd.end(), col))
+                htmlGen.add_color(col)
+            m = regex.search(text, m.end())
+        return res
+
 
     def on_activated(self, view):
         parse_stylesheet(view)
@@ -504,14 +516,11 @@ class Logic:
         self.init_hl_all_regions(view)
         self.clean_hl_all_regions(view)
         if self.highlight_all:
-            res = find_all(regex_all, get_doc_text(view))
+            res = self.find_all(regex_all, get_doc_text(view), view, array_format=self.get_arr_fmt(view))
             if htmlGen.update(view):
                 htmlGen.update_view(view)
             i = 0
             for s, e, col in res:
-                wd, col, var = isInColor(view, sublime.Region(s + 1, s + 1), array_format=self.get_arr_fmt(view))
-                if col is None:
-                    continue
                 i += 1
                 st = "mon_CH_ALL_" + str(i)
                 self.hl_all_regions[view.id()].append(st)
@@ -537,18 +546,6 @@ class Logic:
             view.add_regions(s, [w], region_name(c), "", get_regions_flags())
 
 global_logic = Logic()
-
-
-def find_all(regex, text):
-    res = []
-    m = regex.search(text)
-    while m:
-        col = to_hex_fmt(text[m.start():m.end()])
-        if col is not None:
-            res.append((m.start(), m.end(), col))
-            htmlGen.add_color(col)
-        m = regex.search(text, m.end())
-    return res
 
 
 class ChSetSetting(sublime_plugin.TextCommand):
