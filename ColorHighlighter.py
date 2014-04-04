@@ -49,22 +49,32 @@ regex_all = re.compile(regex_all_s)
 
 colors_by_view = {}
 
+
+def hex_col_conv(col):
+    if col[0] != "#":
+        return None
+
+    l = len(col)
+    for c in col[1:]:
+        if c not in "0123456789ABCDEFabcdef":
+            return None
+    if l == 4:
+        return "#" + col[1]*2 + col[2]*2 + col[3]*2 + "FF"
+    if l == 5:
+        return "#" + col[1]*2 + col[2]*2 + col[3]*2 + col[4]*2
+    elif l == 7:
+        return col + "FF"
+    elif l == 9:
+        return col
+    return None
+
 def conv_to_hex(view, col):
     if col is None or len(col) == 0:
         return None
 
-    if col[0] == "#":
-        l = len(col)
-        if l == 4:
-            return "#" + col[1]*2 + col[2]*2 + col[3]*2 + "FF"
-        if l == 5:
-            return "#" + col[1]*2 + col[2]*2 + col[3]*2 + col[4]*2
-        elif l == 7:
-            return col + "FF"
-        elif l == 9:
-            return col
-        else:
-            return None
+    res = hex_col_conv(col)
+    if res is not None:
+        return res
 
     res = colors.names_to_hex.get(col)
     if res is not None:
@@ -80,18 +90,9 @@ def to_hex_fmt(col):
     if col is None or len(col) == 0:
         return None
 
-    if col[0] == "#":
-        l = len(col)
-        if l == 4:
-            return "#" + col[1]*2 + col[2]*2 + col[3]*2 + "FF"
-        if l == 5:
-            return "#" + col[1]*2 + col[2]*2 + col[3]*2 + col[4]*2
-        elif l == 7:
-            return col + "FF"
-        elif l == 9:
-            return col
-        else:
-            return None
+    res = hex_col_conv(col)
+    if res is not None:
+        return res
 
     if col.startswith("rgb("):
         return parse_col_rgb(col)
