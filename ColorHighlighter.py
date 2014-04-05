@@ -788,6 +788,7 @@ if get_version() < 3000:
 
 
 def conv_to_format(base, col):
+    base = base.strip()
     fmt = get_format(base)
     if fmt is None:
         return None
@@ -798,8 +799,14 @@ def conv_to_format(base, col):
     if fmt == "rgb":
         return "rgb(%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
     if fmt == "rgbad":
+        if len(col) == 7:
+            al = base[base.rfind(",")+1:-1].strip()
+            return "rgba(%d,%d,%d,%s)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), al)
         return "rgba(%d,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
     if fmt == "rgbaf":
+        if len(col) == 7:
+            al = base[base.rfind(",")+1:-1].strip()
+            return "rgba(%d,%d,%d,%s)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), al)
         return "rgba(%d,%d,%d,%f)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
 
 
@@ -815,7 +822,7 @@ def get_hex_6_col(inp):
 class ColorPickerCommandImpl(sublime_plugin.TextCommand):
     def run(self, edit, **args):
         output = get_hex_6_col(args["output"])
-        if output is None or len(output) == 0 or output == args["col"] or output == "#000000FF":
+        if output is None or len(output) == 0 or output == args["col"]:
             return
 
         for val in args["words"].split("\t"):
