@@ -833,6 +833,7 @@ class ColorPickerCommandImpl(sublime_plugin.TextCommand):
         rest = s[pos+1:].split(",")
         return (sublime.Region(int(reg[0]), int(reg[1])), get_hex_6_col(rest[1].strip()), rest[2].strip() == "True")
 
+
 class ColorPickerCommand(sublime_plugin.TextCommand):
     words = []
     col = None
@@ -843,11 +844,11 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
         path = os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker_" + self.ext)
         popen = subprocess.Popen([path, self.col[1:-2]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        err = str(popen.stderr.read())
+        err = popen.stderr.read().decode("utf-8")
         if err is not None and len(err) != 0:
             print_error("Color Picker error:\n" + err)
 
-        self.output = str(popen.stdout.read())
+        self.output = popen.stdout.read().decode("utf-8")
     
 
     if get_version() < 3000:
