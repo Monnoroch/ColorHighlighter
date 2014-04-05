@@ -5,6 +5,7 @@ import stat
 import re
 import colorsys
 import subprocess
+import threading
 
 try:
     import colors
@@ -39,6 +40,40 @@ def read_file(fl):
     return res
 
 
+def get_version():
+    return int(sublime.version())
+
+
+def get_platform():
+    plat = sublime.platform()
+    if plat == "windows":
+        plat = "win"
+    return plat
+
+def get_ext():
+    plat = get_platform()
+    if plat == "win":
+        return plat + ".exe"
+    return plat + "_" + sublime.arch()
+
+
+if get_version() < 3000:
+    class RunAsync(threading.Thread):
+        def __init__(self, cb):
+            self.cb = cb
+            threading.Thread.__init__(self)
+
+        def run(self):
+            self.cb()
+
+    def run_async(cb):
+        RunAsync(cb).start()
+
+else:
+    def run_async(cb):
+        sublime.set_timeout_async(cb, 0)
+
+
 def tohex(r, g, b):
     return "#%02X%02X%02XFF" % (r, g, b)
 
@@ -46,10 +81,12 @@ def tohexa(r, g, b, a):
     return "#%02X%02X%02X%02X" % (r, g, b, a)
 
 
+regex_hex_6_s = "[#][0-9a-fA-F]{6}"
 regex_rgb_s = "[r][g][b][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]"
 regex_rgba_s = "[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*(?:\d{1,3}|[0|1]?\.\d+)[ ]*[)]"
 regex_array_s = "[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}(?:[ ]*|[,][ ]*(?:\d{1,3}|[0|1]?\.\d+)[ ]*)[\]]"
-regex_all_s = "((?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s))" % ("[#][0-9a-fA-F]{8}", "[#][0-9a-fA-F]{6}", "[#][0-9a-fA-F]{4}", "[#][0-9a-fA-F]{3}", regex_rgb_s, regex_rgba_s, regex_array_s)
+regex_all_s = "((?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s))" % ("[#][0-9a-fA-F]{8}", regex_hex_6_s, "[#][0-9a-fA-F]{4}", "[#][0-9a-fA-F]{3}", regex_rgb_s, regex_rgba_s, regex_array_s)
+regex_hex_6 = re.compile(regex_hex_6_s)
 regex_rgb = re.compile(regex_rgb_s)
 regex_rgba = re.compile(regex_rgba_s)
 regex_array = re.compile(regex_array_s)
@@ -227,7 +264,6 @@ def set_scheme(view, cs):
     cs = cs.replace("\\", "/")
     sets = view.settings()
     if sets.get("color_scheme") != cs:
-        print("set_scheme(%d)" % (view.id()), sets.get("color_scheme"), cs)
         sets.set("color_scheme", cs)
 
 
@@ -432,10 +468,8 @@ class Logic:
     def on_g_settings_change(self):
         sets = sublime.load_settings("Preferences.sublime-settings")
         cs = sets.get("color_scheme")
-        print("on_settings_change()", self.settings["color_scheme"], cs)
         if cs != self.settings["color_scheme"]:
             self.settings["color_scheme"] = cs
-            print("CHANGE ALL TO:", cs)
             for i in self.views:
                 vo = self.views[i]
                 if self.need_change_cs(vo["view"]):
@@ -479,10 +513,8 @@ class Logic:
         cs = sets.get("color_scheme")
         view_obj = self.views[view.id()]
         vsets = view_obj["settings"]
-        print("on_settings_change_view(%d)" % (view.id()), self.settings["color_scheme"], vsets["color_scheme"], cs)
         if cs != vsets["color_scheme"]:
             vsets["color_scheme"] = cs
-            print("New Color Scheme: " + cs)
             self.set_gen(view, cs)
 
 
@@ -527,10 +559,6 @@ class Logic:
 
         sets.clear_on_change("ColorHighlighter")
         sets.add_on_change("ColorHighlighter", lambda: self.on_g_settings_change())
-
-        for w in sublime.windows():
-            for v in w.views():
-                self.init_view(v)
 
         self.inited = True
 
@@ -601,7 +629,6 @@ class Logic:
 
         view_obj = self.views[view.id()]
         htmlGen = view_obj["html_gen"]
-        print(htmlGen.color_scheme)
         regs = view_obj["regions"]
 
         words = self.get_words(view, htmlGen, view_obj["colors"])
@@ -686,6 +713,7 @@ class Logic:
 
     def get_words_pub(self, view):
         view_obj = self.views[view.id()]
+        view_obj["colors"] = {}
         return self.get_words(view, view_obj["html_gen"], view_obj["colors"])
 
 global_logic = Logic()
@@ -715,33 +743,19 @@ class ChSetSetting(sublime_plugin.TextCommand):
 
 class ColorSelection(sublime_plugin.EventListener):
     def on_new(self, view):
-        # print("on_new(%d)" % (view.id()))
         global_logic.on_new(view)
 
     def on_clone(self, view):
-        # print("on_clone(%d)" % (view.id()))
         global_logic.on_clone(view)
 
     def on_close(self, view):
-        # print("on_close(%d)" % (view.id()))
         global_logic.on_close(view)
 
     def on_selection_modified(self, view):
-        # print("on_selection_modified(%d)" % (view.id()))
         global_logic.on_selection_modified(view)
 
     def on_activated(self, view):
-        # print("on_activated(%d)" % (view.id()))
         global_logic.on_activated(view)
-
-    # def on_deactivated(self, view):
-    #     print("on_deactivated(%d)" % (view.id()))
-
-    # def on_load(self, view):
-    #     print("on_load(%d)" % (view.id()))
-
-    # def on_pre_close(self, view):
-    #     print("on_pre_close(%d)" % (view.id()))
 
 
 # command to restore color scheme
@@ -749,25 +763,6 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         for hg in global_logic.color_schemes:
             hg.restore()
-
-
-def get_version():
-    return int(sublime.version())
-
-
-def get_platform():
-    plat = sublime.platform()
-    if plat == "windows":
-        plat = "win"
-    return plat
-
-
-def get_ext():
-    plat = get_platform()
-    res = plat + "_" + sublime.arch()
-    if plat == "win":
-        res += ".exe"
-    return res
 
 
 def plugin_loaded():
@@ -808,32 +803,78 @@ def conv_to_format(base, col):
         return "rgba(%d,%d,%d,%f)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
 
 
-class ColorPickerCommand(sublime_plugin.TextCommand):
-    words = []
-    col = None
-    ext = get_ext()
+def get_hex_6_col(inp):
+    if inp is None:
+        return None
+    m = regex_hex_6.search(inp)
+    if m is None:
+        return None
+    return inp[m.start():m.end()]
 
-    def run(self, edit):
-        path = os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker_" + self.ext)
-        words = global_logic.get_words_pub(self.view)
-        popen = subprocess.Popen([path, self.col[1:-2]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        err = str(popen.stderr.read())[2:-1]
-        if err is not None and len(err) != 0:
-            print_error("Color Picker error:\n" + err)
+class ColorPickerCommandImpl(sublime_plugin.TextCommand):
+    def run(self, edit, **args):
+        output = get_hex_6_col(args["output"])
+        if output is None or len(output) == 0 or output == args["col"] or output == "#000000FF":
             return
 
-        output = str(popen.stdout.read())[2:-1]
-        if output is None or len(output) == 0 or output == self.col or output == "#000000FF":
-            return
-
-        for w, c, v in self.words:
+        for val in args["words"].split("\t"):
+            w, c, v = self.parse(val)
             if w is None or v:
                 continue
             new_col = conv_to_format(self.view.substr(w), output)
             if new_col is None:
                 continue
             self.view.replace(edit, w, new_col)
+
+    def parse(self, s):
+        pos = s.find(")")
+        reg = s[2:pos].split(",")
+        rest = s[pos+1:].split(",")
+        return (sublime.Region(int(reg[0]), int(reg[1])), get_hex_6_col(rest[1].strip()), rest[2].strip() == "True")
+
+class ColorPickerCommand(sublime_plugin.TextCommand):
+    words = []
+    col = None
+    ext = get_ext()
+    output = None
+
+    def _do_run(self):
+        path = os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker_" + self.ext)
+        popen = subprocess.Popen([path, self.col[1:-2]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        err = str(popen.stderr.read())
+        if err is not None and len(err) != 0:
+            print_error("Color Picker error:\n" + err)
+
+        self.output = str(popen.stdout.read())
+    
+
+    if get_version() < 3000:
+        def run(self, edit):
+            run_async(lambda: self._do_run())
+            sublime.set_timeout(lambda: self.do_change_col(), 100)
+
+        def do_change_col(self):
+            output = self.output
+            if output == None:
+                sublime.set_timeout(lambda: self.do_change_col(), 100)
+                return
+            self.call_impl()
+            self.output = None
+            
+    else:
+        def run(self, edit):
+            run_async(lambda: self.do_run())
+
+        def do_run(self):
+            self._do_run()
+            self.call_impl()
+
+
+    def call_impl(self):
+        self.view.run_command("color_picker_command_impl", {"output": self.output, "col": self.col, "words": "\t".join(list(map(str, self.words)))})
+
 
     def is_enabled(self):
         self.words = global_logic.get_words_pub(self.view)
