@@ -881,6 +881,11 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
 
         def do_run(self):
             self._do_run()
+
+            if self.output == 'CANCEL':
+                self.output = None
+                return
+
             self.call_impl()
 
 
