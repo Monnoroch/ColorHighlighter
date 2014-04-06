@@ -865,12 +865,16 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
 
         def do_change_col(self):
             output = self.output
-            if output == None:
+            if output is None:
                 sublime.set_timeout(lambda: self.do_change_col(), 100)
                 return
+            else if output == 'CANCEL':
+                self.output = None
+                return
+
             self.call_impl()
             self.output = None
-            
+
     else:
         def run(self, edit):
             run_async(lambda: self.do_run())
