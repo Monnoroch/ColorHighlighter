@@ -293,7 +293,7 @@ class HtmlGen:
 
     def __init__(self, cs):
         self.color_scheme = cs
-        self.fake_scheme = os.path.join("Color Highlighter", os.path.split(os.path.normpath(cs))[-1])
+        self.fake_scheme = os.path.join("Color Highlighter", cs.split('/')[-1])
 
     def load(self, htmlGen):
         self.colors = htmlGen.colors[:]
@@ -775,7 +775,7 @@ def plugin_loaded():
     fpath = os.path.join(path, bin)
     if get_version() >= 3000:
         if not os.path.exists(fpath):
-            data = sublime.load_binary_resource(os.path.join("Packages", "Color Highlighter", bin))
+            data = sublime.load_binary_resource('/'.join("Packages", "Color Highlighter", bin))
             if len(data) != 0:
                 write_bin_file(fpath, data)
                 os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
