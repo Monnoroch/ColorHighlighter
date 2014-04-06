@@ -775,7 +775,7 @@ def plugin_loaded():
     fpath = os.path.join(path, bin)
     if get_version() >= 3000:
         if not os.path.exists(fpath):
-            data = sublime.load_binary_resource('/'.join("Packages", "Color Highlighter", bin))
+            data = sublime.load_binary_resource('/'.join(["Packages", "Color Highlighter", bin]))
             if len(data) != 0:
                 write_bin_file(fpath, data)
                 os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
@@ -868,7 +868,7 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
             if output is None:
                 sublime.set_timeout(lambda: self.do_change_col(), 100)
                 return
-            else if output == 'CANCEL':
+            elif output == 'CANCEL':
                 self.output = None
                 return
 
