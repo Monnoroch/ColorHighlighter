@@ -81,12 +81,12 @@ def tohexa(r, g, b, a):
     return "#%02X%02X%02X%02X" % (r, g, b, a)
 
 
-regex_hex_6_s = "[#][0-9a-fA-F]{6}"
+regex_hex_s = "[#][0-9a-fA-F]"
 regex_rgb_s = "[r][g][b][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]"
 regex_rgba_s = "[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*(?:\d{1,3}|[0|1]?\.\d+)[ ]*[)]"
 regex_array_s = "[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}(?:[ ]*|[,][ ]*(?:\d{1,3}|[0|1]?\.\d+)[ ]*)[\]]"
-regex_all_s = "((?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s))" % ("[#][0-9a-fA-F]{8}", regex_hex_6_s, "[#][0-9a-fA-F]{4}", "[#][0-9a-fA-F]{3}", regex_rgb_s, regex_rgba_s, regex_array_s)
-regex_hex_6 = re.compile(regex_hex_6_s)
+regex_all_s = "((?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s)|(?:%s))" % (regex_hex_s + "{8}", regex_hex_s + "{6}", regex_hex_s + "{4}", regex_hex_s + "{3}", regex_rgb_s, regex_rgba_s, regex_array_s)
+regex_hex_8 = re.compile(regex_hex_s + "{8}")
 regex_rgb = re.compile(regex_rgb_s)
 regex_rgba = re.compile(regex_rgba_s)
 regex_array = re.compile(regex_array_s)
@@ -740,7 +740,6 @@ class ChSetSetting(sublime_plugin.TextCommand):
             return args["value"] != global_logic.settings["highlight_all"]
         return False
 
-
 class ColorSelection(sublime_plugin.EventListener):
     def on_new(self, view):
         global_logic.on_new(view)
@@ -797,31 +796,20 @@ def conv_to_format(base, col):
         return col
 
     if fmt == "rgb":
-        return "rgb(%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
+        return "rgba(%d,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
     if fmt == "rgbad":
-        if len(col) == 7:
-            al = base[base.rfind(",")+1:-1].strip()
-            return "rgba(%d,%d,%d,%s)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), al)
         return "rgba(%d,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
     if fmt == "rgbaf":
-        if len(col) == 7:
-            al = base[base.rfind(",")+1:-1].strip()
-            return "rgba(%d,%d,%d,%s)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), al)
         return "rgba(%d,%d,%d,%f)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
 
 
-def get_hex_6_col(inp):
-    if inp is None:
-        return None
-    m = regex_hex_6.search(inp)
-    if m is None:
-        return None
-    return inp[m.start():m.end()]
-
+def get_hex_8_col(inp):
+    m = regex_hex_8.search(inp)
+    return m and inp[m.start():m.end()] or None
 
 class ColorPickerCommandImpl(sublime_plugin.TextCommand):
     def run(self, edit, **args):
-        output = get_hex_6_col(args["output"])
+        output = get_hex_8_col(args["output"])
         if output is None or len(output) == 0 or output == args["col"]:
             return
 
@@ -838,7 +826,7 @@ class ColorPickerCommandImpl(sublime_plugin.TextCommand):
         pos = s.find(")")
         reg = s[2:pos].split(",")
         rest = s[pos+1:].split(",")
-        return (sublime.Region(int(reg[0]), int(reg[1])), get_hex_6_col(rest[1].strip()), rest[2].strip() == "True")
+        return (sublime.Region(int(reg[0]), int(reg[1])), get_hex_8_col(rest[1].strip()), rest[2].strip() == "True")
 
 
 class ColorPickerCommand(sublime_plugin.TextCommand):
@@ -849,7 +837,7 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
 
     def _do_run(self):
         path = os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker_" + self.ext)
-        popen = subprocess.Popen([path, self.col[1:-2]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        popen = subprocess.Popen([path, self.col[1:]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         err = popen.stderr.read().decode("utf-8")
         if err is not None and len(err) != 0:
@@ -868,12 +856,7 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
             if output is None:
                 sublime.set_timeout(lambda: self.do_change_col(), 100)
                 return
-            elif output == 'CANCEL':
-                self.output = None
-                return
-
             self.call_impl()
-            self.output = None
 
     else:
         def run(self, edit):
@@ -881,16 +864,13 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
 
         def do_run(self):
             self._do_run()
-
-            if self.output == 'CANCEL':
-                self.output = None
-                return
-
             self.call_impl()
 
 
     def call_impl(self):
-        self.view.run_command("color_picker_command_impl", {"output": self.output, "col": self.col, "words": "\t".join(list(map(str, self.words)))})
+        if self.output is not None and len(self.output) == 9 and self.output != 'CANCEL':
+            self.view.run_command("color_picker_command_impl", {"output": self.output, "col": self.col, "words": "\t".join(list(map(str, self.words)))})
+        self.output = None
 
 
     def is_enabled(self):

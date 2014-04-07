@@ -11,7 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = ColorPicker
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -static -s -fvisibility=hidden
+QMAKE_CXXFLAGS += -static -s -fvisibility=hidden -std=c++11
 QMAKE_LFLAGS += -s -fvisibility=hidden
 
 SOURCES += main.cpp
