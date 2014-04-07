@@ -293,7 +293,7 @@ class HtmlGen:
 
     def __init__(self, cs):
         self.color_scheme = cs
-        self.fake_scheme = os.path.join("Color Highlighter", os.path.split(os.path.normpath(cs))[-1])
+        self.fake_scheme = os.path.join("Color Highlighter", cs.split('/')[-1])
 
     def load(self, htmlGen):
         self.colors = htmlGen.colors[:]
@@ -775,7 +775,7 @@ def plugin_loaded():
     fpath = os.path.join(path, bin)
     if get_version() >= 3000:
         if not os.path.exists(fpath):
-            data = sublime.load_binary_resource(os.path.join("Packages", "Color Highlighter", bin))
+            data = sublime.load_binary_resource('/'.join(["Packages", "Color Highlighter", bin]))
             if len(data) != 0:
                 write_bin_file(fpath, data)
                 os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
@@ -865,18 +865,27 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
 
         def do_change_col(self):
             output = self.output
-            if output == None:
+            if output is None:
                 sublime.set_timeout(lambda: self.do_change_col(), 100)
                 return
+            elif output == 'CANCEL':
+                self.output = None
+                return
+
             self.call_impl()
             self.output = None
-            
+
     else:
         def run(self, edit):
             run_async(lambda: self.do_run())
 
         def do_run(self):
             self._do_run()
+
+            if self.output == 'CANCEL':
+                self.output = None
+                return
+
             self.call_impl()
 
 
