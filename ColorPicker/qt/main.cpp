@@ -33,7 +33,8 @@ int main(int argc, char *argv[]) {
     });
     colorDialog.show();
 
-    int rc = a.exec();
+    const int rc = a.exec();
+
     if(!selected)
         printf("CANCEL");
     else {
@@ -43,7 +44,6 @@ int main(int argc, char *argv[]) {
             hexAlpha = "0" + hexAlpha;
         printf("%s%s", result.name().toUpper().toUtf8().constData(), hexAlpha.toUpper().toUtf8().constData());
     }
-    exit(rc);
 
     return rc;
 }

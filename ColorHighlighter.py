@@ -6,6 +6,7 @@ import re
 import colorsys
 import subprocess
 import threading
+import signal
 
 try:
     import colors
@@ -837,13 +838,13 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
 
     def _do_run(self):
         path = os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker_" + self.ext)
-        popen = subprocess.Popen([path, self.col[1:]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        popen = subprocess.Popen([path, self.col[1:]], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        out, err = popen.communicate()
+        self.output = out.decode("utf-8")
+        err = err.decode("utf-8")
 
-        err = popen.stderr.read().decode("utf-8")
         if err is not None and len(err) != 0:
             print_error("Color Picker error:\n" + err)
-
-        self.output = popen.stdout.read().decode("utf-8")
     
 
     if get_version() < 3000:
