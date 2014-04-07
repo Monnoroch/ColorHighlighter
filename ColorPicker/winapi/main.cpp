@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
 	cc.Flags = CC_FULLOPEN | CC_RGBINIT | CC_ANYCOLOR;
  
 	if(ChooseColor(&cc) == TRUE)
-		printf("#%02X%02X%02XFF", GetRValue(cc.rgbResult), GetGValue(cc.rgbResult), GetBValue(cc.rgbResult));
+		printf("#%02X%02X%02X%s", GetRValue(cc.rgbResult), GetGValue(cc.rgbResult), GetBValue(cc.rgbResult), argc < 2 ? "FF" : argv[1] + 7);
 	else
 		printf("CANCEL");
 
