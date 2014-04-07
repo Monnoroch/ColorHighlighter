@@ -58,6 +58,6 @@ int main(int argc, char* argv[]) {
 	else
 		printf("CANCEL");
 
-	ShowWindow( consoleHwnd, SW_SHOW );
+	ShowWindow(consoleHwnd, SW_SHOW);
 	return 0;
 }
