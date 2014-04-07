@@ -157,7 +157,7 @@ def get_format(col):
             for c in col[1:]:
                 if c not in hex_letters:
                     return None
-            return "#%d" % l
+            return "#%d" % (l - 1)
         return None
 
     if col.startswith("rgb("):
@@ -512,6 +512,7 @@ class Logic:
     def on_settings_change_view(self, view):
         sets = view.settings()
         cs = sets.get("color_scheme")
+        self.init_view(view) # TODO: this is a hack, idk why it doesn't work w/o it. Need to remove or figure out, why its needed. 
         view_obj = self.views[view.id()]
         vsets = view_obj["settings"]
         if cs != vsets["color_scheme"]:
@@ -793,8 +794,19 @@ def conv_to_format(base, col):
     if fmt is None:
         return None
 
-    if fmt[0] == "#" or fmt == "named":
+    if fmt == "named":
         return col
+
+    if fmt[0] == "#":
+        if fmt == "#6" and col[-2:] == "FF":
+            return col[:-2]
+        elif fmt == "#4" and col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[7] == col[8]:
+            return "#%s%s%s%s" % (col[1], col[3], col[5], col[7])
+        elif fmt == "#3" and col[-2:] == "FF" and col[1] == col[2] and col[3] == col[4] and col[5] == col[6]:
+            return "#%s%s%s" % (col[1], col[3], col[5])
+        else:
+            return col
+
 
     if fmt == "rgb":
         return "rgba(%d,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
