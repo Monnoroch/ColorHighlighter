@@ -398,7 +398,7 @@ def _get_regions_flags(style):
             return sublime.DRAW_NO_FILL
         if style == "underlined" or style == "underlined_solid":
             return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_SOLID_UNDERLINE
-        elif style == "underlined_strippled":
+        elif style == "underlined_stippled":
             return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_STIPPLED_UNDERLINE
         elif style == "underlined_squiggly":
             return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_SQUIGGLY_UNDERLINE
