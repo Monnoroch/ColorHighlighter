@@ -155,7 +155,7 @@ def get_format(col):
             for c in col[1:]:
                 if c not in hex_letters:
                     return None
-            return "#%d" % l
+            return "#%d" % (l - 1)
         return None
 
     if col.startswith("rgb("):
@@ -338,7 +338,6 @@ class HtmlGen:
         path = os.path.join(sublime.packages_path(), self.fake_scheme)
         if os.path.exists(path):
             os.remove(path)
-
 
 def extract_sass_name_val(line):
     pos = line.find(":")
@@ -737,7 +736,7 @@ class ChSetSetting(sublime_plugin.TextCommand):
         elif setting == "highlight_all":
             return args["value"] != global_logic.settings["highlight_all"]
         return False
-#FFF
+
 class ColorSelection(sublime_plugin.EventListener):
     def on_new(self, view):
         global_logic.on_new(view)
@@ -815,8 +814,18 @@ def conv_to_format(base, col):
     if fmt is None:
         return None
 
-    if fmt[0] == "#" or fmt == "named":
+    if fmt == "named":
         return col
+
+    if fmt[0] == "#":
+        if fmt == "#6" and col[-2:] == "FF":
+            return col[:-2]
+        elif fmt == "#4" and col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[7] == col[8]:
+            return "#%s%s%s%s" % (col[1], col[3], col[5], col[7])
+        elif fmt == "#3" and col[-2:] == "FF" and col[1] == col[2] and col[3] == col[4] and col[5] == col[6]:
+            return "#%s%s%s" % (col[1], col[3], col[5])
+        else:
+            return col
 
     if fmt == "rgb":
         return "rgba(%d,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
