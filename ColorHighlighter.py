@@ -508,6 +508,7 @@ class Logic:
     def on_settings_change_view(self, view):
         sets = view.settings()
         cs = sets.get("color_scheme")
+        self.init_view(view) # TODO: this is a hack, idk why it doesn't work w/o it. Need to remove or figure out, why its needed.
         view_obj = self.views[view.id()]
         vsets = view_obj["settings"]
         if cs != vsets["color_scheme"] and not cs.startswith("Packages/Color Highlighter/"):
@@ -869,14 +870,13 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
 
     def _do_run(self):
         path = os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker_" + self.ext)
-        popen = subprocess.Popen([path, self.col[1:]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        err = popen.stderr.read().decode("utf-8")
+        popen = subprocess.Popen([path, self.col[1:]], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        out, err = popen.communicate()
+        self.output = out.decode("utf-8")
+        err = err.decode("utf-8")
         if err is not None and len(err) != 0:
             print_error("Color Picker error:\n" + err)
 
-        self.output = popen.stdout.read().decode("utf-8")
-    
 
     if get_version() < 3000:
         def run(self, edit):
