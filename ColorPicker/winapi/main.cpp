@@ -9,39 +9,11 @@ int main(int argc, char* argv[]) {
 	HWND consoleHwnd = GetConsoleWindow();
 	ShowWindow(consoleHwnd, SW_HIDE);
 
-	DWORD rgbCurrent; // initial color selection
-	if(argc < 2) {
-		rgbCurrent = RGB(0, 0, 0);
-	}
-	else {
-		int r, g, b, a;
-		char * text;
-		char tmp;
+	unsigned r = 0, g = 0, b = 0, a = 0;
+	if(argc > 1)
+		sscanf_s(argv[1], "%02X%02X%02X%02X", &r, &g, &b, &a);
 
-		text = argv[1] + 1;
-		tmp = text[2];
-		text[2] = '\0';
-		sscanf_s(text, "%X", &r);
-		text[2] = tmp;
-
-		text = argv[1] + 3;
-		tmp = text[2];
-		text[2] = '\0';
-		sscanf_s(text, "%X", &g);
-		text[2] = tmp;
-
-		text = argv[1] + 5;
-		tmp = text[2];
-		text[2] = '\0';
-		sscanf_s(text, "%X", &b);
-		text[2] = tmp;
-
-		text = argv[1] + 7;
-		tmp = text[2];
-		sscanf_s(text, "%X", &a);
-
-		rgbCurrent = RGB(r, g, b);
-	}
+	COLORREF rgbCurrent = RGB((BYTE) r, (BYTE) g, (BYTE) b);
 
 	// Initialize CHOOSECOLOR
 	COLORREF acrCustClr[16] = {}; // array of custom colors 
@@ -54,7 +26,7 @@ int main(int argc, char* argv[]) {
 	cc.Flags = CC_FULLOPEN | CC_RGBINIT | CC_ANYCOLOR;
  
 	if(ChooseColor(&cc) == TRUE)
-		printf("#%02X%02X%02X%s", GetRValue(cc.rgbResult), GetGValue(cc.rgbResult), GetBValue(cc.rgbResult), argc < 2 ? "FF" : argv[1] + 7);
+		printf("#%02X%02X%02X%s", GetRValue(cc.rgbResult), GetGValue(cc.rgbResult), GetBValue(cc.rgbResult), argc < 2 ? "FF" : argv[1] + 6);
 	else
 		printf("CANCEL");
 

@@ -1,0 +1,3 @@
+[
+	{ "keys": ["super+shift+c"], "command": "color_picker" }
+]
