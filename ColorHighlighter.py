@@ -6,13 +6,11 @@ import re
 import colorsys
 import subprocess
 import threading
-import signal
 
 try:
     import colors
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
-
 
 version = "5.0"
 
@@ -294,7 +292,7 @@ class HtmlGen:
 
     def __init__(self, cs):
         self.color_scheme = cs
-        self.fake_scheme = os.path.join("Color Highlighter", cs.split('/')[-1])
+        self.fake_scheme = os.path.join("User", "Color Highlighter", cs.split('/')[-1])
 
     def load(self, htmlGen):
         self.colors = htmlGen.colors[:]
@@ -340,7 +338,6 @@ class HtmlGen:
         path = os.path.join(sublime.packages_path(), self.fake_scheme)
         if os.path.exists(path):
             os.remove(path)
-
 
 def extract_sass_name_val(line):
     pos = line.find(":")
@@ -448,10 +445,10 @@ def parse_stylesheet(view, colors):
 
 
 class Logic:
-    views_ids = []
     views = {}
     settings = {}
-    
+
+
     color_schemes = {}
     def get_html_gen(self, cs):
         if cs not in self.color_schemes.keys():
@@ -511,10 +508,10 @@ class Logic:
     def on_settings_change_view(self, view):
         sets = view.settings()
         cs = sets.get("color_scheme")
-        self.init_view(view) # TODO: this is a hack, idk why it doesn't work w/o it. Need to remove or figure out, why its needed. 
+        self.init_view(view) # TODO: this is a hack, idk why it doesn't work w/o it. Need to remove or figure out, why its needed.
         view_obj = self.views[view.id()]
         vsets = view_obj["settings"]
-        if cs != vsets["color_scheme"]:
+        if cs != vsets["color_scheme"] and not cs.startswith("Packages/Color Highlighter/"):
             vsets["color_scheme"] = cs
             self.set_gen(view, cs)
 
@@ -757,20 +754,41 @@ class ColorSelection(sublime_plugin.EventListener):
     def on_activated(self, view):
         global_logic.on_activated(view)
 
+def restore(files=True):
+    for k in global_logic.views.keys():
+        vo = global_logic.views[k]
+        set_scheme(vo["view"], vo["settings"]["color_scheme"])
+    if files:
+        for hg in global_logic.color_schemes.keys():
+            global_logic.color_schemes[hg].restore()
 
 # command to restore color scheme
 class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        for hg in global_logic.color_schemes:
-            hg.restore()
+        restore()
 
+def restore_broken_css():
+    for w in sublime.windows():
+        for v in w.views():
+            if not os.path.exists(os.path.join(sublime.packages_path(), v.settings().get("color_scheme")[9:])):
+                v.settings().set("color_scheme", sublime.load_settings("Preferences.sublime-settings").get("color_scheme"))
 
 def plugin_loaded():
+    # Create themes folder
+    path = os.path.join(sublime.packages_path(), "User", "Color Highlighter")
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    # restore themes (TODO: remove)
+    restore_broken_css()
+
+    # Create plugin folder
     path = os.path.join(sublime.packages_path(), "Color Highlighter")
     if get_version() >= 3000:
         if not os.path.exists(path):
             os.mkdir(path)
 
+    # Copy binary
     bin = "ColorPicker_" + get_ext()
     fpath = os.path.join(path, bin)
     if get_version() >= 3000:
@@ -782,6 +800,10 @@ def plugin_loaded():
     else:
         if os.path.exists(fpath):
             os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+
+
+def plugin_unloaded():
+    restore(files=False)
 
 if get_version() < 3000:
     plugin_loaded()
@@ -805,7 +827,6 @@ def conv_to_format(base, col):
             return "#%s%s%s" % (col[1], col[3], col[5])
         else:
             return col
-
 
     if fmt == "rgb":
         return "rgba(%d,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
@@ -853,10 +874,9 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
         out, err = popen.communicate()
         self.output = out.decode("utf-8")
         err = err.decode("utf-8")
-
         if err is not None and len(err) != 0:
             print_error("Color Picker error:\n" + err)
-    
+
 
     if get_version() < 3000:
         def run(self, edit):
