@@ -12,7 +12,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.0.1"
+version = "6.0.2"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -998,15 +998,15 @@ def restore_broken_schemes():
                 v.settings().set("color_scheme", g_cs)
 
 def plugin_loaded():
-    # Create plugin folder
-    path = os.path.join(sublime.packages_path(), "Color Highlighter")
-    if not os.path.exists(path):
-        os.mkdir(path)
-
     # Create themes folder
     path = os.path.join(sublime.packages_path(), "User", "Color Highlighter")
     if not os.path.exists(path):
         os.makedirs(path)
+
+    # Create plugin folder
+    path = os.path.join(sublime.packages_path(), "Color Highlighter")
+    if not os.path.exists(path):
+        os.mkdir(path)
 
     # Copy binary
     bin = "ColorPicker_" + get_ext()
