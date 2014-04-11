@@ -18,7 +18,7 @@ These color formats are currently supported:
 - Hexademical e.g. #RGB or #RGBA or #RRGGBB or #RRGGBBAA (you can use both upper and lower case letters)
 - RBG or RGBA value e.g. rgb(rrr, ggg, bbb) or rgba(rrr, ggg, bbb, aaa) or rgba(rrr, ggg, bbb, a.aaa) with decimal channel values.
 - HSV or HSVA value e.g. hsv(hhh, sss, vvv) or hsva(hhh, sss, vvv, aaa) or hsva(hhh, sss, vvv, a.aaa) with decimal channel values.
-- [rrr, ggg, bbb] and [rrr, ggg, bbb, aaa] and [rrr, ggg, bbb, 0.aaa] when editing *.sublime-theme files.
+- [rrr, ggg, bbb] and [rrr, ggg, bbb, aaa] and [rrr, ggg, bbb, a.aaa] when editing *.sublime-theme files.
 - Named colors like "green", "black" and many others.
 - Less/sass/scss variables (supports importing from another files).
 
