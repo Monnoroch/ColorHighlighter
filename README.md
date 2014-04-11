@@ -4,6 +4,10 @@ _ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively 
 
 ![Description](http://i.imgur.com/aRtd2jf.png)
 
+![Description](http://sametmax.com/wp-content/uploads/2013/04/hilight-color.gif)
+
+![Description](http://sametmax.com/wp-content/uploads/2013/04/color-picker.gif)
+
 **Installation :**
 
 - **_Recommended_** - Using [Sublime Package Control](http://wbond.net/sublime_packages/package_control "Sublime Package Control")
