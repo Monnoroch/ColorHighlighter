@@ -12,7 +12,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.0.3"
+version = "6.0.4"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -85,13 +85,13 @@ else:
 
 def conv_from_rgb(col):
     vals = col[4:-1].split(",")
-    return tohex(vals[0], vals[1], vals[2])
+    return tohex(int(vals[0]), int(vals[1]), int(vals[2]))
 
 def conv_to_rgb(col):
-    if col[:-2] == "FF":
+    if col[-2:] == "FF":
         return "rgb(%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
     else:
-        return "rgba(%d,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
+        return "rgba(%da,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
 
 def conv_from_rgbad(col):
     vals = col[5:-1].split(",")
@@ -107,9 +107,51 @@ def conv_from_rgbaf(col):
 def conv_to_rgbaf(col):
     return "rgba(%d,%d,%d,%f)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
 
+def conv_from_hsv(col):
+    vals = col[4:-1].split(",")
+    return tohexhsv(int(vals[0]), int(vals[1]), int(vals[2]))
+
+def conv_to_hsv(col):
+    if col[-2:] == "FF":
+        (r, g, b) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
+        return "hsv(%d,%d,%d)" % rgb_to_hsv(r, g, b)
+    else:
+        (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
+        return "hsva(%d,%d,%d,%d)" % rgb_to_hsv(r, g, b, a)
+
+def conv_from_hsvad(col):
+    vals = col[5:-1].split(",")
+    return tohexhsv(int(vals[0]), int(vals[1]), int(vals[2]), int(vals[3]))
+
+def conv_to_hsvad(col):
+    (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
+    return "hsva(%d,%d,%d,%d)" % rgb_to_hsv(r, g, b, a)
+
+def conv_from_hsvaf(col):
+    vals = list(map(lambda s: s.strip(), col[5:-1].split(",")))
+    return tohexhsv(int(vals[0]), int(vals[1]), int(vals[2]), int(float(vals[3]) * 255))
+
+def conv_to_hsvaf(col):
+    (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
+    return "hsva(%d,%d,%d,%f)" % rgb_to_hsv(r, g, b, a)
+
+
 def conv_from_array_rgb(col):
     vals = col[1:-1].split(",")
     return tohex(int(vals[0]), int(vals[1]), int(vals[2]))
+
+def conv_to_array_rgb(col):
+    if col[:-2] == "FF":
+        return "[%d, %d, %d]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
+    else:
+        return "[%d, %d, %d, %d]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
+
+def conv_from_array_rgbad(col):
+    vals = col[1:-1].split(",")
+    return tohex(int(vals[0]), int(vals[1]), int(vals[2]), int(vals[3]))
+
+def conv_to_array_rgbad(col):
+    return "[%d, %d, %d, %d]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
 
 def conv_to_array_rgb(col):
     if col[:-2] == "FF":
@@ -202,6 +244,21 @@ color_fmts_data = {
         "to_hex": conv_from_rgbaf,
         "from_hex": conv_to_rgbaf
     },
+    "hsv": {
+        "r_str": "[h][s][v][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]",
+        "to_hex": conv_from_hsv,
+        "from_hex": conv_to_hsv
+    },
+    "hsvad": {
+        "r_str": "[h][s][v][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]",
+        "to_hex": conv_from_hsvad,
+        "from_hex": conv_to_hsvad
+    },
+    "hsvaf": {
+        "r_str": "[h][s][v][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*[0|1]?[\.]\d+[ ]*[)]",
+        "to_hex": conv_from_hsvaf,
+        "from_hex": conv_to_hsvaf
+    },
     "array_rgb": {
         "r_str": "[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[\]]",
         "to_hex": conv_from_array_rgb,
@@ -252,10 +309,27 @@ def tohex(r, g, b, a=None):
     if a is None:
         a = 255
     return "#%02X%02X%02X%02X" % (r, g, b, a)
+    
+def tohexhsv(h, s, v, a=None):
+    (r, g, b) = colorsys.hsv_to_rgb(h/255.0, s/255.0, v/255.0)
+    return tohex(int(r*255), int(g*255), int(b*255), a)
 
+def rgb_to_hsv(r, g, b, a=None):
+    (h, s, v) = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
+    if a is None:
+        return (int(h*255), int(s*255), int(v*255))
+    else:
+        return (int(h*255), int(s*255), int(v*255), a)
+
+def hsv_to_rgb(h, s, v, a=None):
+    (r, g, b) = colorsys.hsv_to_rgb(h/255.0, s/255.0, v/255.0)
+    if a is None:
+        return (int(r*255), int(g*255), int(b*255))
+    else:
+        return (int(r*255), int(g*255), int(b*255), a)
 
 def get_cont_col(col):
-    (h, s, v) = colorsys.rgb_to_hsv(int(col[1:3],16)/255.0, int(col[3:5],16)/255.0, int(col[5:7],16)/255.0)
+    (h, s, v) = hsv_to_rgb(int(col[1:3],16), int(col[3:5],16), int(col[5:7],16))
     v1 = v * (s - 1) + 1
     s1 = 0
     if abs(v1) > 1e-10:
