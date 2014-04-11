@@ -12,7 +12,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.0.2"
+version = "6.0.3"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -199,7 +199,7 @@ color_fmts_data = {
     },
     "rgbaf": {
         "r_str": "[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*[0|1]?[\.]\d+[ ]*[)]",
-        "to_hex": conv_from_rgbad,
+        "to_hex": conv_from_rgbaf,
         "from_hex": conv_to_rgbaf
     },
     "array_rgb": {
@@ -362,6 +362,8 @@ def isInColor(view, sel, col_vars, array_format):
                 continue
             word = sublime.Region(s, e)
             col = view.substr(word)
+            if k[0] == "#" and view.substr(word.begin() - 1) not in [" ", ":"]:
+                continue
             if color_fmts_data[k]["regex"].search(col):
                 return word, color_fmts_data[k]["to_hex"](col), False
 
