@@ -14,7 +14,7 @@ except ImportError:
 
 version = "6.0.0"
 
-hex_letters = "0123456789ABCDEFabcdef"
+hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
 
 
@@ -132,34 +132,39 @@ def conv_to_array_rgbaf(col):
     return "[%d, %d, %d, %f]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
 
 def conv_from_hex3(col):
+    col = col.upper()
     return "#" + col[1] * 2 + col[2] * 2 + col[3] * 2 + "FF"
 
 def conv_to_hex3(col):
+    col = col.upper()
     if col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[-2:] == "FF":
         return "#%s%s%s" % (col[1], col[3], col[5])
     return col
 
 def conv_from_hex4(col):
+    col = col.upper()
     return "#" + col[1] * 2 + col[2] * 2 + col[3] * 2 + col[4] * 2
 
 def conv_to_hex4(col):
+    col = col.upper()
     if col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[7] == col[8]:
         return "#%s%s%s%s" % (col[1], col[3], col[5], col[7])
     return col
 
 def conv_from_hex6(col):
-    return col + "FF"
+    return col.upper() + "FF"
 
 def conv_to_hex6(col):
+    col = col.upper()
     if col[-2:] == "FF":
         return col[:-2]
     return col
 
 def conv_from_hex8(col):
-    return col
+    return col.upper()
 
 def conv_to_hex8(col):
-    return col
+    return col.upper()
 
 color_fmts_data = {
     "#3": {
@@ -286,6 +291,7 @@ def conv_to_format(base, col):
 def hex_col_conv(col):
     if col[0] != "#":
         return None
+    col = col.upper()
 
     l = len(col)
     for c in col[1:]:
