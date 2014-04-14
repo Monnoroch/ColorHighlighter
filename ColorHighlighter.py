@@ -329,7 +329,7 @@ def hsv_to_rgb(h, s, v, a=None):
         return (int(r*255), int(g*255), int(b*255), a)
 
 def get_cont_col(col):
-    (h, s, v) = hsv_to_rgb(int(col[1:3],16), int(col[3:5],16), int(col[5:7],16))
+    (h, s, v) = colorsys.rgb_to_hsv(int(col[1:3],16)/255.0, int(col[3:5],16)/255.0, int(col[5:7],16)/255.0)
     v1 = v * (s - 1) + 1
     s1 = 0
     if abs(v1) > 1e-10:
