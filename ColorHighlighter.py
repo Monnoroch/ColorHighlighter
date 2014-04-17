@@ -136,6 +136,35 @@ def conv_to_hsvaf(col):
     return "hsva(%d,%d,%d,%f)" % rgb_to_hsv(r, g, b, a)
 
 
+def conv_from_hsl(col):
+    vals = col[4:-1].split(",")
+    return tohexhsl(int(vals[0]), int(vals[1]), int(vals[2]))
+
+def conv_to_hsl(col):
+    if col[-2:] == "FF":
+        (r, g, b) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
+        return "hsl(%d,%d,%d)" % rgb_to_hsl(r, g, b)
+    else:
+        (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
+        return "hsla(%d,%d,%d,%d)" % rgb_to_hsl(r, g, b, a)
+
+def conv_from_hslad(col):
+    vals = col[5:-1].split(",")
+    return tohexhsl(int(vals[0]), int(vals[1]), int(vals[2]), int(vals[3]))
+
+def conv_to_hslad(col):
+    (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
+    return "hsla(%d,%d,%d,%d)" % rgb_to_hsl(r, g, b, a)
+
+def conv_from_hslaf(col):
+    vals = list(map(lambda s: s.strip(), col[5:-1].split(",")))
+    return tohexhsl(int(vals[0]), int(vals[1]), int(vals[2]), int(float(vals[3]) * 255))
+
+def conv_to_hslaf(col):
+    (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
+    return "hsla(%d,%d,%d,%f)" % rgb_to_hsl(r, g, b, a)
+
+
 def conv_from_array_rgb(col):
     vals = col[1:-1].split(",")
     return tohex(int(vals[0]), int(vals[1]), int(vals[2]))
@@ -259,6 +288,21 @@ color_fmts_data = {
         "to_hex": conv_from_hsvaf,
         "from_hex": conv_to_hsvaf
     },
+    "hsl": {
+        "r_str": "[h][s][l][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]",
+        "to_hex": conv_from_hsl,
+        "from_hex": conv_to_hsl
+    },
+    "hslad": {
+        "r_str": "[h][s][l][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]",
+        "to_hex": conv_from_hslad,
+        "from_hex": conv_to_hslad
+    },
+    "hslaf": {
+        "r_str": "[h][s][l][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*[0|1]?[\.]\d+[ ]*[)]",
+        "to_hex": conv_from_hslaf,
+        "from_hex": conv_to_hslaf
+    },
     "array_rgb": {
         "r_str": "[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[\]]",
         "to_hex": conv_from_array_rgb,
@@ -314,6 +358,10 @@ def tohexhsv(h, s, v, a=None):
     (r, g, b) = colorsys.hsv_to_rgb(h/255.0, s/255.0, v/255.0)
     return tohex(int(r*255), int(g*255), int(b*255), a)
 
+def tohexhsl(h, s, l, a=None):
+    (r, g, b) = colorsys.hls_to_rgb(h/255.0, l/255.0, s/255.0)
+    return tohex(int(r*255), int(g*255), int(b*255), a)
+
 def rgb_to_hsv(r, g, b, a=None):
     (h, s, v) = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
     if a is None:
@@ -323,6 +371,20 @@ def rgb_to_hsv(r, g, b, a=None):
 
 def hsv_to_rgb(h, s, v, a=None):
     (r, g, b) = colorsys.hsv_to_rgb(h/255.0, s/255.0, v/255.0)
+    if a is None:
+        return (int(r*255), int(g*255), int(b*255))
+    else:
+        return (int(r*255), int(g*255), int(b*255), a)
+
+def rgb_to_hsl(r, g, b, a=None):
+    (h, l, s) = colorsys.rgb_to_hls(r/255.0, g/255.0, b/255.0)
+    if a is None:
+        return (int(h*255), int(s*255), int(l*255))
+    else:
+        return (int(h*255), int(s*255), int(l*255), a)
+
+def hsl_to_rgb(h, s, l, a=None):
+    (r, g, b) = colorsys.hls_to_rgb(h/255.0, l/255.0, s/255.0)
     if a is None:
         return (int(r*255), int(g*255), int(b*255))
     else:
