@@ -27,7 +27,7 @@ These color formats are currently supported:
 - Named colors like "green", "black" and many others.
 - Less/sass/scss variables (supports importing from another files).
 - VAL can be the following text:
-  - An integer from 0 to 255
+  - An integer: from 0 to 255 or from 0 to 360 for hue.
   - A float value from 0.0 to 1.0, you can also skip leading zero (like that: .25)
   - A percentage from 0% to 100%.
 
