@@ -80,133 +80,72 @@ else:
     def run_async(cb):
         sublime.set_timeout_async(cb, 0)
 
-
 # regex helpers
 
-def conv_from_rgb(col):
-    vals = col[4:-1].split(",")
-    return tohex(int(vals[0]), int(vals[1]), int(vals[2]))
+def val_type(val):
+    if val[-1] == "%":
+        return "%"
+    if "." in val:
+        return "f"
+    return "d"
 
-def conv_to_rgb(col):
+def val_to_int(val):
+    t = val_type(val)
+    if t == "%":
+        return int((int(val[:-1])*255)/100.0)
+    if t == "f":
+        return int(float(val)*255)
+    return int(val)
+
+def hex_to_sval(t, h):
+    if t == "%":
+        return str(int((int(h, 16) * 100)/255.0)) + '%'
+    if t == "f":
+        return str(int(h, 16)/255.0)
+    return str(int(h, 16))
+
+def conv_from_rgb_gen(k, col):
+    (r, g, b) = color_fmts_data[k]["m_regex"].search(col).groups()
+    return tohex(val_to_int(r), val_to_int(g), val_to_int(b))
+
+def conv_to_rgb_gen(k, base, col):
+    s = color_fmts_data[k]["m_regex"].search(base)
+    (r, g, b) = s.groups()
+    (tr, tg, tb) = (val_type(r), val_type(g), val_type(b))
+    (nr, ng, nb) = (hex_to_sval(tr, col[1:3]), hex_to_sval(tg, col[3:5]), hex_to_sval(tb, col[5:7]))
     if col[-2:] == "FF":
-        return "rgb(%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
+        return base[:s.start(k[0])] + nr + base[s.end(k[0]):s.start(k[1])] + ng + base[s.end(k[1]):s.start(k[2])] + nb + base[s.end(k[2]):]
     else:
-        return "rgba(%da,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
+        na = hex_to_sval("d", col[7:9])
+        return base[:s.start(k[0])].replace(k + "(", k + "a(") + nr + base[s.end(k[0]):s.start(k[1])] + ng + base[s.end(k[1]):s.start(k[2])] + nb + ", " + na + base[s.end(k[2]):]
 
-def conv_from_rgbad(col):
-    vals = col[5:-1].split(",")
-    return tohex(int(vals[0]), int(vals[1]), int(vals[2]), int(vals[3]))
+def conv_from_rgba_gen(k, col):
+    (r, g, b, a) = color_fmts_data[k]["m_regex"].search(col).groups()
+    return tohex(val_to_int(r), val_to_int(g), val_to_int(b), val_to_int(a))
 
-def conv_to_rgbad(col):
-    return "rgba(%d,%d,%d,%d)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
+def conv_to_rgba_gen(k, base, col):
+    s = color_fmts_data[k]["m_regex"].search(base)
+    (r, g, b, a) = s.groups()
+    (tr, tg, tb, ta) = (val_type(r), val_type(g), val_type(b), val_type(a))
+    (nr, ng, nb, na) = (hex_to_sval(tr, col[1:3]), hex_to_sval(tg, col[3:5]), hex_to_sval(tb, col[5:7]), hex_to_sval(ta, col[7:9]))
+    return base[:s.start(k[0])]+ nr + base[s.end(k[0]):s.start(k[1])] + ng + base[s.end(k[1]):s.start(k[2])] + nb + base[s.end(k[2]):s.start(k[3])] + na + base[s.end(k[3]):]
 
-def conv_from_rgbaf(col):
-    vals = list(map(lambda s: s.strip(), col[5:-1].split(",")))
-    return tohex(int(vals[0]), int(vals[1]), int(vals[2]), int(float(vals[3]) * 255))
-
-def conv_to_rgbaf(col):
-    return "rgba(%d,%d,%d,%f)" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
-
-def conv_from_hsv(col):
-    vals = col[4:-1].split(",")
-    return tohexhsv(int(vals[0]), int(vals[1]), int(vals[2]))
-
-def conv_to_hsv(col):
+def conv_to_array_rgba(base, col):
+    s = color_fmts_data[k]["m_regex"].search(base)
+    (r, g, b) = s.groups()
+    (tr, tg, tb) = (val_type(r), val_type(g), val_type(b))
+    (nr, ng, nb) = (hex_to_sval(tr, col[1:3]), hex_to_sval(tg, col[3:5]), hex_to_sval(tb, col[5:7]))
     if col[-2:] == "FF":
-        (r, g, b) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
-        return "hsv(%d,%d,%d)" % rgb_to_hsv(r, g, b)
+        return base[:s.start(k[0])] + nr + base[s.end(k[0]):s.start(k[1])] + ng + base[s.end(k[1]):s.start(k[2])] + nb + base[s.end(k[2]):]
     else:
-        (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
-        return "hsva(%d,%d,%d,%d)" % rgb_to_hsv(r, g, b, a)
-
-def conv_from_hsvad(col):
-    vals = col[5:-1].split(",")
-    return tohexhsv(int(vals[0]), int(vals[1]), int(vals[2]), int(vals[3]))
-
-def conv_to_hsvad(col):
-    (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
-    return "hsva(%d,%d,%d,%d)" % rgb_to_hsv(r, g, b, a)
-
-def conv_from_hsvaf(col):
-    vals = list(map(lambda s: s.strip(), col[5:-1].split(",")))
-    return tohexhsv(int(vals[0]), int(vals[1]), int(vals[2]), int(float(vals[3]) * 255))
-
-def conv_to_hsvaf(col):
-    (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
-    return "hsva(%d,%d,%d,%f)" % rgb_to_hsv(r, g, b, a)
-
-
-def conv_from_hsl(col):
-    vals = col[4:-1].split(",")
-    return tohexhsl(int(vals[0]), int(vals[1]), int(vals[2]))
-
-def conv_to_hsl(col):
-    if col[-2:] == "FF":
-        (r, g, b) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
-        return "hsl(%d,%d,%d)" % rgb_to_hsl(r, g, b)
-    else:
-        (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
-        return "hsla(%d,%d,%d,%d)" % rgb_to_hsl(r, g, b, a)
-
-def conv_from_hslad(col):
-    vals = col[5:-1].split(",")
-    return tohexhsl(int(vals[0]), int(vals[1]), int(vals[2]), int(vals[3]))
-
-def conv_to_hslad(col):
-    (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
-    return "hsla(%d,%d,%d,%d)" % rgb_to_hsl(r, g, b, a)
-
-def conv_from_hslaf(col):
-    vals = list(map(lambda s: s.strip(), col[5:-1].split(",")))
-    return tohexhsl(int(vals[0]), int(vals[1]), int(vals[2]), int(float(vals[3]) * 255))
-
-def conv_to_hslaf(col):
-    (r, g, b, a) = (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
-    return "hsla(%d,%d,%d,%f)" % rgb_to_hsl(r, g, b, a)
-
-
-def conv_from_array_rgb(col):
-    vals = col[1:-1].split(",")
-    return tohex(int(vals[0]), int(vals[1]), int(vals[2]))
-
-def conv_to_array_rgb(col):
-    if col[:-2] == "FF":
-        return "[%d, %d, %d]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
-    else:
-        return "[%d, %d, %d, %d]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
-
-def conv_from_array_rgbad(col):
-    vals = col[1:-1].split(",")
-    return tohex(int(vals[0]), int(vals[1]), int(vals[2]), int(vals[3]))
-
-def conv_to_array_rgbad(col):
-    return "[%d, %d, %d, %d]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
-
-def conv_to_array_rgb(col):
-    if col[:-2] == "FF":
-        return "[%d, %d, %d]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16))
-    else:
-        return "[%d, %d, %d, %d]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
-
-def conv_from_array_rgbad(col):
-    vals = col[1:-1].split(",")
-    return tohex(int(vals[0]), int(vals[1]), int(vals[2]), int(vals[3]))
-
-def conv_to_array_rgbad(col):
-    return "[%d, %d, %d, %d]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16))
-
-def conv_from_array_rgbaf(col):
-    vals = col[1:-1].split(",")
-    return tohex(int(vals[0]), int(vals[1]), int(vals[2]), int(float(vals[3]) * 255))
-
-def conv_to_array_rgbaf(col):
-    return "[%d, %d, %d, %f]" % (int(col[1:3], 16), int(col[3:5], 16), int(col[5:7], 16), int(col[7:9], 16)/255.0)
+        na = hex_to_sval("d", col[7:9])
+        return base[:s.start(k[0])] + nr + base[s.end(k[0]):s.start(k[1])] + ng + base[s.end(k[1]):s.start(k[2])] + nb + ", " + na + base[s.end(k[2]):]
 
 def conv_from_hex3(col):
     col = col.upper()
     return "#" + col[1] * 2 + col[2] * 2 + col[3] * 2 + "FF"
 
-def conv_to_hex3(col):
+def conv_to_hex3(base, col):
     col = col.upper()
     if col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[-2:] == "FF":
         return "#%s%s%s" % (col[1], col[3], col[5])
@@ -216,7 +155,7 @@ def conv_from_hex4(col):
     col = col.upper()
     return "#" + col[1] * 2 + col[2] * 2 + col[3] * 2 + col[4] * 2
 
-def conv_to_hex4(col):
+def conv_to_hex4(base, col):
     col = col.upper()
     if col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[7] == col[8]:
         return "#%s%s%s%s" % (col[1], col[3], col[5], col[7])
@@ -225,7 +164,7 @@ def conv_to_hex4(col):
 def conv_from_hex6(col):
     return col.upper() + "FF"
 
-def conv_to_hex6(col):
+def conv_to_hex6(base, col):
     col = col.upper()
     if col[-2:] == "FF":
         return col[:-2]
@@ -234,9 +173,10 @@ def conv_to_hex6(col):
 def conv_from_hex8(col):
     return col.upper()
 
-def conv_to_hex8(col):
+def conv_to_hex8(base, col):
     return col.upper()
 
+value_regex = "(?:\d{1,3})|(?:[0|1]?[\.]\d+)|(?:\d{1,3}[%])"
 color_fmts_data = {
     "#3": {
         "r_str": "[#][0-9a-fA-F]{3}",
@@ -258,65 +198,53 @@ color_fmts_data = {
         "to_hex": conv_from_hex8,
         "from_hex": conv_to_hex8
     },
-    "rgb": {
-        "r_str": "[r][g][b][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]",
-        "to_hex": conv_from_rgb,
-        "from_hex": conv_to_rgb
+    "rgb": { 
+        "r_str": "[r][g][b][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
+        "m_str": "[r][g][b][(][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
+        "to_hex": lambda col: conv_from_rgb_gen("rgb", col),
+        "from_hex": lambda base, col: conv_to_rgb_gen("rgb", base, col)
     },
-    "rgbad": {
-        "r_str": "[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]",
-        "to_hex": conv_from_rgbad,
-        "from_hex": conv_to_rgbad
+    "rgba": {
+        "r_str": "[r][g][b][a][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
+        "m_str": "[r][g][b][a][(][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
+        "to_hex": lambda col: conv_from_rgba_gen("rgba", col),
+        "from_hex": lambda base, col: conv_to_rgba_gen("rgba", base, col)
     },
-    "rgbaf": {
-        "r_str": "[r][g][b][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*[0|1]?[\.]\d+[ ]*[)]",
-        "to_hex": conv_from_rgbaf,
-        "from_hex": conv_to_rgbaf
+    "hsv": { 
+        "r_str": "[h][s][v][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
+        "m_str": "[h][s][v][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<v>%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
+        "to_hex": lambda col: conv_from_rgb_gen("hsv", col),
+        "from_hex": lambda base, col: conv_to_rgb_gen("hsv", base, col)
     },
-    "hsv": {
-        "r_str": "[h][s][v][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]",
-        "to_hex": conv_from_hsv,
-        "from_hex": conv_to_hsv
+    "hsva": {
+        "r_str": "[h][s][v][a][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
+        "m_str": "[h][s][v][a][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<v>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
+        "to_hex": lambda col: conv_from_rgba_gen("hsva", col),
+        "from_hex": lambda base, col: conv_to_rgba_gen("hsva", base, col)
     },
-    "hsvad": {
-        "r_str": "[h][s][v][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]",
-        "to_hex": conv_from_hsvad,
-        "from_hex": conv_to_hsvad
+    "hsl": { 
+        "r_str": "[h][s][l][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
+        "m_str": "[h][s][l][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<l>%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
+        "to_hex": lambda col: conv_from_rgb_gen("hsl", col),
+        "from_hex": lambda base, col: conv_to_rgb_gen("hsl", base, col)
     },
-    "hsvaf": {
-        "r_str": "[h][s][v][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*[0|1]?[\.]\d+[ ]*[)]",
-        "to_hex": conv_from_hsvaf,
-        "from_hex": conv_to_hsvaf
+    "hsla": {
+        "r_str": "[h][s][l][a][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
+        "m_str": "[h][s][l][a][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<l>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
+        "to_hex": lambda col: conv_from_rgba_gen("hsla", col),
+        "from_hex": lambda base, col: conv_to_rgba_gen("hsla", base, col)
     },
-    "hsl": {
-        "r_str": "[h][s][l][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]",
-        "to_hex": conv_from_hsl,
-        "from_hex": conv_to_hsl
-    },
-    "hslad": {
-        "r_str": "[h][s][l][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[)]",
-        "to_hex": conv_from_hslad,
-        "from_hex": conv_to_hslad
-    },
-    "hslaf": {
-        "r_str": "[h][s][l][a][(][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*[0|1]?[\.]\d+[ ]*[)]",
-        "to_hex": conv_from_hslaf,
-        "from_hex": conv_to_hslaf
-    },
-    "array_rgb": {
-        "r_str": "[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[\]]",
-        "to_hex": conv_from_array_rgb,
+    "rgb_array": {
+        "r_str": "[\[][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[\]]" % (value_regex, value_regex, value_regex),
+        "m_str": "[\[][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[\]]" % (value_regex, value_regex, value_regex),
+        "to_hex": lambda col: conv_from_rgb_gen("rgb_array", col),
         "from_hex": conv_to_array_rgb
     },
-    "array_rgbad": {
-        "r_str": "[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[\]]",
-        "to_hex": conv_from_array_rgbad,
-        "from_hex": conv_to_array_rgbad
-    },
-    "array_rgbaf": {
-        "r_str": "[\[][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*\d{1,3}[ ]*[,][ ]*[0|1]?[\.]\d+[ ]*[\]]",
-        "to_hex": conv_from_array_rgbaf,
-        "from_hex": conv_to_array_rgbaf
+    "rgba_array": {
+        "r_str": "[\[][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[\]]" % (value_regex, value_regex, value_regex, value_regex),
+        "m_str": "[\[][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[\]]" % (value_regex, value_regex, value_regex, value_regex),
+        "to_hex": lambda col: conv_from_rgba_gen("rgba_array", col),
+        "from_hex": lambda base, col: conv_to_rgba_gen("rgba_array", base, col)
     }
 }
 regex_order = ["#8", "#6", "#4", "#3"]
@@ -324,19 +252,22 @@ for k in color_fmts_data.keys():
     if k not in regex_order:
         regex_order.append(k)
 
-def get_all_colors_rstrs():
+def get_all_colors_rstrs(s):
     res = ""
     for k in regex_order:
-        res += "(?:%s)|" % color_fmts_data[k]["r_str"]
+        res += "(?:%s)|" % color_fmts_data[k][s]
     return res[:-1]
 
 color_fmts_data["all"] = {
-    "r_str": "(%s)" % get_all_colors_rstrs(),
+    "r_str": "(%s)" % get_all_colors_rstrs("r_str"),
+    "m_str": "",
     "to_hex": None
 }
 
 for k in color_fmts_data.keys():
     color_fmts_data[k]["regex"] = re.compile(color_fmts_data[k]["r_str"])
+    if "m_str" in color_fmts_data[k].keys():
+        color_fmts_data[k]["m_regex"] = re.compile(color_fmts_data[k]["m_str"])
 
 
 def find_all(regex, text):
@@ -421,8 +352,7 @@ def conv_to_format(base, col):
             if colors.names_to_hex[k] == col:
                 return k
         return col
-
-    return color_fmts_data[fmt]["from_hex"](col)
+    return color_fmts_data[fmt]["from_hex"](base, col)
 
 def hex_col_conv(col):
     if col[0] != "#":
@@ -494,7 +424,7 @@ def isInColor(view, sel, col_vars, array_format):
         if b < s or b > e:
             continue
         for k in regex_order:
-            if not array_format and k.startswith("array"):
+            if not array_format and k.endswith("array"):
                 continue
             word = sublime.Region(s, e)
             col = view.substr(word)
