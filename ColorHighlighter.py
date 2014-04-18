@@ -182,18 +182,7 @@ def conv_to_hsva_gen(k, base, col):
     (th, ts, tv, ta) = (val_type(h), val_type(s), val_type(v), val_type(a))
     (nh, ns, nv, na) = (hex_to_sval(th, col[1:3]), hex_to_sval(ts, col[3:5]), hex_to_sval(tv, col[5:7]), hex_to_sval(ta, col[7:9]))
     return base[:se.start(k[0])]+ nh + base[se.end(k[0]):se.start(k[1])] + ns + base[se.end(k[1]):se.start(k[2])] + nv + base[se.end(k[2]):se.start(k[3])] + na + base[se.end(k[3]):]
-
-def conv_to_array_rgb(base, col):
-    s = color_fmts_data[k]["m_regex"].search(base)
-    (r, g, b) = s.groups()
-    (tr, tg, tb) = (val_type(r), val_type(g), val_type(b))
-    (nr, ng, nb) = (hex_to_sval(tr, col[1:3]), hex_to_sval(tg, col[3:5]), hex_to_sval(tb, col[5:7]))
-    if col[-2:] == "FF":
-        return base[:s.start(k[0])] + nr + base[s.end(k[0]):s.start(k[1])] + ng + base[s.end(k[1]):s.start(k[2])] + nb + base[s.end(k[2]):]
-    else:
-        na = hex_to_sval("d", col[7:9])
-        return base[:s.start(k[0])] + nr + base[s.end(k[0]):s.start(k[1])] + ng + base[s.end(k[1]):s.start(k[2])] + nb + ", " + na + base[s.end(k[2]):]
-
+    
 def conv_from_hex3(col):
     col = col.upper()
     return "#" + col[1] * 2 + col[2] * 2 + col[3] * 2 + "FF"
@@ -291,7 +280,7 @@ color_fmts_data = {
         "r_str": "[\[][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[\]]" % (value_regex, value_regex, value_regex),
         "m_str": "[\[][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[\]]" % (value_regex, value_regex, value_regex),
         "to_hex": lambda col: conv_from_rgb_gen("rgb_array", col),
-        "from_hex": conv_to_array_rgb
+        "from_hex": lambda base, col: conv_to_rgba_gen("rgb_array", base, col)
     },
     "rgba_array": {
         "r_str": "[\[][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[\]]" % (value_regex, value_regex, value_regex, value_regex),
