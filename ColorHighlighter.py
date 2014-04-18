@@ -12,7 +12,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.1.1"
+version = "6.2.0"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -129,7 +129,7 @@ def hex_to_shue(t, h):
         return str(int((int(h, 16) * 100)/360.0)) + '%'
     if t == "f":
         return str(int(h, 16)/360.0)
-    return str(int(h, 16))
+    return str(int((int(h, 16)*360)/255.0))
 
 def conv_from_rgb_gen(k, col):
     (r, g, b) = color_fmts_data[k]["m_regex"].search(col).groups()
@@ -387,6 +387,9 @@ def conv_to_format(base, col):
                 return k
         return col
     return color_fmts_data[fmt]["from_hex"](base, col)
+
+def convert_format(base, col):
+    return conv_to_format(base, color_fmts_data[get_format(col)]["to_hex"](col))
 
 def hex_col_conv(col):
     if col[0] != "#":
@@ -991,6 +994,13 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
         global_logic.restore()
 
 
+def parse_word(s):
+    pos = s.find(")")
+    reg = s[2:pos].split(",")
+    rest = s[pos+1:].split(",")
+    return (sublime.Region(int(reg[0]), int(reg[1])), rest[1].strip(), rest[2].strip() == "True")
+
+
 class ColorPickerCommandImpl(sublime_plugin.TextCommand):
     def run(self, edit, **args):
         m = color_fmts_data["#8"]["regex"].search(args["output"])
@@ -999,20 +1009,13 @@ class ColorPickerCommandImpl(sublime_plugin.TextCommand):
             return
 
         for val in args["words"].split("\t"):
-            w, c, v = self.parse(val)
+            w, c, v = parse_word(val)
             if w is None or v:
                 continue
             new_col = conv_to_format(self.view.substr(w), output)
             if new_col is None:
                 continue
             self.view.replace(edit, w, new_col)
-
-    def parse(self, s):
-        pos = s.find(")")
-        reg = s[2:pos].split(",")
-        rest = s[pos+1:].split(",")
-        return (sublime.Region(int(reg[0]), int(reg[1])), rest[1].strip(), rest[2].strip() == "True")
-
 
 class ColorPickerCommand(sublime_plugin.TextCommand):
     words = []
@@ -1067,6 +1070,43 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
                 break
         return wd is not None and self.col is not None
 
+class ColorConvertCommandImpl(sublime_plugin.TextCommand):
+    def run(self, edit, **args):
+        for val in args["words"].split("\t"):
+            w, c, v = parse_word(val)
+            if w is None or v:
+                continue
+
+            new_col = convert_format(args["format"], self.view.substr(w))
+            if new_col is None:
+                continue
+            self.view.replace(edit, w, new_col)
+
+class ColorConvertCommand(sublime_plugin.TextCommand):
+    words = []
+    wd = None
+
+    def do_run(self, edit, res):
+        self.view.run_command("color_convert_command_impl", {"format": res, "words": "\t".join(list(map(str, self.words)))})
+        self.clear()
+
+    def clear(self):
+        self.words = []
+        self.wd = None
+
+    def run(self, edit):
+        panel = self.view.window().show_input_panel("Format: ", self.view.substr(self.wd), lambda res, e=edit: self.do_run(e, res), None, self.clear)
+        panel.sel().add(sublime.Region(0, panel.size()))
+
+    def is_enabled(self):
+        self.words = global_logic.get_words(self.view)
+        self.wd = None
+        col = None
+        for w, c, v in self.words:
+            if w is not None and not v:
+                self.wd, col = w, c
+                break
+        return self.wd is not None and col is not None
 
 # event listener
 
