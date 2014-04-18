@@ -1,6 +1,6 @@
 #ColorHighlighter
 
-_ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively previews hexadecimal color values by underlaying the selected hex codes. Also, plugin adds color picker to easily modify colors._
+_ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively previews hexadecimal color values by underlaying the selected hex codes. Also, plugin adds color picker and color format converter to easily modify colors._
 
 ![Description](http://i.imgur.com/aRtd2jf.png)
 
@@ -41,10 +41,15 @@ You can also turn on highlighting all colors at once, but it would highlight onl
 
 **Color picker usage:**
 
-Just put the cursor (or multiple cursors) on the color code and select "Choose color" in context menu. Select the color in a popup color picker and all color codes under your cursors will change. The change will preserve exact code format, so if you select two codes "#FFF" and "rgb(255,255,255)" and choose color #FF0000, in the end you get two codes like that: "#FF00FF" and "rgb(255,0,0)".
+Just put the cursor (or multiple cursors) on the color code and select "Choose color" in context menu (or press `ctrl+shift+c`). Select the color in a popup color picker and all color codes under your cursors will change. The change will preserve exact code format, so if you select two codes "#FFF" and "rgb(255,255,255)" and choose color #FF0000, in the end you get two codes like that: "#FF00FF" and "rgb(255,0,0)".
+
+**Color converter usage:**
+
+Just put the cursor (or multiple cursors) on the color code and select "Convert color" in context menu (or press `ctrl+shift+v`). Input a color format to use and press enter.
+Format can be any format supported by this plugin, for exaample if you convert rgb(255,255,255) into format hsv(1,1%,1%), you'll get hsv(360, 100%, 100%).
 
 
 **ACHTUNG!!! :**
 
-Color picker works only on linux x64 and win64 with installed Qt (just for a couple of days, untill we build it on other systems).
+Color picker has a bug on OSX, i fixed it, but can't rebuild the binary to apply this fix.
 
