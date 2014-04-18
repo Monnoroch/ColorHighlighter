@@ -1,3 +1,4 @@
 [
-	{ "keys": ["super+shift+c"], "command": "color_picker" }
+	{ "keys": ["super+shift+c"], "command": "color_picker" },
+	{ "keys": ["super+shift+v"], "command": "color_convert" }
 ]
