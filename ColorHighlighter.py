@@ -218,6 +218,18 @@ def conv_from_hex8(col):
 def conv_to_hex8(base, col):
     return col.upper()
 
+def conv_from_named(col):
+    res = colors.names_to_hex.get(col)
+    if res is not None:
+        return res
+    return None
+
+def conv_to_named(base, col):
+    for k in colors.names_to_hex.keys():
+        if colors.names_to_hex[k] == col:
+            return k
+    return col
+
 value_regex = "(?:\d{1,3})|(?:[0|1]?[\.]\d+)|(?:\d{1,3}[%])"
 color_fmts_data = {
     "#3": {
@@ -287,27 +299,34 @@ color_fmts_data = {
         "m_str": "[\[][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[\]]" % (value_regex, value_regex, value_regex, value_regex),
         "to_hex": lambda col: conv_from_rgba_gen("rgba_array", col),
         "from_hex": lambda base, col: conv_to_rgba_gen("rgba_array", base, col)
+    },
+    "named": {
+        "to_hex": conv_from_named,
+        "from_hex": conv_to_named
     }
 }
+
 regex_order = ["#8", "#6", "#4", "#3"]
 for k in color_fmts_data.keys():
-    if k not in regex_order:
+    if k not in regex_order and "regex" in color_fmts_data[k].keys():
         regex_order.append(k)
 
-def get_all_colors_rstrs(s):
+def get_all_colors_rstrs():
     res = ""
     for k in regex_order:
-        res += "(?:%s)|" % color_fmts_data[k][s]
+        if "r_str" in color_fmts_data[k].keys():
+            res += "(?:%s)|" % color_fmts_data[k]["r_str"]
     return res[:-1]
 
 color_fmts_data["all"] = {
-    "r_str": "(%s)" % get_all_colors_rstrs("r_str"),
+    "r_str": "(%s)" % get_all_colors_rstrs(),
     "m_str": "",
     "to_hex": None
 }
 
 for k in color_fmts_data.keys():
-    color_fmts_data[k]["regex"] = re.compile(color_fmts_data[k]["r_str"])
+    if "r_str" in color_fmts_data[k].keys():
+        color_fmts_data[k]["regex"] = re.compile(color_fmts_data[k]["r_str"])
     if "m_str" in color_fmts_data[k].keys():
         color_fmts_data[k]["m_regex"] = re.compile(color_fmts_data[k]["m_str"])
 
@@ -382,10 +401,7 @@ def conv_to_format(base, col):
         return None
 
     if fmt == "named":
-        for k in colors.names_to_hex.keys():
-            if colors.names_to_hex[k] == col:
-                return k
-        return col
+        return conv_to_named("", col)
     return color_fmts_data[fmt]["from_hex"](base, col)
 
 def convert_format(base, col):
@@ -1086,8 +1102,9 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
     words = []
     wd = None
 
-    def do_run(self, edit, res):
-        self.view.run_command("color_convert_command_impl", {"format": res, "words": "\t".join(list(map(str, self.words)))})
+    def do_run(self, edit, res, txt):
+        if res != txt:
+            self.view.run_command("color_convert_command_impl", {"format": res, "words": "\t".join(list(map(str, self.words)))})
         self.clear()
 
     def clear(self):
@@ -1095,7 +1112,8 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
         self.wd = None
 
     def run(self, edit):
-        panel = self.view.window().show_input_panel("Format: ", self.view.substr(self.wd), lambda res, e=edit: self.do_run(e, res), None, self.clear)
+        txt = self.view.substr(self.wd)
+        panel = self.view.window().show_input_panel("Format: ", txt, lambda res, e=edit, t=txt: self.do_run(e, res, t), None, self.clear)
         panel.sel().add(sublime.Region(0, panel.size()))
 
     def is_enabled(self):
