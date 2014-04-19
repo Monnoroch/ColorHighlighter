@@ -893,6 +893,7 @@ class Logic:
 
 
     def find_all(self, regex, text, view, htmlGen, col_vars):
+        print(col_vars)
         res = []
         array_format = self.get_arr_fmt(view)
         m = regex.search(text)
@@ -903,7 +904,8 @@ class Logic:
                 htmlGen.add_color(col)
             m = regex.search(text, m.end())
 
-        for k in colors.names_to_hex.keys():
+        symbols = list(colors.names_to_hex.keys()) + list(col_vars.keys())
+        for k in symbols:
             l = len(k)
             pos = 0
             ind = text.find(k, pos)
