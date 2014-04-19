@@ -308,7 +308,7 @@ color_fmts_data = {
 
 regex_order = ["#8", "#6", "#4", "#3"]
 for k in color_fmts_data.keys():
-    if k not in regex_order and "regex" in color_fmts_data[k].keys():
+    if k not in regex_order and "r_str" in color_fmts_data[k].keys():
         regex_order.append(k)
 
 def get_all_colors_rstrs():
