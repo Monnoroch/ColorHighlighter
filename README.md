@@ -41,7 +41,7 @@ You can choose the highliting style from:
 - Filled, outlined in ST2.
 - Filled, outlined, underlined (solid, strippled, squiggly) in ST3.
 
-You can also turn on highlighting all colors at once, but it would highlight only constant colors, no variables. This mode has own highlighting style, so you can highlight all colors with underline and selected colors with filled rect.
+You can also turn on highlighting all colors at once. This mode has own highlighting style, so you can highlight all colors with underline and selected colors with filled rect.
 
 **Color picker usage:**
 
