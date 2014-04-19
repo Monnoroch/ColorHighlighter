@@ -463,7 +463,7 @@ def isInColor(view, sel, col_vars, array_format):
             return word1, res, True
         return None, None, None
     # just color
-    elif view.substr(word.begin() - 1) in [" ", ":"]:
+    elif view.substr(word.begin() - 1) in [" ", ":" , "\"", "\'"]:
         res = name_to_hex(view.substr(word), col_vars)
         if res is not None:
             return word, res, False
@@ -481,7 +481,7 @@ def isInColor(view, sel, col_vars, array_format):
                 continue
             word = sublime.Region(s, e)
             col = view.substr(word)
-            if k[0] == "#" and view.substr(word.begin() - 1) not in [" ", ":"]:
+            if k[0] == "#" and view.substr(word.begin() - 1) not in [" ", ":" , "\"", "\'"]:
                 continue
             if color_fmts_data[k]["regex"].search(col):
                 return word, color_fmts_data[k]["to_hex"](col), False
@@ -902,6 +902,18 @@ class Logic:
                 res.append((wd.begin(), wd.end(), col))
                 htmlGen.add_color(col)
             m = regex.search(text, m.end())
+
+        for k in colors.names_to_hex.keys():
+            l = len(k)
+            pos = 0
+            ind = text.find(k, pos)
+            while ind != -1:
+                wd, col, var = isInColor(view, sublime.Region(ind+1, ind+1), col_vars, array_format=array_format)
+                if col is not None:
+                    res.append((wd.begin(), wd.end(), col))
+                    htmlGen.add_color(col)
+                pos = ind + l
+                ind = text.find(k, pos)
         return res
 
     def _get_regions_flags(self, style):
