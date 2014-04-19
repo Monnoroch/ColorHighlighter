@@ -103,7 +103,7 @@ def hue_to_int(val):
         return int((int(val[:-1])*255)/100.0)
     if t == "f":
         return int(float(val)*255)
-    return int((int(val) * 255)/366.0)
+    return int((int(val) * 255)/360.0)
 
 def tohex_rgba(r, g, b, a=None):
     if a is None:
@@ -126,9 +126,9 @@ def hex_to_sval(t, h):
 
 def hex_to_shue(t, h):
     if t == "%":
-        return str(int((int(h, 16) * 100)/360.0)) + '%'
+        return str(int((int(h, 16) * 100)/255.0)) + '%'
     if t == "f":
-        return str(int(h, 16)/360.0)
+        return str(int(h, 16)/255.0)
     return str(int((int(h, 16)*360)/255.0))
 
 def conv_from_rgb_gen(k, col):
@@ -177,10 +177,10 @@ def conv_from_hsva_gen(k, col):
     return tohex_hsva(h, s, v, a)
 
 def conv_to_hsva_gen(k, base, col):
-    s = color_fmts_data[k]["m_regex"].search(base)
-    (h, s, v, a) = s.groups()
+    se = color_fmts_data[k]["m_regex"].search(base)
+    (h, s, v, a) = se.groups()
     (th, ts, tv, ta) = (val_type(h), val_type(s), val_type(v), val_type(a))
-    (nh, ns, nv, na) = (hex_to_sval(th, col[1:3]), hex_to_sval(ts, col[3:5]), hex_to_sval(tv, col[5:7]), hex_to_sval(ta, col[7:9]))
+    (nh, ns, nv, na) = (hex_to_shue(th, col[1:3]), hex_to_sval(ts, col[3:5]), hex_to_sval(tv, col[5:7]), hex_to_sval(ta, col[7:9]))
     return base[:se.start(k[0])]+ nh + base[se.end(k[0]):se.start(k[1])] + ns + base[se.end(k[1]):se.start(k[2])] + nv + base[se.end(k[2]):se.start(k[3])] + na + base[se.end(k[3]):]
     
 def conv_from_hex3(col):
@@ -697,6 +697,7 @@ def parse_stylesheet(view, colors):
 class Logic:
     views = {}
     settings = {}
+    samples = {"curr": 0, "vals": None}
 
 
     # html generator caching fabric
@@ -893,7 +894,6 @@ class Logic:
 
 
     def find_all(self, regex, text, view, htmlGen, col_vars):
-        print(col_vars)
         res = []
         array_format = self.get_arr_fmt(view)
         m = regex.search(text)
@@ -1106,7 +1106,7 @@ class ColorConvertCommandImpl(sublime_plugin.TextCommand):
             w, c, v = parse_word(val)
             if w is None or v:
                 continue
-
+            convert_format("hsv(1.0, 1.0, 1.0)", "hsv(360, 255, 0)")
             new_col = convert_format(args["format"], self.view.substr(w))
             if new_col is None:
                 continue
@@ -1116,9 +1116,9 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
     words = []
     wd = None
 
-    def do_run(self, edit, res, txt):
-        if res != txt:
-            self.view.run_command("color_convert_command_impl", {"format": res, "words": "\t".join(list(map(str, self.words)))})
+    def do_run(self, edit, fmt, txt):
+        if fmt != txt:
+            self.view.run_command("color_convert_command_impl", {"format": fmt, "words": "\t".join(list(map(str, self.words)))})
         self.clear()
 
     def clear(self):
@@ -1127,7 +1127,7 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
         txt = self.view.substr(self.wd)
-        panel = self.view.window().show_input_panel("Format: ", txt, lambda res, e=edit, t=txt: self.do_run(e, res, t), None, self.clear)
+        panel = self.view.window().show_input_panel("Format: ", txt, lambda fmt, e=edit, t=txt: self.do_run(e, fmt, t), None, self.clear)
         panel.sel().add(sublime.Region(0, panel.size()))
 
     def is_enabled(self):
@@ -1139,6 +1139,33 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
                 self.wd, col = w, c
                 break
         return self.wd is not None and col is not None
+
+class ColorConvertNextCommand(sublime_plugin.TextCommand):
+    words = []
+
+    def clear(self):
+        self.words = []
+
+    def run(self, edit):
+        samples = global_logic.samples
+        if samples["vals"] is None:
+            samples["vals"] = sublime.load_settings(settings_file).get("color_formats")
+            samples["curr"] = 0
+        self.view.run_command("color_convert_command_impl", {"format": samples["vals"][samples["curr"]], "words": "\t".join(list(map(str, self.words)))})
+        self.clear()
+        samples["curr"] += 1
+        if samples["curr"] == len(samples["vals"]):
+            samples["curr"] = 0
+
+    def is_enabled(self):
+        self.words = global_logic.get_words(self.view)
+        wd = None
+        col = None
+        for w, c, v in self.words:
+            if w is not None and not v:
+                wd, col = w, c
+                break
+        return wd is not None and col is not None
 
 # event listener
 
