@@ -52,6 +52,8 @@ Just put the cursor (or multiple cursors) on the color code and select "Choose c
 Just put the cursor (or multiple cursors) on the color code and select "Convert color" in context menu (or press `ctrl+shift+v`). Input a color format to use and press enter.
 Format can be any format supported by this plugin, for example if you convert rgb(255,255,255) into format hsv(1,1%,1%), you'll get hsv(360, 100%, 100%). Also works with named colors (both ways).
 
+Also, there is a Next color command, triggered by `ctrl+shift+n` to choose next color format.
+
 
 **ACHTUNG!!! :**
 
