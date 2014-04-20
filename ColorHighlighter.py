@@ -1210,6 +1210,7 @@ def plugin_loaded():
         os.mkdir(path)
 
     # Copy binary
+    chflags = stat.S_IXUSR|stat.S_IXGRP|stat.S_IRUSR|stat.S_IRUSR|stat.S_IWUSR|stat.S_IWGRP
     bin = "ColorPicker_" + get_ext()
     fpath = os.path.join(path, bin)
     if get_version() >= 3000:
@@ -1217,10 +1218,10 @@ def plugin_loaded():
             data = sublime.load_binary_resource('/'.join(["Packages", "Color Highlighter", bin]))
             if len(data) != 0:
                 write_bin_file(fpath, data)
-                os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+                os.chmod(fpath, chflags)
     else:
         if os.path.exists(fpath):
-            os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+            os.chmod(fpath, chflags)
 
     # restore themes
     restore_broken_schemes()
