@@ -12,7 +12,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.2.1"
+version = "6.2.2"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -22,7 +22,6 @@ settings_file = "ColorHighlighter.sublime-settings"
 
 def print_error(err):
     print(err.replace("\\n", "\n"))
-
 
 # files helpers
 
@@ -430,17 +429,19 @@ def name_to_hex(col, col_vars):
     if col is None or len(col) == 0:
         return None
 
-    res = hex_col_conv(col)
-    if res is not None:
-        return res
-
     res = colors.names_to_hex.get(col)
     if res is not None:
         return name_to_hex(res, col_vars)
 
-    if col_vars is None:
+    res = col_vars.get(col)
+    if res is not None:
+        return name_to_hex(res, col_vars)
+
+    fmt = get_format(col)
+    if fmt is None:
         return None
-    return name_to_hex(col_vars.get(col), col_vars)
+
+    return color_fmts_data[fmt]["to_hex"](col)
 
 def isInColor(view, sel, col_vars, array_format):
     b = sel.begin()
@@ -1106,7 +1107,6 @@ class ColorConvertCommandImpl(sublime_plugin.TextCommand):
             w, c, v = parse_word(val)
             if w is None or v:
                 continue
-            convert_format("hsv(1.0, 1.0, 1.0)", "hsv(360, 255, 0)")
             new_col = convert_format(args["format"], self.view.substr(w))
             if new_col is None:
                 continue
