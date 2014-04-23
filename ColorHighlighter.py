@@ -12,7 +12,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.2.0"
+version = "6.2.1"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -230,7 +230,7 @@ def conv_to_named(base, col):
             return k
     return col
 
-value_regex = "(?:\d{1,3})|(?:[0|1]?[\.]\d+)|(?:\d{1,3}[%])"
+value_regex = "(?:\d{1,3})|(?:[0|1]?[\.]\d*)|(?:\d{1,3}[%])"
 color_fmts_data = {
     "#3": {
         "r_str": "[#][0-9a-fA-F]{3}",
@@ -1210,7 +1210,6 @@ def plugin_loaded():
         os.mkdir(path)
 
     # Copy binary
-    chflags = stat.S_IXUSR|stat.S_IXGRP|stat.S_IRUSR|stat.S_IRUSR|stat.S_IWUSR|stat.S_IWGRP
     bin = "ColorPicker_" + get_ext()
     fpath = os.path.join(path, bin)
     if get_version() >= 3000:
@@ -1218,10 +1217,10 @@ def plugin_loaded():
             data = sublime.load_binary_resource('/'.join(["Packages", "Color Highlighter", bin]))
             if len(data) != 0:
                 write_bin_file(fpath, data)
-                os.chmod(fpath, chflags)
+                os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
     else:
         if os.path.exists(fpath):
-            os.chmod(fpath, chflags)
+            os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
 
     # restore themes
     restore_broken_schemes()
