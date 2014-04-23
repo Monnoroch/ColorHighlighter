@@ -345,34 +345,6 @@ def tohex(r, g, b, a=None):
         a = 255
     return "#%02X%02X%02X%02X" % (r, g, b, a)
 
-def rgb_to_hsv(r, g, b, a=None):
-    (h, s, v) = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
-    if a is None:
-        return (int(h*255), int(s*255), int(v*255))
-    else:
-        return (int(h*255), int(s*255), int(v*255), a)
-
-def hsv_to_rgb(h, s, v, a=None):
-    (r, g, b) = colorsys.hsv_to_rgb(h/255.0, s/255.0, v/255.0)
-    if a is None:
-        return (int(r*255), int(g*255), int(b*255))
-    else:
-        return (int(r*255), int(g*255), int(b*255), a)
-
-def rgb_to_hsl(r, g, b, a=None):
-    (h, l, s) = colorsys.rgb_to_hls(r/255.0, g/255.0, b/255.0)
-    if a is None:
-        return (int(h*255), int(s*255), int(l*255))
-    else:
-        return (int(h*255), int(s*255), int(l*255), a)
-
-def hsl_to_rgb(h, s, l, a=None):
-    (r, g, b) = colorsys.hls_to_rgb(h/255.0, l/255.0, s/255.0)
-    if a is None:
-        return (int(r*255), int(g*255), int(b*255))
-    else:
-        return (int(r*255), int(g*255), int(b*255), a)
-
 def get_cont_col(col):
     (h, s, v) = colorsys.rgb_to_hsv(int(col[1:3],16)/255.0, int(col[3:5],16)/255.0, int(col[5:7],16)/255.0)
     v1 = v * (s - 1) + 1
@@ -405,25 +377,6 @@ def conv_to_format(base, col):
 
 def convert_format(base, col):
     return conv_to_format(base, color_fmts_data[get_format(col)]["to_hex"](col))
-
-def hex_col_conv(col):
-    if col[0] != "#":
-        return None
-    col = col.upper()
-
-    l = len(col)
-    for c in col[1:]:
-        if c not in hex_letters:
-            return None
-    if l == 4:
-        return "#" + col[1]*2 + col[2]*2 + col[3]*2 + "FF"
-    if l == 5:
-        return "#" + col[1]*2 + col[2]*2 + col[3]*2 + col[4]*2
-    elif l == 7:
-        return col + "FF"
-    elif l == 9:
-        return col
-    return None
 
 def name_to_hex(col, col_vars):
     if col is None or len(col) == 0:
@@ -503,13 +456,6 @@ def set_scheme(view, cs):
         sets.set("color_scheme", cs)
         return True
     return False
-
-def is_vidget(self, view):
-    w = view.window()
-    if w is None:
-        return False
-    grp, _ = w.get_view_index(view)
-    return grp != -1
 
 def to_abs_cs_path(cs):
     return os.path.join(sublime.packages_path(), os.path.normpath(cs[len("Packages/"):]))
