@@ -12,7 +12,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.2.2"
+version = "6.2.3"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -534,6 +534,8 @@ class HtmlGen:
 
 # less variables parsers
 
+import_regex = re.compile("[\"|\''](?P<name>.*)[\"|\'']")
+
 def extract_sass_name_val(line):
     pos = line.find(":")
     if pos == -1:
@@ -543,47 +545,39 @@ def extract_sass_name_val(line):
     col = line[pos+1:].lstrip()
     return var, col
 
-def _extract_sass_fname(name):
-    if not name.endswith(".sass"):
-        name += ".sass"
-    name = os.path.join(os.path.dirname(nm), name)
+def _extract_sass_fname(dirname, name, ext):
+    if not name.endswith(ext):
+        name += ext
+    name = os.path.join(dirname, name)
     if not os.path.exists(name):
         return None
     return name
 
-def _extract_scss_fname(name):
-    if not name.endswith(".scss"):
-        name += ".scss"
-    name = os.path.join(os.path.dirname(nm), name)
-    if not os.path.exists(name):
+def extract_sass_fname(dirname, line):
+    se = import_regex.search(line)
+    if not se:
         return None
-    return name
+    name = line[se.start("name"):se.end("name")]
+    res = _extract_sass_fname(dirname, name, ".sass")
+    if res is None:
+        res = _extract_sass_fname(dirname, name, ".scss")
+    return res
 
-def extract_sass_fname(view, line):
-    nm = view.file_name()
-    if nm is None:
-        return None
-
-    line = line[8:-1].strip()[1:-1]
-    name = _extract_sass_fname(line)
-    if name is None:
-        name = _extract_scss_fname(line)
-    return name
-
-def find_sass_vars(view, text, cols):
+def find_sass_vars(dirname, text, cols):
     for line in map(lambda s: s.strip(), text.split("\n")):
         if len(line) < 2 or line[0] != "$":
             continue
 
         if line.startswith("@import"):
-            name = extract_sass_fname(view, line)
+            name = extract_sass_fname(dirname, line)
             if name != None:
-                find_sass_vars(view, read_file(name), cols)
+                find_sass_vars(dirname, read_file(name), cols)
             continue
 
         var, col = extract_sass_name_val(line)
         if var != None:
             cols[var] = col
+
 
 def extract_less_name_val(line):
     pos = line.find(":")
@@ -594,27 +588,27 @@ def extract_less_name_val(line):
     col = line[pos+1:-1].strip()
     return var, col
 
-def extract_less_fname(view, line):
-    nm = view.file_name()
-    if nm is None:
+def extract_less_fname(dirname, line):
+    se = import_regex.search(line)
+    if not se:
         return None
-    name = line[8:-1].strip()[1:-1]
+    name = line[se.start("name"):se.end("name")]
     if not name.endswith(".less"):
         name += ".less"
-    name = os.path.join(os.path.dirname(nm), name)
-    if not os.path.exists(name):
+    res = os.path.join(dirname, name)
+    if not os.path.exists(res):
         return None
-    return name
+    return res
 
-def find_less_vars(view, text, cols):
+def find_less_vars(dirname, text, cols):
     for line in map(lambda s: s.strip(), text.split("\n")):
         if len(line) < 2 or line[0] != "@":
             continue
 
         if line.startswith("@import"):
-            name = extract_less_fname(view, line)
+            name = extract_less_fname(dirname, line)
             if name != None:
-                find_less_vars(view, read_file(name), cols)
+                find_less_vars(dirname, read_file(name), cols)
             continue
 
         var, col = extract_less_name_val(line)
@@ -630,13 +624,14 @@ def parse_stylesheet(view, colors):
     nm = view.file_name()
     if nm is None:
         return
+    dirname = os.path.dirname(nm)
 
     name, ext = os.path.splitext(nm)
     text = get_doc_text(view)
     if ext in [".sass", ".scss"]:
-        find_sass_vars(view, text, colors)
+        find_sass_vars(dirname, text, colors)
     elif ext in [".less"]:
-        find_less_vars(view, text, colors)
+        find_less_vars(dirname, text, colors)
 
 
 # event handler, main logic
