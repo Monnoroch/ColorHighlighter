@@ -12,7 +12,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.2.5"
+version = "6.2.6"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -550,11 +550,11 @@ import_regex = re.compile("[\"|\''](?P<name>.*)[\"|\'']")
 def extract_sass_name_val(line):
     pos = line.find(":")
     if pos == -1:
-        return None, None
+        return None, None, None
 
     var = line[:pos].rstrip()
     col = line[pos+1:].lstrip()
-    return var, col
+    return var, col, line.find(col)
 
 def _extract_sass_fname(dirname, name, ext):
     if not name.endswith(ext):
@@ -587,19 +587,19 @@ def find_sass_vars(dirname, fname, text, cols):
                 find_sass_vars(dirname, name, read_file(name), cols)
             continue
 
-        var, col = extract_sass_name_val(line)
+        var, col, pos = extract_sass_name_val(line)
         if var != None:
-            cols[var] = {"col": col, "file": fname, "line": i - 1}
+            cols[var] = {"col": col, "file": fname, "line": i - 1, "pos": pos}
 
 
 def extract_less_name_val(line):
     pos = line.find(":")
     if pos == -1:
-        return None, None
+        return None, None, None
 
     var = line[:pos].rstrip()
     col = line[pos+1:-1].strip()
-    return var, col
+    return var, col, line.find(col)
 
 def extract_less_fname(dirname, line):
     se = import_regex.search(line)
@@ -626,9 +626,9 @@ def find_less_vars(dirname, fname, text, cols):
                 find_less_vars(dirname, name, read_file(name), cols)
             continue
 
-        var, col = extract_less_name_val(line)
+        var, col, pos = extract_less_name_val(line)
         if var != None:
-            cols[var] = {"col": col, "file": fname, "line": i}
+            cols[var] = {"col": col, "file": fname, "line": i, "pos": pos}
 
 
 def extract_name_val(name, line):
@@ -1136,22 +1136,7 @@ class GoToVarDefinitionCommand(sublime_plugin.TextCommand):
         w, c, v = self.words[0]
         var = global_logic.views[self.view.id()]["vars"][self.view.substr(w)]
         wnd = self.view.window()
-        view = wnd.find_open_file(var["file"])
-        if view is None:
-            return
-        
-        line = view.line(view.text_point(var["line"] - 1, 0))
-        lines = view.substr(line)
-        _, col = extract_name_val(var["file"], lines)
-        b = line.begin() + lines.find(col)
-        e = b + len(col)
-        reg = sublime.Region(b, e)
-
-        wnd.focus_view(view)
-        view.show(reg)
-        sel = view.sel()
-        sel.clear()
-        sel.add(reg)
+        view = wnd.open_file(var["file"] + ":%d:%d" % (var["line"], var["pos"] + 1), sublime.ENCODED_POSITION|sublime.TRANSIENT)
 
     def is_enabled(self):
         self.words = global_logic.get_words(self.view)
