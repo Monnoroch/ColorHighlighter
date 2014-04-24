@@ -54,7 +54,7 @@ Format can be any format supported by this plugin, for example if you convert rg
 
 Also, there is a Next color command, triggered by `ctrl+shift+n` to choose next color format.
 
-**Less/sass variables navigetion:**
+**Less/sass variables navigation:**
 
 Just put cursor on a variable, right click on it and press "Go to variable definition" and the plugin will open it.
 
