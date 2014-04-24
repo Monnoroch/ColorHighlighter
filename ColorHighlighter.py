@@ -12,7 +12,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.2.3"
+version = "6.2.4"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -396,6 +396,17 @@ def name_to_hex(col, col_vars):
 
     return color_fmts_data[fmt]["to_hex"](col)
 
+def get_word(view, reg):
+    beg = view.word(reg.begin()).begin()
+    while view.substr(beg - 1) == "-":
+        beg = view.word(beg - 2).begin()
+
+    end = view.word(reg.end()).end()
+    while view.substr(end) == "-":
+        end = view.word(end + 1).end()
+
+    return sublime.Region(beg, end)
+
 def isInColor(view, sel, col_vars, array_format):
     b = sel.begin()
     if b != sel.end():
@@ -404,6 +415,7 @@ def isInColor(view, sel, col_vars, array_format):
     word = view.word(b)
     # sass/less variable
     if view.substr(word.begin() - 1) in ["@", "$"]:
+        word = get_word(view, sel)
         word1 = sublime.Region(word.begin() - 1, word.end())
         res = name_to_hex(view.substr(word1), col_vars)
         if res is not None:
@@ -411,6 +423,7 @@ def isInColor(view, sel, col_vars, array_format):
         return None, None, None
     # less variable interpolation
     elif view.substr(word.begin() - 1) == "{" and view.substr(word.begin() - 2) == "@" and view.substr(word.end()) == "}":
+        word = get_word(view, sel)
         word1 = sublime.Region(word.begin() - 2, word.end() + 1)
         res = name_to_hex("@" + view.substr(word), col_vars)
         if res is not None:
@@ -418,6 +431,7 @@ def isInColor(view, sel, col_vars, array_format):
         return None, None, None
     # just color
     elif view.substr(word.begin() - 1) in [" ", ":" , "\"", "\'"]:
+        word = get_word(view, sel)
         res = name_to_hex(view.substr(word), col_vars)
         if res is not None:
             return word, res, False
@@ -846,7 +860,9 @@ class Logic:
                 htmlGen.add_color(col)
             m = regex.search(text, m.end())
 
-        symbols = list(colors.names_to_hex.keys()) + list(col_vars.keys())
+        varss = list(col_vars.keys())
+        varss.sort(key=len, reverse=True)
+        symbols = list(colors.names_to_hex.keys()) + varss
         for k in symbols:
             l = len(k)
             pos = 0
