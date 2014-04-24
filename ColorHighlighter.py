@@ -12,7 +12,7 @@ try:
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.2.4"
+version = "6.2.5"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -388,7 +388,7 @@ def name_to_hex(col, col_vars):
 
     res = col_vars.get(col)
     if res is not None:
-        return name_to_hex(res, col_vars)
+        return name_to_hex(res["col"], col_vars)
 
     fmt = get_format(col)
     if fmt is None:
@@ -412,10 +412,9 @@ def isInColor(view, sel, col_vars, array_format):
     if b != sel.end():
         return None, None, None
 
-    word = view.word(b)
+    word = get_word(view, sel)
     # sass/less variable
     if view.substr(word.begin() - 1) in ["@", "$"]:
-        word = get_word(view, sel)
         word1 = sublime.Region(word.begin() - 1, word.end())
         res = name_to_hex(view.substr(word1), col_vars)
         if res is not None:
@@ -423,7 +422,6 @@ def isInColor(view, sel, col_vars, array_format):
         return None, None, None
     # less variable interpolation
     elif view.substr(word.begin() - 1) == "{" and view.substr(word.begin() - 2) == "@" and view.substr(word.end()) == "}":
-        word = get_word(view, sel)
         word1 = sublime.Region(word.begin() - 2, word.end() + 1)
         res = name_to_hex("@" + view.substr(word), col_vars)
         if res is not None:
@@ -431,7 +429,6 @@ def isInColor(view, sel, col_vars, array_format):
         return None, None, None
     # just color
     elif view.substr(word.begin() - 1) in [" ", ":" , "\"", "\'"]:
-        word = get_word(view, sel)
         res = name_to_hex(view.substr(word), col_vars)
         if res is not None:
             return word, res, False
@@ -577,20 +574,22 @@ def extract_sass_fname(dirname, line):
         res = _extract_sass_fname(dirname, name, ".scss")
     return res
 
-def find_sass_vars(dirname, text, cols):
+def find_sass_vars(dirname, fname, text, cols):
+    i = 0
     for line in map(lambda s: s.strip(), text.split("\n")):
+        i += 1
         if len(line) < 2 or line[0] != "$":
             continue
 
         if line.startswith("@import"):
             name = extract_sass_fname(dirname, line)
             if name != None:
-                find_sass_vars(dirname, read_file(name), cols)
+                find_sass_vars(dirname, name, read_file(name), cols)
             continue
 
         var, col = extract_sass_name_val(line)
         if var != None:
-            cols[var] = col
+            cols[var] = {"col": col, "file": fname, "line": i - 1}
 
 
 def extract_less_name_val(line):
@@ -614,20 +613,29 @@ def extract_less_fname(dirname, line):
         return None
     return res
 
-def find_less_vars(dirname, text, cols):
+def find_less_vars(dirname, fname, text, cols):
+    i = 0
     for line in map(lambda s: s.strip(), text.split("\n")):
+        i += 1
         if len(line) < 2 or line[0] != "@":
             continue
 
         if line.startswith("@import"):
             name = extract_less_fname(dirname, line)
             if name != None:
-                find_less_vars(dirname, read_file(name), cols)
+                find_less_vars(dirname, name, read_file(name), cols)
             continue
 
         var, col = extract_less_name_val(line)
         if var != None:
-            cols[var] = col
+            cols[var] = {"col": col, "file": fname, "line": i}
+
+
+def extract_name_val(name, line):
+    if name.endswith(".less"):
+        return extract_less_name_val(line)
+    if name.endswith(".sass") or name.endswith("scss"):
+        return extract_sass_name_val(line)
 
 
 def get_doc_text(view):
@@ -643,9 +651,9 @@ def parse_stylesheet(view, colors):
     name, ext = os.path.splitext(nm)
     text = get_doc_text(view)
     if ext in [".sass", ".scss"]:
-        find_sass_vars(dirname, text, colors)
+        find_sass_vars(dirname, nm, text, colors)
     elif ext in [".less"]:
-        find_less_vars(dirname, text, colors)
+        find_less_vars(dirname, nm, text, colors)
 
 
 # event handler, main logic
@@ -935,7 +943,6 @@ class Logic:
         self.init()
         self.init_view(view)
         view_obj = self.views[view.id()]
-        view_obj["vars"] = {}
         return self._get_words(view, view_obj["html_gen"], view_obj["vars"])
 
     def restore(self, files=True):
@@ -1050,13 +1057,12 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
 
     def is_enabled(self):
         self.words = global_logic.get_words(self.view)
-        wd = None
         self.col = None
         for w, c, v in self.words:
             if w is not None and not v:
-                wd, self.col = w, c
-                break
-        return wd is not None and self.col is not None
+                _, self.col = w, c
+                return True
+        return False
 
 class ColorConvertCommandImpl(sublime_plugin.TextCommand):
     def run(self, edit, **args):
@@ -1090,12 +1096,11 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         self.words = global_logic.get_words(self.view)
         self.wd = None
-        col = None
         for w, c, v in self.words:
             if w is not None and not v:
-                self.wd, col = w, c
-                break
-        return self.wd is not None and col is not None
+                self.wd, _ = w, c
+                return True
+        return False
 
 class ColorConvertNextCommand(sublime_plugin.TextCommand):
     words = []
@@ -1116,13 +1121,44 @@ class ColorConvertNextCommand(sublime_plugin.TextCommand):
 
     def is_enabled(self):
         self.words = global_logic.get_words(self.view)
-        wd = None
-        col = None
         for w, c, v in self.words:
             if w is not None and not v:
-                wd, col = w, c
-                break
-        return wd is not None and col is not None
+                return True
+        return False
+
+class GoToVarDefinitionCommand(sublime_plugin.TextCommand):
+    words = []
+
+    def clear(self):
+        self.words = []
+
+    def run(self, edit):
+        w, c, v = self.words[0]
+        var = global_logic.views[self.view.id()]["vars"][self.view.substr(w)]
+        wnd = self.view.window()
+        view = wnd.find_open_file(var["file"])
+        if view is None:
+            return
+        
+        line = view.line(view.text_point(var["line"] - 1, 0))
+        lines = view.substr(line)
+        _, col = extract_name_val(var["file"], lines)
+        b = line.begin() + lines.find(col)
+        e = b + len(col)
+        reg = sublime.Region(b, e)
+
+        wnd.focus_view(view)
+        view.show(reg)
+        sel = view.sel()
+        sel.clear()
+        sel.add(reg)
+
+    def is_enabled(self):
+        self.words = global_logic.get_words(self.view)
+        for w, c, v in self.words:
+            if w is not None and v:
+                return True
+        return False
 
 # event listener
 
