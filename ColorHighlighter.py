@@ -14,7 +14,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.3.0"
+version = "6.3.1"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -672,12 +672,17 @@ def create_icon(col):
     if os.path.exists(full_name):
         return fname
     cmd = 'convert -units PixelsPerCentimeter -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
-    popen = subprocess.Popen(cmd % (col, full_name), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    popen = subprocess.Popen(cmd % (col, full_name), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     _, err = popen.communicate()
-    err = err.decode("utf-8")
+    try:
+        err = err.decode("utf-8")
+    except UnicodeDecodeError as ex:
+        err = str(ex)
     if err is not None and len(err) != 0:
         print_error("convert error:\n" + err)
-    return fname
+    if os.path.exists(full_name):
+        return fname
+    return ""
 
 
 # event handler, main logic
