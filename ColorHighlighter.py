@@ -795,6 +795,10 @@ class Logic:
             return
 
         sets = sublime.load_settings(settings_file)
+        if get_version() < 3000 and sets.get("ha_style").startswith("underlined"):
+            sets.set("ha_style", "outlined")
+            sublime.save_settings(settings_file)
+
         for k in ["enabled", "highlight_all", "style", "ha_style", "icons_all", "icons"]:
             self.settings[k] = sets.get(k)
 
