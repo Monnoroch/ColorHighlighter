@@ -14,7 +14,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.3.1"
+version = "6.3.2"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -795,8 +795,13 @@ class Logic:
             return
 
         sets = sublime.load_settings(settings_file)
-        if get_version() < 3000 and sets.get("ha_style").startswith("underlined"):
-            sets.set("ha_style", "outlined")
+        if get_version() < 3000:
+            if sets.get("ha_style").startswith("underlined"):
+                sets.set("ha_style", "outlined")
+            if sets.get("icons"):
+                sets.set("icons", False)
+            if sets.get("icons_all"):
+                sets.set("icons_all", False)
             sublime.save_settings(settings_file)
 
         for k in ["enabled", "highlight_all", "style", "ha_style", "icons_all", "icons"]:
@@ -1012,16 +1017,20 @@ class ChSetSetting(sublime_plugin.TextCommand):
     def is_visible(self, **args):
         setting = args["setting"]
         global_logic.init()
-        if setting == "style":
-            if get_version() >= 3000:
-                return True
-            return args["value"] in ["default", "filled", "outlined"]
-        elif setting == "ha_style":
-            if get_version() >= 3000:
-                return True
-            return args["value"] in ["default", "filled", "outlined"]
-        elif setting in ["enabled", "highlight_all", "icons_all", "icons"]:
+
+        if setting in ["enabled", "highlight_all"]:
             return args["value"] != global_logic.settings[setting]
+
+        if get_version() >= 3000:
+            if setting in ["style", "ha_style"]:
+                return True
+            if setting in ["icons_all", "icons"]:
+                return args["value"] != global_logic.settings[setting] 
+        else:
+            if setting in ["style", "ha_style"]:
+                return args["value"] in ["default", "filled", "outlined"]
+            if setting in ["icons_all", "icons"]:
+                return False
         return False
 
 
