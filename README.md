@@ -1,6 +1,6 @@
 #ColorHighlighter
 
-_ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively previews hexadecimal color values by underlaying the selected hex codes. Also, plugin adds color picker, color format converter and less/sass variables navigation to easily modify colors._
+_ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively previews hexadecimal color values by underlaying the selected hex codes in different styles and icons. Also, plugin adds color picker, color format converter and less/sass variables navigation to easily modify colors._
 
 ![Description](http://i.imgur.com/aRtd2jf.png)
 
@@ -42,6 +42,8 @@ You can choose the highliting style from:
 - Filled, outlined, underlined (solid, strippled, squiggly) in ST3.
 
 You can also turn on highlighting all colors at once. This mode has own highlighting style, so you can highlight all colors with underline and selected colors with filled rect.
+
+You can also enable icons, which will be shown in the gutter of a file.
 
 **Color picker usage:**
 
