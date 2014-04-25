@@ -1233,10 +1233,12 @@ def plugin_loaded():
     full_data_path = os.path.join(sublime.packages_path()[:-len("Packages")], os.path.normpath(data_path))
     full_icons_path = os.path.join(full_data_path, "icons")
     full_themes_path = os.path.join(full_data_path, "themes")
-    # Create themes folder
+    # Create folders
     if not os.path.exists(full_data_path):
         os.mkdir(full_data_path)
+    if not os.path.exists(full_icons_path):
         os.mkdir(full_icons_path)
+    if not os.path.exists(full_themes_path):
         os.mkdir(full_themes_path)
 
     # Copy binary
