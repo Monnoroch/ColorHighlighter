@@ -15,6 +15,7 @@ _ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively 
     - install `Color Highlighter`
 - Alternatively, download the package from [GitHub](https://github.com/Monnoroch/ColorHighlighter "ColorHighlighter") into your `Packages` folder
 - For icons install [ImageMagick](http://www.imagemagick.org/)
+- For color picker on linux install Qt5 framework.
 
 **Usage :**
 
