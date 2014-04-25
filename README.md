@@ -2,7 +2,7 @@
 
 _ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively previews hexadecimal color values by underlaying the selected hex codes in different styles and icons. Also, plugin adds color picker, color format converter and less/sass variables navigation to easily modify colors._
 
-![Description](http://i.imgur.com/aRtd2jf.png)
+![Description](http://prntscr.com/3d6l47)
 
 ![Description](http://sametmax.com/wp-content/uploads/2013/04/hilight-color.gif)
 
