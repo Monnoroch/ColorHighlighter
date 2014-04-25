@@ -48,6 +48,16 @@
                                 "caption": "Underlined (squiggly)",
                                 "command": "ch_set_setting",
                                 "args": {"setting": "style", "value": "underlined_squiggly"}
+                            },
+                            {
+                                "caption": "Show icons",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "icons", "value": true}
+                            },
+                            {
+                                "caption": "Hide icons",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "icons", "value": false}
                             }
                         ]
                     },
@@ -91,6 +101,16 @@
                                 "caption": "Underlined (squiggly)",
                                 "command": "ch_set_setting",
                                 "args": {"setting": "ha_style", "value": "underlined_squiggly"}
+                            },
+                            {
+                                "caption": "Show icons",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "icons_all", "value": true}
+                            },
+                            {
+                                "caption": "Hide icons",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "icons_all", "value": false}
                             }
                         ]
                     },

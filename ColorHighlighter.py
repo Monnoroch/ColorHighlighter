@@ -6,17 +6,27 @@ import re
 import colorsys
 import subprocess
 import threading
+import shutil
 
 try:
     import colors
 except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
-version = "6.2.6"
+
+version = "6.3.0"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
 
+
+data_path = "Packages/User/Color Highlighter/"
+icons_path = data_path + "icons/"
+themes_path = data_path + "themes/"
+
+full_data_path = None
+full_icons_path = None
+full_themes_path = None
 
 # errors helper
 
@@ -499,7 +509,7 @@ class HtmlGen:
 
     def __init__(self, cs):
         self.color_scheme = cs
-        self.fake_scheme = "Packages/User/Color Highlighter/" + cs.split('/')[-1]
+        self.fake_scheme = themes_path + cs.split('/')[-1]
 
     def load(self, htmlGen):
         self.colors += htmlGen.colors[:]
@@ -656,6 +666,20 @@ def parse_stylesheet(view, colors):
         find_less_vars(dirname, nm, text, colors)
 
 
+def create_icon(col):
+    fname = icons_path + "%s.png" % col[1:]
+    full_name = os.path.join(full_icons_path, "%s.png" % col[1:])
+    if os.path.exists(full_name):
+        return fname
+    cmd = 'convert -units PixelsPerCentimeter -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
+    popen = subprocess.Popen(cmd % (col, full_name), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    _, err = popen.communicate()
+    err = err.decode("utf-8")
+    if err is not None and len(err) != 0:
+        print_error("convert error:\n" + err)
+    return fname
+
+
 # event handler, main logic
 
 class Logic:
@@ -686,7 +710,7 @@ class Logic:
 
     def on_settings_change_view(self, view):
         cs = view.settings().get("color_scheme")
-        if not cs.startswith("Packages/User/Color Highlighter/"):
+        if not cs.startswith(themes_path):
             self.set_scheme_view(self.views[view.id()], cs)
 
     def on_ch_settings_change(self):
@@ -719,6 +743,16 @@ class Logic:
         if ha_style != self.settings["ha_style"]:
             self.settings["ha_style"] = ha_style
             self.on_activated(sublime.active_window().active_view())
+
+        icons_all = sets.get("icons_all")
+        if icons_all != self.settings["icons_all"]:
+            self.settings["icons_all"] = icons_all
+            self.on_activated(sublime.active_window().active_view())
+
+        icons = sets.get("icons")
+        if icons != self.settings["icons"]:
+            self.settings["icons"] = icons
+            self.on_selection_modified(sublime.active_window().active_view())
 
     def do_disable(self):
          for k in self.views.keys():
@@ -756,11 +790,8 @@ class Logic:
             return
 
         sets = sublime.load_settings(settings_file)
-
-        self.settings["enabled"] = sets.get("enabled")
-        self.settings["highlight_all"] = sets.get("highlight_all")
-        self.settings["style"] = sets.get("style")
-        self.settings["ha_style"] = sets.get("ha_style")
+        for k in ["enabled", "highlight_all", "style", "ha_style", "icons_all", "icons"]:
+            self.settings[k] = sets.get(k)
 
         sets.clear_on_change("ColorHighlighter")
         sets.add_on_change("ColorHighlighter", lambda: self.on_ch_settings_change())
@@ -822,7 +853,6 @@ class Logic:
             res = self.find_all(color_fmts_data["all"]["regex"], get_doc_text(view), view, htmlGen, view_obj["vars"])
             if htmlGen.update():
                 htmlGen.update_view(view)
-
             i = 0
             flags = self.get_regions_ha_flags()
             for s, e, col in res:
@@ -830,6 +860,9 @@ class Logic:
                 st = "mon_CH_ALL_" + str(i)
                 regs.append(st)
                 view.add_regions(st, [sublime.Region(s, e)], region_name(col), "", flags)
+                if self.settings["icons_all"]:
+                    regs.append(st + "-ico")
+                    view.add_regions(st + "-ico", [sublime.Region(s, e)], region_name(col) + "-ico", create_icon(col), sublime.HIDDEN)
 
         self.on_selection_modified(view)
 
@@ -852,9 +885,12 @@ class Logic:
             flags = self.get_regions_flags()
             for w, col, _ in words:
                 i += 1
-                s = "mon_CH_" + str(i)
-                regs.append(s)
-                view.add_regions(s, [w], region_name(col), "", flags)
+                st = "mon_CH_" + str(i)
+                regs.append(st)
+                view.add_regions(st, [w], region_name(col), "", flags)
+                if self.settings["icons"]:
+                    regs.append(st + "-ico")
+                    view.add_regions(st + "-ico", [w], region_name(col) + "-ico", create_icon(col), sublime.HIDDEN)
 
 
     def find_all(self, regex, text, view, htmlGen, col_vars):
@@ -975,10 +1011,8 @@ class ChSetSetting(sublime_plugin.TextCommand):
             if get_version() >= 3000:
                 return True
             return args["value"] in ["default", "filled", "outlined"]
-        elif setting == "enabled":
-            return args["value"] != global_logic.settings["enabled"]
-        elif setting == "highlight_all":
-            return args["value"] != global_logic.settings["highlight_all"]
+        elif setting in ["enabled", "highlight_all", "icons_all", "icons"]:
+            return args["value"] != global_logic.settings[setting]
         return False
 
 
@@ -1019,7 +1053,7 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
     output = None
 
     def _do_run(self):
-        path = os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker_" + self.ext)
+        path = os.path.join(full_data_path, "ColorPicker_" + self.ext)
         popen = subprocess.Popen([path, self.col[1:]], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
         out, err = popen.communicate()
         self.output = out.decode("utf-8")
@@ -1177,28 +1211,30 @@ def restore_broken_schemes():
                 v.settings().set("color_scheme", g_cs)
 
 def plugin_loaded():
+    global full_data_path, full_icons_path, full_themes_path
+    full_data_path = os.path.join(sublime.packages_path()[:-len("Packages")], os.path.normpath(data_path))
+    full_icons_path = os.path.join(full_data_path, "icons")
+    full_themes_path = os.path.join(full_data_path, "themes")
     # Create themes folder
-    path = os.path.join(sublime.packages_path(), "User", "Color Highlighter")
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-    # Create plugin folder
-    path = os.path.join(sublime.packages_path(), "Color Highlighter")
-    if not os.path.exists(path):
-        os.mkdir(path)
+    if not os.path.exists(full_data_path):
+        os.mkdir(full_data_path)
+        os.mkdir(full_icons_path)
+        os.mkdir(full_themes_path)
 
     # Copy binary
-    bin = "ColorPicker_" + get_ext()
-    fpath = os.path.join(path, bin)
+    binary = "ColorPicker_" + get_ext()
+    chflags = stat.S_IXUSR|stat.S_IXGRP|stat.S_IRUSR|stat.S_IRUSR|stat.S_IWUSR|stat.S_IWGRP
+    fpath = os.path.join(full_data_path, binary)
     if get_version() >= 3000:
         if not os.path.exists(fpath):
-            data = sublime.load_binary_resource('/'.join(["Packages", "Color Highlighter", bin]))
+            data = sublime.load_binary_resource('/'.join(["Packages", "Color Highlighter", "ColorPicker", binary]))
             if len(data) != 0:
                 write_bin_file(fpath, data)
-                os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+                os.chmod(fpath, chflags)
     else:
-        if os.path.exists(fpath):
-            os.chmod(fpath, stat.S_IXUSR|stat.S_IXGRP)
+        if not os.path.exists(fpath):
+            shutil.copy(os.path.join(sublime.packages_path(), "Color Highlighter", "ColorPicker", binary), fpath)
+            os.chmod(fpath, chflags)
 
     # restore themes
     restore_broken_schemes()
