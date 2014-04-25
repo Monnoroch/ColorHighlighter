@@ -14,7 +14,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.3.2"
+version = "6.3.3"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -563,7 +563,7 @@ def extract_sass_name_val(line):
         return None, None, None
 
     var = line[:pos].rstrip()
-    col = line[pos+1:].lstrip()
+    col = line[pos+1:-1].strip()
     return var, col, line.find(col)
 
 def _extract_sass_fname(dirname, name, ext):
