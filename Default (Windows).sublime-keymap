@@ -1,5 +1,5 @@
 [
 	{ "keys": ["ctrl+shift+c"], "command": "color_picker" },
 	{ "keys": ["ctrl+shift+v"], "command": "color_convert" },
-	{ "keys": ["ctrl+shift+n"], "command": "color_convert_next" }
+	{ "keys": ["ctrl+shift+."], "command": "color_convert_next" }
 ]
