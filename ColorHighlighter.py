@@ -14,7 +14,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.3.3"
+version = "6.3.4"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -237,6 +237,8 @@ def conv_to_named(base, col):
     for k in colors.names_to_hex.keys():
         if colors.names_to_hex[k] == col:
             return k
+    if len(col) == 9:
+        return col[:-2]
     return col
 
 value_regex = "(?:\d{1,3})|(?:[0|1]?[\.]\d*)|(?:\d{1,3}[%])"
