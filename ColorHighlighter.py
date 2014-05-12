@@ -14,7 +14,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.3.5"
+version = "6.4.0"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -91,79 +91,55 @@ else:
 
 # regex helpers
 
-def val_type(val):
-    if val[-1] == "%":
-        return "%"
-    if "." in val:
-        return "f"
-    return "d"
-
-def val_to_int(val):
-    t = val_type(val)
-    if t == "%":
-        return int((int(val[:-1])*255)/100.0)
-    if t == "f":
-        return int(float(val)*255)
-    return int(val)
+def per_to_int(val):
+    return int((int(val[:-1])*255)/100.0)
 
 def hue_to_int(val):
-    t = val_type(val)
-    if t == "%":
-        return int((int(val[:-1])*255)/100.0)
-    if t == "f":
-        return int(float(val)*255)
     return int((int(val) * 255)/360.0)
 
-def tohex_rgba(r, g, b, a=None):
-    if a is None:
-        return tohex(val_to_int(r), val_to_int(g), val_to_int(b))
-    else:
-        return tohex(val_to_int(r), val_to_int(g), val_to_int(b), val_to_int(a))
+def flt_to_int(val):
+    return int(float(val)*255)
 
 def tohex_hsva(h, s, v, a=None):
     if a is None:
-        return tohex(hue_to_int(h), val_to_int(s), val_to_int(v))
+        return tohex(hue_to_int(h), per_to_int(s), per_to_int(v))
     else:
-        return tohex(hue_to_int(h), val_to_int(s), val_to_int(v), val_to_int(a))
+        return tohex(hue_to_int(h), per_to_int(s), per_to_int(v), flt_to_int(a))
 
-def hex_to_sval(t, h):
-    if t == "%":
-        return str(int((int(h, 16) * 100)/255.0)) + '%'
-    if t == "f":
-        return str(int(h, 16)/255.0)
+
+def hex_to_flt(h):
+    return str(int(h, 16)/255.0)
+
+def hex_to_int(h):
     return str(int(h, 16))
 
-def hex_to_shue(t, h):
-    if t == "%":
-        return str(int((int(h, 16) * 100)/255.0)) + '%'
-    if t == "f":
-        return str(int(h, 16)/255.0)
+def hex_to_hue(h):
     return str(int((int(h, 16)*360)/255.0))
+
+def hex_to_perc(h):
+    return str(int((int(h, 16) * 100)/255.0)) + '%'
+
 
 def conv_from_rgb_gen(k, col):
     (r, g, b) = color_fmts_data[k]["m_regex"].search(col).groups()
-    return tohex_rgba(r, g, b)
+    return tohex(int(r), int(g), int(b))
 
 def conv_to_rgb_gen(k, base, col):
     s = color_fmts_data[k]["m_regex"].search(base)
-    (r, g, b) = s.groups()
-    (tr, tg, tb) = (val_type(r), val_type(g), val_type(b))
-    (nr, ng, nb) = (hex_to_sval(tr, col[1:3]), hex_to_sval(tg, col[3:5]), hex_to_sval(tb, col[5:7]))
-    if col[-2:] == "FF":
+    (nr, ng, nb) = (hex_to_int(col[1:3]), hex_to_int(col[3:5]), hex_to_int(col[5:7]))
+    if col.endswith("FF"):
         return base[:s.start(k[0])] + nr + base[s.end(k[0]):s.start(k[1])] + ng + base[s.end(k[1]):s.start(k[2])] + nb + base[s.end(k[2]):]
     else:
-        na = hex_to_sval("f", col[7:9])
+        na = hex_to_flt(col[7:9])
         return base[:s.start(k[0])].replace(k + "(", k + "a(") + nr + base[s.end(k[0]):s.start(k[1])] + ng + base[s.end(k[1]):s.start(k[2])] + nb + ", " + na + base[s.end(k[2]):]
 
 def conv_from_rgba_gen(k, col):
     (r, g, b, a) = color_fmts_data[k]["m_regex"].search(col).groups()
-    return tohex_rgba(r, g, b, a)
+    return tohex(int(r), int(g), int(b), flt_to_int(a))
 
 def conv_to_rgba_gen(k, base, col):
     s = color_fmts_data[k]["m_regex"].search(base)
-    (r, g, b, a) = s.groups()
-    (tr, tg, tb, ta) = (val_type(r), val_type(g), val_type(b), val_type(a))
-    (nr, ng, nb, na) = (hex_to_sval(tr, col[1:3]), hex_to_sval(tg, col[3:5]), hex_to_sval(tb, col[5:7]), hex_to_sval(ta, col[7:9]))
+    (nr, ng, nb, na) = (hex_to_int(col[1:3]), hex_to_int(col[3:5]), hex_to_int(col[5:7]), hex_to_flt(col[7:9]))
     return base[:s.start(k[0])]+ nr + base[s.end(k[0]):s.start(k[1])] + ng + base[s.end(k[1]):s.start(k[2])] + nb + base[s.end(k[2]):s.start(k[3])] + na + base[s.end(k[3]):]
 
 def conv_from_hsv_gen(k, col):
@@ -172,13 +148,11 @@ def conv_from_hsv_gen(k, col):
 
 def conv_to_hsv_gen(k, base, col):
     se = color_fmts_data[k]["m_regex"].search(base)
-    (h, s, v) = se.groups()
-    (th, ts, tv) = (val_type(h), val_type(s), val_type(v))
-    (nh, ns, nv) = (hex_to_shue(th, col[1:3]), hex_to_sval(ts, col[3:5]), hex_to_sval(tv, col[5:7]))
-    if col[-2:] == "FF":
+    (nh, ns, nv) = (hex_to_hue(col[1:3]), hex_to_perc(col[3:5]), hex_to_perc(col[5:7]))
+    if col.endswith("FF"):
         return base[:se.start(k[0])] + nh + base[se.end(k[0]):se.start(k[1])] + ns + base[se.end(k[1]):se.start(k[2])] + nv + base[se.end(k[2]):]
     else:
-        na = hex_to_sval("f", col[7:9])
+        na = hex_to_flt(col[7:9])
         return base[:se.start(k[0])].replace(k + "(", k + "a(") + nh + base[se.end(k[0]):se.start(k[1])] + ns + base[se.end(k[1]):se.start(k[2])] + nv + ", " + na + base[se.end(k[2]):]
 
 def conv_from_hsva_gen(k, col):
@@ -187,36 +161,36 @@ def conv_from_hsva_gen(k, col):
 
 def conv_to_hsva_gen(k, base, col):
     se = color_fmts_data[k]["m_regex"].search(base)
-    (h, s, v, a) = se.groups()
-    (th, ts, tv, ta) = (val_type(h), val_type(s), val_type(v), val_type(a))
-    (nh, ns, nv, na) = (hex_to_shue(th, col[1:3]), hex_to_sval(ts, col[3:5]), hex_to_sval(tv, col[5:7]), hex_to_sval(ta, col[7:9]))
+    (nh, ns, nv, na) = (hex_to_hue(col[1:3]), hex_to_perc(col[3:5]), hex_to_perc(col[5:7]), hex_to_flt(col[7:9]))
     return base[:se.start(k[0])]+ nh + base[se.end(k[0]):se.start(k[1])] + ns + base[se.end(k[1]):se.start(k[2])] + nv + base[se.end(k[2]):se.start(k[3])] + na + base[se.end(k[3]):]
-    
+
+
+def compress_hex4(col):
+    if col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[7] == col[8]:
+        return "#%s%s%s%s" % (col[1], col[3], col[5], col[7])
+    return col
+
+def compress_hex(col):
+    if col.endswith("FF"):
+        if col[1] == col[2] and col[3] == col[4] and col[5] == col[6]:
+            return "#%s%s%s" % (col[1], col[3], col[5])
+        return col[:-2]
+    return compress_hex4(col)
+
+
 def conv_from_hex3(col):
     col = col.upper()
     return "#" + col[1] * 2 + col[2] * 2 + col[3] * 2 + "FF"
 
 def conv_to_hex3(base, col):
-    col = col.upper()
-
-    if col.endswith("FF"):
-        if col[1] == col[2] and col[3] == col[4] and col[5] == col[6]:
-            return "#%s%s%s" % (col[1], col[3], col[5])
-        return col[:-2]
-
-    if col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[7] == col[8]:
-        return "#%s%s%s%s" % (col[1], col[3], col[5], col[7])
-    return col
+    return compress_hex(col.upper())
 
 def conv_from_hex4(col):
     col = col.upper()
     return "#" + col[1] * 2 + col[2] * 2 + col[3] * 2 + col[4] * 2
 
 def conv_to_hex4(base, col):
-    col = col.upper()
-    if col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[7] == col[8]:
-        return "#%s%s%s%s" % (col[1], col[3], col[5], col[7])
-    return col
+    return compress_hex4(col.upper())
 
 def conv_from_hex6(col):
     return col.upper() + "FF"
@@ -239,15 +213,22 @@ def conv_from_named(col):
         return res
     return None
 
-def conv_to_named(base, col):
+def conv_to_named_base(base, col):
     for k in colors.names_to_hex.keys():
         if colors.names_to_hex[k] == col:
             return k
-    if len(col) == 9:
-        return col[:-2]
-    return col
+    return None
 
-value_regex = "(?:\d{1,3})|(?:[0|1]?[\.]\d*)|(?:\d{1,3}[%])"
+def conv_to_named(base, col):
+    b = conv_to_named_base(base, col)
+    if b is not None:
+        return b
+    return col[:-2]
+
+rgx_value_float = "[0|1]?[\.]\d*"
+rgx_value_int = "\d{1,3}"
+rgx_value_per = "\d{1,3}[%]"
+value_regex = "(?:%s)|(?:%s)|(?:%s)" % (rgx_value_int, rgx_value_float, rgx_value_per)
 color_fmts_data = {
     "#3": {
         "r_str": "[#][0-9a-fA-F]{3}",
@@ -270,38 +251,38 @@ color_fmts_data = {
         "from_hex": conv_to_hex8
     },
     "rgb": { 
-        "r_str": "[r][g][b][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
-        "m_str": "[r][g][b][(][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
+        "r_str": "[r][g][b][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (rgx_value_int, rgx_value_int, rgx_value_int),
+        "m_str": "[r][g][b][(][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[)]" % (rgx_value_int, rgx_value_int, rgx_value_int),
         "to_hex": lambda col: conv_from_rgb_gen("rgb", col),
         "from_hex": lambda base, col: conv_to_rgb_gen("rgb", base, col)
     },
     "rgba": {
-        "r_str": "[r][g][b][a][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
-        "m_str": "[r][g][b][a][(][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
+        "r_str": "[r][g][b][a][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (rgx_value_int, rgx_value_int, rgx_value_int, rgx_value_float),
+        "m_str": "[r][g][b][a][(][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[)]" % (rgx_value_int, rgx_value_int, rgx_value_int, rgx_value_float),
         "to_hex": lambda col: conv_from_rgba_gen("rgba", col),
         "from_hex": lambda base, col: conv_to_rgba_gen("rgba", base, col)
     },
     "hsv": { 
-        "r_str": "[h][s][v][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
-        "m_str": "[h][s][v][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<v>%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
+        "r_str": "[h][s][v][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per),
+        "m_str": "[h][s][v][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<v>%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per),
         "to_hex": lambda col: conv_from_hsv_gen("hsv", col),
         "from_hex": lambda base, col: conv_to_hsv_gen("hsv", base, col)
     },
     "hsva": {
-        "r_str": "[h][s][v][a][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
-        "m_str": "[h][s][v][a][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<v>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
+        "r_str": "[h][s][v][a][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per, rgx_value_float),
+        "m_str": "[h][s][v][a][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<v>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per, rgx_value_float),
         "to_hex": lambda col: conv_from_hsva_gen("hsva", col),
         "from_hex": lambda base, col: conv_to_hsva_gen("hsva", base, col)
     },
     "hsl": { 
-        "r_str": "[h][s][l][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
-        "m_str": "[h][s][l][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<l>%s)[ ]*[)]" % (value_regex, value_regex, value_regex),
+        "r_str": "[h][s][l][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per),
+        "m_str": "[h][s][l][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<l>%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per),
         "to_hex": lambda col: conv_from_hsv_gen("hsl", col),
         "from_hex": lambda base, col: conv_to_hsv_gen("hsl", base, col)
     },
     "hsla": {
-        "r_str": "[h][s][l][a][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
-        "m_str": "[h][s][l][a][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<l>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[)]" % (value_regex, value_regex, value_regex, value_regex),
+        "r_str": "[h][s][l][a][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per, rgx_value_float),
+        "m_str": "[h][s][l][a][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<l>%s)[ ]*[,][ ]*(?P<a>%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per, rgx_value_float),
         "to_hex": lambda col: conv_from_hsva_gen("hsla", col),
         "from_hex": lambda base, col: conv_to_hsva_gen("hsla", base, col)
     },
@@ -390,7 +371,10 @@ def conv_to_format(base, col):
         return None
 
     if fmt == "named":
-        return conv_to_named("", col)
+        b = conv_to_named_base("", col)
+        if b is not None:
+            return b
+        return compress_hex4(col)
     return color_fmts_data[fmt]["from_hex"](base, col)
 
 def convert_format(base, col):
@@ -698,7 +682,6 @@ def create_icon(col):
 class Logic:
     views = {}
     settings = {}
-    samples = {"curr": 0, "vals": None}
 
 
     # html generator caching fabric
@@ -767,6 +750,11 @@ class Logic:
             self.settings["icons"] = icons
             self.on_selection_modified(sublime.active_window().active_view())
 
+        color_formats = sets.get("color_formats")
+        if color_formats != self.settings["color_formats"]:
+            self.settings["color_formats"] = color_formats
+            self.settings["color_fmts"] = list(map(get_format, color_formats))
+
     def do_disable(self):
          for k in self.views.keys():
             vo = self.views[k]
@@ -812,8 +800,10 @@ class Logic:
                 sets.set("icons_all", False)
             sublime.save_settings(settings_file)
 
-        for k in ["enabled", "highlight_all", "style", "ha_style", "icons_all", "icons"]:
+        for k in ["enabled", "highlight_all", "style", "ha_style", "icons_all", "icons", "color_formats"]:
             self.settings[k] = sets.get(k)
+
+        self.settings["color_fmts"] = list(map(get_format, self.settings["color_formats"]))
 
         sets.clear_on_change("ColorHighlighter")
         sets.add_on_change("ColorHighlighter", lambda: self.on_ch_settings_change())
@@ -1124,16 +1114,21 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
                 return True
         return False
 
+
+def reg_to_str(reg):
+    return "%d,%d" % (reg.begin(), reg.end())
+
+def reg_from_str(st):
+    w = st.split(",")
+    return sublime.Region(int(w[0]), int(w[1]))
+
 class ColorConvertCommandImpl(sublime_plugin.TextCommand):
     def run(self, edit, **args):
-        for val in args["words"].split("\t"):
-            w, c, v = parse_word(val)
-            if w is None or v:
-                continue
-            new_col = convert_format(args["format"], self.view.substr(w))
-            if new_col is None:
-                continue
-            self.view.replace(edit, w, new_col)
+        wd = reg_from_str(args["word"])
+        new_col = convert_format(args["format"], self.view.substr(wd))
+        if new_col is None:
+            return
+        self.view.replace(edit, wd, new_col)
 
 class ColorConvertCommand(sublime_plugin.TextCommand):
     words = []
@@ -1141,7 +1136,10 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
 
     def do_run(self, edit, fmt, txt):
         if fmt != txt:
-            self.view.run_command("color_convert_command_impl", {"format": fmt, "words": "\t".join(list(map(str, self.words)))})
+            for w, c, v in self.words:
+                if w is None or v:
+                    continue
+                self.view.run_command("color_convert_command_impl", {"format": fmt, "word": reg_to_str(w)})
         self.clear()
 
     def clear(self):
@@ -1169,15 +1167,58 @@ class ColorConvertNextCommand(sublime_plugin.TextCommand):
         self.words = []
 
     def run(self, edit):
-        samples = global_logic.samples
-        if samples["vals"] is None:
-            samples["vals"] = sublime.load_settings(settings_file).get("color_formats")
-            samples["curr"] = 0
-        self.view.run_command("color_convert_command_impl", {"format": samples["vals"][samples["curr"]], "words": "\t".join(list(map(str, self.words)))})
+        samples = global_logic.settings["color_fmts"]
+        l = len(samples)
+
+        for w, c, v in self.words:
+            if w is None or v:
+                continue
+            fmt = get_format(self.view.substr(w))
+            val = -1
+            for i in range(0, l):
+                if fmt == samples[i]:
+                    val = i + 1
+                    break
+            if val == l:
+                val = 0
+            if val == -1:
+                continue
+            self.view.run_command("color_convert_command_impl", {"format": global_logic.settings["color_formats"][val], "word": reg_to_str(w)})
         self.clear()
-        samples["curr"] += 1
-        if samples["curr"] == len(samples["vals"]):
-            samples["curr"] = 0
+
+    def is_enabled(self):
+        self.words = global_logic.get_words(self.view)
+        for w, c, v in self.words:
+            if w is not None and not v:
+                return True
+        return False
+
+
+class ColorConvertPrevCommand(sublime_plugin.TextCommand):
+    words = []
+
+    def clear(self):
+        self.words = []
+
+    def run(self, edit):
+        samples = global_logic.settings["color_fmts"]
+        l = len(samples)
+
+        for w, c, v in self.words:
+            if w is None or v:
+                continue
+            fmt = get_format(self.view.substr(w))
+            val = -1
+            for i in range(0, l):
+                if fmt == samples[i]:
+                    val = i - 1
+                    break
+            if val == -1:
+                val = l - 1
+            if val == -1:
+                continue
+            self.view.run_command("color_convert_command_impl", {"format": global_logic.settings["color_formats"][val], "word": reg_to_str(w)})
+        self.clear()
 
     def is_enabled(self):
         self.words = global_logic.get_words(self.view)
