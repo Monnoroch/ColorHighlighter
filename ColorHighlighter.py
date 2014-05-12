@@ -14,7 +14,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.4.0"
+version = "6.4.1"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -225,7 +225,7 @@ def conv_to_named(base, col):
         return b
     return col[:-2]
 
-rgx_value_float = "[0|1]?[\.]\d*"
+rgx_value_float = "(?:[0|1])|(?:[1][\.]?[0]*)|(?:[0]?[\.]\d*)"
 rgx_value_int = "\d{1,3}"
 rgx_value_per = "\d{1,3}[%]"
 value_regex = "(?:%s)|(?:%s)|(?:%s)" % (rgx_value_int, rgx_value_float, rgx_value_per)
@@ -1134,7 +1134,19 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
     words = []
     wd = None
 
+    formats = {
+        "rgb": "rgb(255, 255, 255)",
+        "rgba": "rgba(255, 255, 255, 1)",
+        "hsv": "hsv(360, 100%, 100%)",
+        "hsva": "hsva(360, 100%, 100%, 1)",
+        "hsl": "hsl(360, 100%, 100%)",
+        "hsla": "hsla(360, 100%, 100%, 1)"
+    }
+
     def do_run(self, edit, fmt, txt):
+        psfmt = self.formats.get(fmt)
+        if psfmt is not None:
+            fmt = psfmt
         if fmt != txt:
             for w, c, v in self.words:
                 if w is None or v:
