@@ -157,7 +157,7 @@ def conv_to_rgb_gen(k, base, col):
 
 def conv_from_rgba_gen(k, col):
     (r, g, b, a) = color_fmts_data[k]["m_regex"].search(col).groups()
-    return tohex_rgba(r, g, b)
+    return tohex_rgba(r, g, b, a)
 
 def conv_to_rgba_gen(k, base, col):
     s = color_fmts_data[k]["m_regex"].search(base)
