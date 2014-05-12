@@ -14,7 +14,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.3.4"
+version = "6.3.5"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -198,8 +198,14 @@ def conv_from_hex3(col):
 
 def conv_to_hex3(base, col):
     col = col.upper()
-    if col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[-2:] == "FF":
-        return "#%s%s%s" % (col[1], col[3], col[5])
+
+    if col.endswith("FF"):
+        if col[1] == col[2] and col[3] == col[4] and col[5] == col[6]:
+            return "#%s%s%s" % (col[1], col[3], col[5])
+        return col[:-2]
+
+    if col[1] == col[2] and col[3] == col[4] and col[5] == col[6] and col[7] == col[8]:
+        return "#%s%s%s%s" % (col[1], col[3], col[5], col[7])
     return col
 
 def conv_from_hex4(col):
