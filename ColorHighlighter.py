@@ -14,7 +14,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.4.1"
+version = "6.4.2"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -91,20 +91,37 @@ else:
 
 # regex helpers
 
-def per_to_int(val):
-    return int((int(val[:-1])*255)/100.0)
+def per_to_flt(val):
+    return int(val[:-1])/100.0
 
-def hue_to_int(val):
-    return int((int(val) * 255)/360.0)
+def hue_to_flt(val):
+    h = int(val)
+    if h == 360:
+        return 0
+    return h / 360.0
 
 def flt_to_int(val):
     return int(float(val)*255)
 
-def tohex_hsva(h, s, v, a=None):
-    if a is None:
-        return tohex(hue_to_int(h), per_to_int(s), per_to_int(v))
+def tohex_hsva(k, h, s, v, a=None):
+    (vh, vs, vv) = (hue_to_flt(h), per_to_flt(s), per_to_flt(v))
+    if k.startswith("hsv"):
+        (r, g, b) = colorsys.hsv_to_rgb(vh, vs, vv)
     else:
-        return tohex(hue_to_int(h), per_to_int(s), per_to_int(v), flt_to_int(a))
+        (r, g, b) = colorsys.hls_to_rgb(vh, vv, vs)
+    (vr, vg, vb) = (int(r*255), int(g*255), int(b*255))
+    if a is None:
+        return tohex(vr, vg, vb)
+    else:
+        return tohex(vr, vg, vb, flt_to_int(a))
+
+def fromhex_hsva(k, col):
+    (fr, fg, fb) = (int(col[1:3], 16)/255.0, int(col[3:5], 16)/255.0, int(col[5:7], 16)/255.0)
+    if k.startswith("hsv"):
+        (nh, ns, nv) = colorsys.rgb_to_hsv(fr, fg, fb)
+    else:
+        (nh, nv, ns) = colorsys.rgb_to_hls(fr, fg, fb)
+    return (str(int(nh * 360)), str(int(ns * 100)) + '%', str(int(nv * 100)) + '%')
 
 
 def hex_to_flt(h):
@@ -144,11 +161,11 @@ def conv_to_rgba_gen(k, base, col):
 
 def conv_from_hsv_gen(k, col):
     (h, s, v) = color_fmts_data[k]["m_regex"].search(col).groups()
-    return tohex_hsva(h, s, v)
+    return tohex_hsva(k, h, s, v)
 
 def conv_to_hsv_gen(k, base, col):
     se = color_fmts_data[k]["m_regex"].search(base)
-    (nh, ns, nv) = (hex_to_hue(col[1:3]), hex_to_perc(col[3:5]), hex_to_perc(col[5:7]))
+    (nh, ns, nv) = fromhex_hsva(k, col)
     if col.endswith("FF"):
         return base[:se.start(k[0])] + nh + base[se.end(k[0]):se.start(k[1])] + ns + base[se.end(k[1]):se.start(k[2])] + nv + base[se.end(k[2]):]
     else:
@@ -157,11 +174,12 @@ def conv_to_hsv_gen(k, base, col):
 
 def conv_from_hsva_gen(k, col):
     (h, s, v, a) = color_fmts_data[k]["m_regex"].search(col).groups()
-    return tohex_hsva(h, s, v, a)
+    return tohex_hsva(k, h, s, v, a)
 
 def conv_to_hsva_gen(k, base, col):
     se = color_fmts_data[k]["m_regex"].search(base)
-    (nh, ns, nv, na) = (hex_to_hue(col[1:3]), hex_to_perc(col[3:5]), hex_to_perc(col[5:7]), hex_to_flt(col[7:9]))
+    (nh, ns, nv) = fromhex_hsva(k, col)
+    na =  hex_to_flt(col[7:9])
     return base[:se.start(k[0])]+ nh + base[se.end(k[0]):se.start(k[1])] + ns + base[se.end(k[1]):se.start(k[2])] + nv + base[se.end(k[2]):se.start(k[3])] + na + base[se.end(k[3]):]
 
 
