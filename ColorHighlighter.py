@@ -14,7 +14,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.4.2"
+version = "6.4.3"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -129,12 +129,6 @@ def hex_to_flt(h):
 
 def hex_to_int(h):
     return str(int(h, 16))
-
-def hex_to_hue(h):
-    return str(int((int(h, 16)*360)/255.0))
-
-def hex_to_perc(h):
-    return str(int((int(h, 16) * 100)/255.0)) + '%'
 
 
 def conv_from_rgb_gen(k, col):
