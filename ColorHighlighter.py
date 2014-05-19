@@ -770,6 +770,7 @@ class Logic:
             vo = self.views[k]
             view = vo["view"]
             if vo["html_gen"].update_view(view):
+                self.on_activated(view)
                 self.on_selection_modified(view)
 
     def set_scheme_view(self, view_obj, cs):
