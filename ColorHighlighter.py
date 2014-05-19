@@ -784,8 +784,7 @@ class Logic:
 
         view = view_obj["view"]
         htmlGen.update()
-        if htmlGen.update_view(view):
-            self.on_selection_modified(view)
+        htmlGen.update_view(view)
 
     # initers
 
