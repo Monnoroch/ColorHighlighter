@@ -25,6 +25,16 @@
                         "children":
                         [
                             {
+                                "caption": "Disabled",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "style", "value": "disabled"}
+                            },
+                            {
+                                "caption": "None",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "style", "value": "none"}
+                            },
+                            {
                                 "caption": "Filled",
                                 "command": "ch_set_setting",
                                 "args": {"setting": "style", "value": "filled"}
@@ -62,21 +72,19 @@
                         ]
                     },
                     {
-                        "caption": "Highlit all",
-                        "command": "ch_set_setting",
-                        "args": {"setting": "highlight_all", "value": true},
-                        "mnemonic": "A"
-                    },
-                    {
-                        "caption": "Do not highlit all",
-                        "command": "ch_set_setting",
-                        "args": {"setting": "highlight_all", "value": false},
-                        "mnemonic": "A"
-                    },
-                    {
                         "caption": "Highlit all style",
                         "children":
                         [
+                            {
+                                "caption": "Disabled",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "ha_style", "value": "disabled"}
+                            },
+                            {
+                                "caption": "None",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "ha_style", "value": "none"}
+                            },
                             {
                                 "caption": "Filled",
                                 "command": "ch_set_setting",

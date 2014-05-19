@@ -727,25 +727,17 @@ class Logic:
         enabled = sets.get("enabled")
         if enabled != self.settings["enabled"]:
             self.settings["enabled"] = enabled
-            if not enabled and not self.settings["highlight_all"]:
+            if not enabled:
                 self.do_disable()
             else:
                 self.do_enable()
+            self.on_activated(sublime.active_window().active_view())
             self.on_selection_modified(sublime.active_window().active_view())
 
         style = sets.get("style")
         if style != self.settings["style"]:
             self.settings["style"] = style
             self.on_selection_modified(sublime.active_window().active_view())
-
-        highlight_all = sets.get("highlight_all")
-        if highlight_all != self.settings["highlight_all"]:
-            self.settings["highlight_all"] = highlight_all
-            if not highlight_all and not self.settings["enabled"]:
-                self.do_disable()
-            else:
-                self.do_enable()
-            self.on_activated(sublime.active_window().active_view())
 
         ha_style = sets.get("ha_style")
         if ha_style != self.settings["ha_style"]:
@@ -812,7 +804,7 @@ class Logic:
                 sets.set("icons_all", False)
             sublime.save_settings(settings_file)
 
-        for k in ["enabled", "highlight_all", "style", "ha_style", "icons_all", "icons", "color_formats"]:
+        for k in ["enabled", "style", "ha_style", "icons_all", "icons", "color_formats"]:
             self.settings[k] = sets.get(k)
 
         self.settings["color_fmts"] = list(map(get_format, self.settings["color_formats"]))
@@ -869,8 +861,9 @@ class Logic:
         view_obj["vars"] = {}
         self.clean_hl_all_regions(view)
 
-        parse_stylesheet(view, view_obj["vars"])
-        if self.settings["highlight_all"]:
+        if self.settings["enabled"] and self.settings["ha_style"] != "disabled":
+            parse_stylesheet(view, view_obj["vars"])
+
             htmlGen = view_obj["html_gen"]
             regs = view_obj["hl_all_regions"]
 
@@ -882,8 +875,9 @@ class Logic:
             for s, e, col in res:
                 i += 1
                 st = "mon_CH_ALL_" + str(i)
-                regs.append(st)
-                view.add_regions(st, [sublime.Region(s, e)], region_name(col), "", flags)
+                if self.settings["ha_style"] != "none":
+                    regs.append(st)
+                    view.add_regions(st, [sublime.Region(s, e)], region_name(col), "", flags)
                 if self.settings["icons_all"]:
                     regs.append(st + "-ico")
                     view.add_regions(st + "-ico", [sublime.Region(s, e)], region_name(col) + "-ico", create_icon(col), sublime.HIDDEN)
@@ -896,7 +890,7 @@ class Logic:
             return
 
         self.clean_regions(view)
-        if self.settings["enabled"]:
+        if self.settings["enabled"] and self.settings["style"] != "disabled":
             view_obj = self.views[view.id()]
 
             htmlGen = view_obj["html_gen"]
@@ -910,8 +904,9 @@ class Logic:
             for w, col, _ in words:
                 i += 1
                 st = "mon_CH_" + str(i)
-                regs.append(st)
-                view.add_regions(st, [w], region_name(col), "", flags)
+                if self.settings["style"] != "none":
+                    regs.append(st)
+                    view.add_regions(st, [w], region_name(col), "", flags)
                 if self.settings["icons"]:
                     regs.append(st + "-ico")
                     view.add_regions(st + "-ico", [w], region_name(col) + "-ico", create_icon(col), sublime.HIDDEN)
@@ -1028,7 +1023,7 @@ class ChSetSetting(sublime_plugin.TextCommand):
         setting = args["setting"]
         global_logic.init()
 
-        if setting in ["enabled", "highlight_all"]:
+        if setting == "enabled":
             return args["value"] != global_logic.settings[setting]
 
         if get_version() >= 3000:

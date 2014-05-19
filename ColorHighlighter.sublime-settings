@@ -2,7 +2,6 @@
     "enabled": true,
     "style": "default",
     "icons": true,
-    "highlight_all": true,
     "ha_style": "underlined_solid",
     "icons_all": false,
     "color_formats": [
