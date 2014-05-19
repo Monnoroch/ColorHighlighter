@@ -476,9 +476,6 @@ def region_name(s):
 # color scheme helpers
 
 def set_scheme(view, cs):
-    regex = re.compile('\.stTheme', re.IGNORECASE)
-    if regex.search(cs):
-        return False    
     sets = view.settings()
     if sets.get("color_scheme") != cs:
         sets.set("color_scheme", cs)
@@ -720,6 +717,8 @@ class Logic:
         self.settings["color_scheme"] = cs
 
     def on_settings_change_view(self, view):
+        if view.settings().get("is_widget"):
+            return
         cs = view.settings().get("color_scheme")
         if not cs.startswith(themes_path):
             self.set_scheme_view(self.views[view.id()], cs)
@@ -824,6 +823,8 @@ class Logic:
         self.inited = True
 
     def init_view(self, view):
+        if view.settings().get('is_widget'):
+            return False
         if view.id() in self.views.keys():
             return True
         sets = view.settings()
