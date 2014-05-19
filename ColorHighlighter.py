@@ -476,6 +476,9 @@ def region_name(s):
 # color scheme helpers
 
 def set_scheme(view, cs):
+    regex = re.compile('\.stTheme', re.IGNORECASE)
+    if regex.search(cs):
+        return False    
     sets = view.settings()
     if sets.get("color_scheme") != cs:
         sets.set("color_scheme", cs)
