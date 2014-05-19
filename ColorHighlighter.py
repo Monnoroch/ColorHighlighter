@@ -820,6 +820,10 @@ class Logic:
 
         self.inited = True
 
+        for w in sublime.windows():
+            for v in w.views():
+                self.init_view(v)
+
     def init_view(self, view):
         if view.id() in self.views.keys():
             return True
