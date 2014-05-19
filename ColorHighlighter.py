@@ -731,8 +731,6 @@ class Logic:
                 self.do_disable()
             else:
                 self.do_enable()
-            self.on_activated(sublime.active_window().active_view())
-            self.on_selection_modified(sublime.active_window().active_view())
 
         style = sets.get("style")
         if style != self.settings["style"]:
@@ -764,6 +762,7 @@ class Logic:
             vo = self.views[k]
             view = vo["view"]
             if set_scheme(view, vo["settings"]["color_scheme"]):
+                self.on_activated(view)
                 self.on_selection_modified(view)
 
     def do_enable(self):
@@ -783,9 +782,9 @@ class Logic:
         view_obj["html_gen"] = htmlGen
 
         view = view_obj["view"]
-        if htmlGen.update():
-            if htmlGen.update_view(view):
-                self.on_selection_modified(view)
+        htmlGen.update()
+        if htmlGen.update_view(view):
+            self.on_selection_modified(view)
 
     # initers
 
