@@ -5,6 +5,7 @@
     "ha_style": "underlined_solid",
     "icons_all": false,
     "default_keybindings": true,
+    "convert_util_path" : "convert",
     "color_formats": [
         "white",
         "#FFF", "#FFFF", "#FFFFFF", "#FFFFFFFF",
