@@ -1165,6 +1165,7 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
     wd = None
 
     formats = {
+        "named": "white",
         "rgb": "rgb(255, 255, 255)",
         "rgba": "rgba(255, 255, 255, 1)",
         "hsv": "hsv(0, 0%, 100%)",

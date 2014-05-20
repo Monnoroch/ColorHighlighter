@@ -1,6 +1,6 @@
 [
 	{ "keys": ["super+shift+c"], "command": "color_picker" },
-	{ "keys": ["super+shift+v"], "command": "color_convert" },
+	{ "keys": ["super+shift+a"], "command": "color_convert" },
 	{ "keys": ["super+shift+,"], "command": "color_convert_prev" },
 	{ "keys": ["super+shift+."], "command": "color_convert_next" }
 ]
