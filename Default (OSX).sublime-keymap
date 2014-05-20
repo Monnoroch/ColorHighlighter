@@ -1,6 +1,38 @@
 [
-	{ "keys": ["super+shift+c"], "command": "color_picker" },
-	{ "keys": ["super+shift+a"], "command": "color_convert" },
-	{ "keys": ["super+shift+,"], "command": "color_convert_prev" },
-	{ "keys": ["super+shift+."], "command": "color_convert_next" }
+	{
+		"keys": ["super+shift+c"],
+		"command": "color_picker",
+		"context": [
+			{
+				"key": "color_highlighter.color_picker"
+			}
+		]
+	},
+	{
+		"keys": ["super+shift+a"],
+		"command": "color_convert",
+		"context": [
+			{
+				"key": "color_highlighter.color_convert"
+			}
+		]
+	},
+	{
+		"keys": ["super+shift+,"],
+		"command": "color_convert_prev",
+		"context": [
+			{
+				"key": "color_highlighter.color_convert_prev"
+			}
+		]
+	},
+	{
+		"keys": ["super+shift+."],
+		"command": "color_convert_next",
+		"context": [
+			{
+				"key": "color_highlighter.color_convert_next"
+			}
+		]
+	}
 ]
