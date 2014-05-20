@@ -742,6 +742,10 @@ class Logic:
             else:
                 self.do_enable()
 
+        default_keybindings = sets.get("default_keybindings")
+        if default_keybindings != self.settings["default_keybindings"]:
+            self.settings["default_keybindings"] = default_keybindings
+
         style = sets.get("style")
         if style != self.settings["style"]:
             self.settings["style"] = style
@@ -810,7 +814,7 @@ class Logic:
                 sets.set("icons_all", False)
             sublime.save_settings(settings_file)
 
-        for k in ["enabled", "style", "ha_style", "icons_all", "icons", "color_formats"]:
+        for k in ["enabled", "default_keybindings", "style", "ha_style", "icons_all", "icons", "color_formats"]:
             self.settings[k] = sets.get(k)
 
         self.settings["color_fmts"] = list(map(get_format, self.settings["color_formats"]))
@@ -1044,7 +1048,7 @@ class ChSetSetting(sublime_plugin.TextCommand):
         setting = args["setting"]
         global_logic.init()
 
-        if setting == "enabled":
+        if setting in ["enabled", "default_keybindings"]:
             return args["value"] != global_logic.settings[setting]
 
         if get_version() >= 3000:
@@ -1307,6 +1311,12 @@ class ColorSelection(sublime_plugin.EventListener):
 
     def on_pre_save(self, view):
         global_logic.on_pre_save(view)
+
+    def on_query_context(self, view, key, op, operand, match_all):
+        if not key.startswith('color_highlighter.'):
+            return None
+        return sublime.load_settings(settings_file).get("default_keybindings")
+
 
 
 # initers and deiniters

@@ -4,6 +4,7 @@
     "icons": true,
     "ha_style": "underlined_solid",
     "icons_all": false,
+    "default_keybindings": true,
     "color_formats": [
         "white",
         "#FFF", "#FFFF", "#FFFFFF", "#FFFFFFFF",

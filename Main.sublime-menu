@@ -126,6 +126,16 @@
                         "caption": "Restore color scheme",
                         "command": "restore_color_scheme",
                         "mnemonic": "R"
+                    },
+                    {
+                        "caption": "Enable default keybindings",
+                        "command": "ch_set_setting",
+                        "args": {"setting": "default_keybindings", "value": true}
+                    },
+                    {
+                        "caption": "Disable default keybindings",
+                        "command": "ch_set_setting",
+                        "args": {"setting": "default_keybindings", "value": false}
                     }
                 ]
             }
