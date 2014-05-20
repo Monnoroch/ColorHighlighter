@@ -14,7 +14,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.4.5"
+version = "6.5"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -488,7 +488,7 @@ def to_abs_cs_path(cs):
 # html generator for color scheme
 
 class HtmlGen:
-    colors = []
+    colors = None
     color_scheme = None
     fake_scheme = None
     need_upd = False
@@ -514,11 +514,15 @@ class HtmlGen:
     def __init__(self, cs):
         self.color_scheme = cs
         self.fake_scheme = themes_path + cs.split('/')[-1]
+        self.colors = []
 
     def load(self, htmlGen):
-        self.colors += htmlGen.colors[:]
-        self.string += htmlGen.string
-        self.need_upd = htmlGen.string != ""
+        new_cols = [x for x in htmlGen.colors if x not in self.colors]
+        for col in new_cols:
+            cont = get_cont_col(col)
+            self.string += self.gen_string % (region_name(col), col, cont, cont)
+        self.colors += new_cols
+        self.need_upd = len(new_cols) != 0
 
     def add_color(self, col):
         if col in self.colors:
@@ -709,17 +713,21 @@ class Logic:
         sets = sublime.load_settings("Preferences.sublime-settings")
         cs = sets.get("color_scheme")
         curr_cs = self.settings["color_scheme"]
-        if cs != curr_cs:
-            for k in self.views.keys():
-                vo = self.views[k]
-                if vo["settings"]["color_scheme"] == curr_cs:
-                    self.set_scheme_view(vo, cs)
+        if cs == curr_cs:
+            return
+        for k in self.views.keys():
+            vo = self.views[k]
+            if vo["settings"]["color_scheme"] == curr_cs:
+                self.set_scheme_view(vo, cs)
         self.settings["color_scheme"] = cs
 
     def on_settings_change_view(self, view):
         cs = view.settings().get("color_scheme")
+        vo = self.views[view.id()]
+        if vo["settings"]["color_scheme"] == cs:
+            return
         if not cs.startswith(themes_path):
-            self.set_scheme_view(self.views[view.id()], cs)
+            self.set_scheme_view(vo, cs)
 
     def on_ch_settings_change(self):
         sets = sublime.load_settings(settings_file)
@@ -774,10 +782,7 @@ class Logic:
                 self.on_selection_modified(view)
 
     def set_scheme_view(self, view_obj, cs):
-        vsets = view_obj["settings"]
-        if vsets["color_scheme"] == cs:
-            return
-        vsets["color_scheme"] = cs
+        view_obj["settings"]["color_scheme"] = cs
         htmlGen = self.get_html_gen(cs)
         htmlGen.load(view_obj["html_gen"])
         view_obj["html_gen"] = htmlGen
@@ -851,6 +856,7 @@ class Logic:
 
     def on_close(self, view):
         if view.id() in self.views.keys():
+            view.settings().clear_on_change("ColorHighlighter")
             del(self.views[view.id()])
 
     def on_pre_save(self, view):
@@ -1013,6 +1019,13 @@ class Logic:
         if files:
             for hg in self.color_schemes.keys():
                 self.color_schemes[hg].restore()
+
+    def remove_callbacks(self):
+        for k in self.views.keys():
+            self.views[k]["view"].settings().clear_on_change("ColorHighlighter")
+
+        sublime.load_settings(settings_file).clear_on_change("ColorHighlighter")
+        sublime.load_settings("Preferences.sublime-settings").clear_on_change("ColorHighlighter")
 
 global_logic = Logic()
 
@@ -1299,7 +1312,7 @@ def restore_broken_schemes():
     for w in sublime.windows():
         for v in w.views():
             if not os.path.exists(to_abs_cs_path(v.settings().get("color_scheme"))):
-                v.settings().set("color_scheme", g_cs)
+                set_scheme(v, g_cs)
 
 def plugin_loaded():
     global full_data_path, full_icons_path, full_themes_path
@@ -1336,6 +1349,7 @@ def plugin_loaded():
 # TODO: remove
 def plugin_unloaded():
     global_logic.restore(files=False)
+    global_logic.remove_callbacks()
 
 if get_version() < 3000:
     plugin_loaded()
