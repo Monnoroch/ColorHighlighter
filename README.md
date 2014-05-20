@@ -40,6 +40,8 @@ You can also turn on highlighting all colors at once. This mode has own highligh
 
 You can also enable icons, which will be shown in the gutter of a file.
 
+Yoy can always turn off default keybindings via main menu.
+
 **Color picker usage:**
 
 Just put the cursor (or multiple cursors) on the color code and select "Choose color" in context menu (or press `ctrl+shift+c`). Select the color in a popup color picker and all color codes under your cursors will change. The change will preserve exact code format, so if you select two codes "#FFF" and "rgb(255,255,255)" and choose color "#FF0000", in the end you get two codes like that: "#FF00FF" and "rgb(255,0,0)".
