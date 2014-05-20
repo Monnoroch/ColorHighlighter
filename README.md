@@ -19,10 +19,10 @@ _ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively 
 
 **Usage :**
 
-Just click or move the cursor (or multiple cursors) on the color code e.g. #FFFFFF and it'll be highlighted with its real color.
+Just click or move the cursor (or multiple cursors) on the color code e.g. "#FFFFFF" and it'll be highlighted with its real color.
 These color formats are currently supported:
 - All CSS color formats.
-- Hexademical RGBA (#FFFFFFFF).
+- Hexademical RGBA ("#FFFFFFFF").
 - Named colors like "green", "black" and many others.
 - Less/sass/scss variables (supports importing from another files).
 - [VAL, VAL, VAL] and [VAL, VAL, VAL, VAL] when editing *.sublime-theme files. Where VAL can be the following:
@@ -42,12 +42,12 @@ You can also enable icons, which will be shown in the gutter of a file.
 
 **Color picker usage:**
 
-Just put the cursor (or multiple cursors) on the color code and select "Choose color" in context menu (or press `ctrl+shift+c`). Select the color in a popup color picker and all color codes under your cursors will change. The change will preserve exact code format, so if you select two codes "#FFF" and "rgb(255,255,255)" and choose color #FF0000, in the end you get two codes like that: "#FF00FF" and "rgb(255,0,0)".
+Just put the cursor (or multiple cursors) on the color code and select "Choose color" in context menu (or press `ctrl+shift+c`). Select the color in a popup color picker and all color codes under your cursors will change. The change will preserve exact code format, so if you select two codes "#FFF" and "rgb(255,255,255)" and choose color "#FF0000", in the end you get two codes like that: "#FF00FF" and "rgb(255,0,0)".
 
 **Color converter usage:**
 
 Just put the cursor (or multiple cursors) on the color code and select "Convert color" in context menu (or press `ctrl+shift+a`). Input a color format to use and press enter.
-Format can be any format supported by this plugin, for example if you convert rgb(255,255,255) into format hsv(1,1%,1%), you'll get hsv(360, 0%, 100%). You can also use shortcuts (rgb, rgba, etc...). Works with named colors (both ways).
+Format can be any format supported by this plugin, for example if you convert "rgb(255,255,255)" into format "hsv(1,1%,1%)" or just "hsv", you'll get "hsv(0, 0%, 100%)". You can also use shortcuts (rgb, rgba, etc...). Works with named colors (both ways).
 
 Also, there is a Prev/Next color commands, triggered by `ctrl+shift+,` and `ctrl+shift+.` respectively to choose previous or next color format.
 
