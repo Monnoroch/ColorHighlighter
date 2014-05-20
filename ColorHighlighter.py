@@ -15,7 +15,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.5.3"
+version = "6.5.4"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -38,20 +38,16 @@ def print_error(err):
 # files helpers
 
 def write_file(fl, s):
-    f = open(fl, "w")
-    f.write(s)
-    f.close()
+    with open(fl, "w") as f:
+        f.write(s)
 
 def write_bin_file(fl, s):
-    f = open(fl, "wb")
-    f.write(s)
-    f.close()
+    with open(fl, "wb") as f:
+        f.write(s)
 
 def read_file(fl):
-    f = open(fl, "r")
-    res = f.read()
-    f.close()
-    return res
+    with open(fl, "r") as f:
+        return f.read()
 
 
 # platform helpers
