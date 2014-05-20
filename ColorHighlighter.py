@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 import sublime, sublime_plugin
 import os
@@ -14,10 +15,11 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.5"
+version = "6.5.1"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
+low_letters = "abcdefghijklmnopqrstuvwxyz"
 
 
 data_path = "Packages/User/Color Highlighter/"
@@ -883,6 +885,7 @@ class Logic:
                 htmlGen.update_view(view)
             i = 0
             flags = self.get_regions_ha_flags()
+            print(res, flags)
             for s, e, col in res:
                 i += 1
                 st = "mon_CH_ALL_" + str(i)
@@ -937,15 +940,17 @@ class Logic:
         varss = list(col_vars.keys())
         varss.sort(key=len, reverse=True)
         symbols = list(colors.names_to_hex.keys()) + varss
+        print(symbols)
         for k in symbols:
             l = len(k)
             pos = 0
             ind = text.find(k, pos)
             while ind != -1:
-                wd, col, var = isInColor(view, sublime.Region(ind+1, ind+1), col_vars, array_format=array_format)
-                if col is not None:
-                    res.append((wd.begin(), wd.end(), col))
-                    htmlGen.add_color(col)
+                if text[ind + l] not in low_letters and text[ind - 1] not in low_letters:
+                    wd, col, var = isInColor(view, sublime.Region(ind+1, ind+1), col_vars, array_format=array_format)
+                    if col is not None:
+                        res.append((wd.begin(), wd.end(), col))
+                        htmlGen.add_color(col)
                 pos = ind + l
                 ind = text.find(k, pos)
         return res
