@@ -717,8 +717,6 @@ class Logic:
         self.settings["color_scheme"] = cs
 
     def on_settings_change_view(self, view):
-        if view.settings().get("is_widget"):
-            return
         cs = view.settings().get("color_scheme")
         if not cs.startswith(themes_path):
             self.set_scheme_view(self.views[view.id()], cs)
