@@ -15,7 +15,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.5.1"
+version = "6.5.2"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -885,7 +885,6 @@ class Logic:
                 htmlGen.update_view(view)
             i = 0
             flags = self.get_regions_ha_flags()
-            print(res, flags)
             for s, e, col in res:
                 i += 1
                 st = "mon_CH_ALL_" + str(i)
@@ -940,7 +939,6 @@ class Logic:
         varss = list(col_vars.keys())
         varss.sort(key=len, reverse=True)
         symbols = list(colors.names_to_hex.keys()) + varss
-        print(symbols)
         for k in symbols:
             l = len(k)
             pos = 0
