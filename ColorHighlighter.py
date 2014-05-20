@@ -15,7 +15,7 @@ except ImportError:
     colors = __import__("Color Highlighter", fromlist=["colors"]).colors
 
 
-version = "6.5.2"
+version = "6.5.3"
 
 hex_letters = "0123456789ABCDEF"
 settings_file = "ColorHighlighter.sublime-settings"
@@ -742,10 +742,6 @@ class Logic:
             else:
                 self.do_enable()
 
-        default_keybindings = sets.get("default_keybindings")
-        if default_keybindings != self.settings["default_keybindings"]:
-            self.settings["default_keybindings"] = default_keybindings
-
         style = sets.get("style")
         if style != self.settings["style"]:
             self.settings["style"] = style
@@ -814,7 +810,7 @@ class Logic:
                 sets.set("icons_all", False)
             sublime.save_settings(settings_file)
 
-        for k in ["enabled", "default_keybindings", "style", "ha_style", "icons_all", "icons", "color_formats"]:
+        for k in ["enabled", "style", "ha_style", "icons_all", "icons", "color_formats"]:
             self.settings[k] = sets.get(k)
 
         self.settings["color_fmts"] = list(map(get_format, self.settings["color_formats"]))
@@ -1048,7 +1044,10 @@ class ChSetSetting(sublime_plugin.TextCommand):
         setting = args["setting"]
         global_logic.init()
 
-        if setting in ["enabled", "default_keybindings"]:
+        if setting == "default_keybindings":
+            return args["value"] != sublime.load_settings(settings_file).get(setting)
+
+        if setting in ["enabled"]:
             return args["value"] != global_logic.settings[setting]
 
         if get_version() >= 3000:
