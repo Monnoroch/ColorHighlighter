@@ -419,6 +419,8 @@ def get_word(view, reg):
 
     return sublime.Region(beg, end)
 
+
+bound_symbols = ["\n", "\t", " ", ";", ":"]
 def isInColor(view, sel, col_vars, array_format):
     b = sel.begin()
     if b != sel.end():
@@ -464,8 +466,9 @@ def isInColor(view, sel, col_vars, array_format):
                 continue
             word = sublime.Region(s, e)
             col = view.substr(word)
-            if k[0] == "#" and view.substr(word.begin() - 1) not in [" ", ":" , "\"", "\'"]:
+            if k[0] == "#" and (view.substr(word.begin() - 1) not in bound_symbols or view.substr(word.end()) not in bound_symbols):
                 continue
+            print(col, view.substr(word.end()))
             if color_fmts_data[k]["regex"].search(col):
                 return word, color_fmts_data[k]["to_hex"](col), False
 
