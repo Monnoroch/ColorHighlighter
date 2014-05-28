@@ -241,22 +241,22 @@ rgx_value_per = "\d{1,3}[%]"
 value_regex = "(?:%s)|(?:%s)|(?:%s)" % (rgx_value_int, rgx_value_float, rgx_value_per)
 color_fmts_data = {
     "#3": {
-        "r_str": "[#][0-9a-fA-F]{3}",
+        "r_str": "\b#[0-9a-fA-F]{3}\b",
         "to_hex": conv_from_hex3,
         "from_hex": conv_to_hex3
     },
     "#4": {
-        "r_str": "[#][0-9a-fA-F]{4}",
+        "r_str": "\b#[0-9a-fA-F]{4}\b",
         "to_hex": conv_from_hex4,
         "from_hex": conv_to_hex4
     },
     "#6": {
-        "r_str": "[#][0-9a-fA-F]{6}",
+        "r_str": "\b#[0-9a-fA-F]{6}\b",
         "to_hex": conv_from_hex6,
         "from_hex": conv_to_hex6
     },
     "#8": {
-        "r_str": "[#][0-9a-fA-F]{8}",
+        "r_str": "\b#[0-9a-fA-F]{8}\b",
         "to_hex": conv_from_hex8,
         "from_hex": conv_to_hex8
     },
