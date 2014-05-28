@@ -34,5 +34,14 @@
 				"key": "color_highlighter.color_convert_next"
 			}
 		]
+	},
+	{
+		"keys": ["super+alt+d"],
+		"command": "go_to_var_definition",
+		"context": [
+			{
+				"key": "color_highlighter.color_convert_next"
+			}
+		]
 	}
 ]

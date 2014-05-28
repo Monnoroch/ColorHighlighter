@@ -260,7 +260,7 @@ color_fmts_data = {
         "to_hex": conv_from_hex8,
         "from_hex": conv_to_hex8
     },
-    "rgb": { 
+    "rgb": {
         "r_str": "[r][g][b][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (rgx_value_int, rgx_value_int, rgx_value_int),
         "m_str": "[r][g][b][(][ ]*(?P<r>%s)[ ]*[,][ ]*(?P<g>%s)[ ]*[,][ ]*(?P<b>%s)[ ]*[)]" % (rgx_value_int, rgx_value_int, rgx_value_int),
         "to_hex": lambda col: conv_from_rgb_gen("rgb", col),
@@ -272,7 +272,7 @@ color_fmts_data = {
         "to_hex": lambda col: conv_from_rgba_gen("rgba", col),
         "from_hex": lambda base, col: conv_to_rgba_gen("rgba", base, col)
     },
-    "hsv": { 
+    "hsv": {
         "r_str": "[h][s][v][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per),
         "m_str": "[h][s][v][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<v>%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per),
         "to_hex": lambda col: conv_from_hsv_gen("hsv", col),
@@ -284,7 +284,7 @@ color_fmts_data = {
         "to_hex": lambda col: conv_from_hsva_gen("hsva", col),
         "from_hex": lambda base, col: conv_to_hsva_gen("hsva", base, col)
     },
-    "hsl": { 
+    "hsl": {
         "r_str": "[h][s][l][(][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[,][ ]*(?:%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per),
         "m_str": "[h][s][l][(][ ]*(?P<h>%s)[ ]*[,][ ]*(?P<s>%s)[ ]*[,][ ]*(?P<l>%s)[ ]*[)]" % (rgx_value_int, rgx_value_per, rgx_value_per),
         "to_hex": lambda col: conv_from_hsv_gen("hsl", col),
@@ -444,6 +444,12 @@ def isInColor(view, sel, col_vars, array_format):
         res = name_to_hex(view.substr(word), col_vars)
         if res is not None:
             return word, res, False
+    # styl variable
+    else:
+        word1 = sublime.Region(word.begin(), word.end())
+        res = name_to_hex(view.substr(word1), col_vars)
+        if res is not None:
+            return word1, res, True
 
     line = view.line(b)
     beg = line.begin()
@@ -647,11 +653,43 @@ def find_less_vars(dirname, fname, text, cols):
             cols[var] = {"col": col, "file": fname, "line": i, "pos": pos}
 
 
-def extract_name_val(name, line):
-    if name.endswith(".less"):
-        return extract_less_name_val(line)
-    if name.endswith(".sass") or name.endswith("scss"):
-        return extract_sass_name_val(line)
+def extract_styl_fname(dirname, line):
+    se = import_regex.search(line)
+    if not se:
+        return None
+    name = line[se.start("name"):se.end("name")]
+    if not name.endswith(".styl"):
+        name += ".styl"
+    res = os.path.join(dirname, name)
+    if not os.path.exists(res):
+        return None
+    return res
+
+def extract_styl_name_val(line):
+    pos = line.find("=")
+    if pos == -1:
+        return None, None, None
+
+    var = line[:pos].strip()
+    col = line[pos+1:].strip()
+    return var, col, line.find(col)
+
+def find_styl_vars(dirname, fname, text, cols):
+    i = 0
+    for line in map(lambda s: s.strip(), text.split("\n")):
+        i += 1
+        if len(line) < 2:
+            continue
+
+        if line.startswith("@import"):
+            name = extract_styl_fname(dirname, line)
+            if name != None:
+                find_styl_vars(dirname, name, read_file(name), cols)
+            continue
+
+        var, col, pos = extract_styl_name_val(line)
+        if var != None:
+            cols[var] = {"col": col, "file": fname, "line": i, "pos": pos}
 
 
 def get_doc_text(view):
@@ -670,6 +708,8 @@ def parse_stylesheet(view, colors):
         find_sass_vars(dirname, nm, text, colors)
     elif ext in [".less"]:
         find_less_vars(dirname, nm, text, colors)
+    elif ext in [".styl"]:
+        find_styl_vars(dirname, nm, text, colors)
 
 
 def create_icon(col):
@@ -935,12 +975,13 @@ class Logic:
         varss = list(col_vars.keys())
         varss.sort(key=len, reverse=True)
         symbols = list(colors.names_to_hex.keys()) + varss
+        tlen = len(text)
         for k in symbols:
             l = len(k)
             pos = 0
             ind = text.find(k, pos)
             while ind != -1:
-                if text[ind + l] not in low_letters and text[ind - 1] not in low_letters:
+                if (ind + l == tlen or text[ind + l] not in low_letters) and (ind == 0 or text[ind - 1] not in low_letters):
                     wd, col, var = isInColor(view, sublime.Region(ind+1, ind+1), col_vars, array_format=array_format)
                     if col is not None:
                         res.append((wd.begin(), wd.end(), col))
@@ -1050,7 +1091,7 @@ class ChSetSetting(sublime_plugin.TextCommand):
             if setting in ["style", "ha_style"]:
                 return True
             if setting in ["icons_all", "icons"]:
-                return args["value"] != global_logic.settings[setting] 
+                return args["value"] != global_logic.settings[setting]
         else:
             if setting in ["style", "ha_style"]:
                 return args["value"] in ["default", "filled", "outlined"]
