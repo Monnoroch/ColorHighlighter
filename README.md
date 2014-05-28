@@ -24,7 +24,7 @@ These color formats are currently supported:
 - All CSS color formats.
 - Hexademical RGBA ("#FFFFFFFF").
 - Named colors like "green", "black" and many others.
-- Less/sass/scss variables (supports importing from another files).
+- Less/sass/scss/stylus variables (supports importing from another files).
 - [VAL, VAL, VAL] and [VAL, VAL, VAL, VAL] when editing *.sublime-theme files. Where VAL can be the following:
   - An integer: from 0 to 255.
   - A float value from 0.0 to 1.0, you can also skip leading zero (like that: .25)
@@ -53,9 +53,9 @@ Format can be any format supported by this plugin, for example if you convert "r
 
 Also, there is a Prev/Next color commands, triggered by `ctrl+shift+,` and `ctrl+shift+.` respectively to choose previous or next color format.
 
-**Less/sass variables navigation:**
+**Less/sass/scss/stylus variables navigation:**
 
-Just put cursor on a variable, right click on it and press "Go to variable definition" and the plugin will open it.
+Just put cursor on a variable, right click on it and press "Go to variable definition" and the plugin will open it. There is also a shortcut `ctrl+alt+d`.
 
 
 **ACHTUNG!!! :**
