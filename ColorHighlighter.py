@@ -420,7 +420,7 @@ def get_word(view, reg):
     return sublime.Region(beg, end)
 
 
-bound_symbols = ["\n", "\t", " ", ";", ":"]
+bound_symbols = ["\n", "\t", " ", ";", ":", ","]
 def isInColor(view, sel, col_vars, array_format):
     b = sel.begin()
     if b != sel.end():
