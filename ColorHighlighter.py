@@ -468,7 +468,6 @@ def isInColor(view, sel, col_vars, array_format):
             col = view.substr(word)
             if k[0] == "#" and (view.substr(word.begin() - 1) not in bound_symbols or view.substr(word.end()) not in bound_symbols):
                 continue
-            print(col, view.substr(word.end()))
             if color_fmts_data[k]["regex"].search(col):
                 return word, color_fmts_data[k]["to_hex"](col), False
 
