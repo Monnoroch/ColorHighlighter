@@ -40,7 +40,7 @@ You can also turn on highlighting all colors at once. This mode has own highligh
 
 You can also enable icons, which will be shown in the gutter of a file.
 
-Yoy can always turn off default keybindings via main menu.
+You can always turn off default keybindings via main menu.
 
 **Color picker usage:**
 
