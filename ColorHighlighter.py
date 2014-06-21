@@ -420,7 +420,7 @@ def get_word(view, reg):
     return sublime.Region(beg, end)
 
 
-bound_symbols = ["\n", "\t", " ", ";", ":", ","]
+bound_symbols = ["\n", "\t", " ", ";", ":", ",", "\'", "\"", ">", "<"]
 def isInColor(view, sel, col_vars, array_format):
     b = sel.begin()
     if b != sel.end():
@@ -805,6 +805,12 @@ class Logic:
             self.settings["color_formats"] = color_formats
             self.settings["color_fmts"] = list(map(get_format, color_formats))
 
+        file_exts = sets.get("file_exts")
+        if file_exts != self.settings["file_exts"]:
+            self.settings["file_exts"] = file_exts
+            self.on_activated(sublime.active_window().active_view())
+            self.on_selection_modified(sublime.active_window().active_view())
+
     def do_disable(self):
          for k in self.views.keys():
             vo = self.views[k]
@@ -848,7 +854,7 @@ class Logic:
                 sets.set("icons_all", False)
             sublime.save_settings(settings_file)
 
-        for k in ["enabled", "style", "ha_style", "icons_all", "icons", "color_formats"]:
+        for k in ["enabled", "style", "ha_style", "icons_all", "icons", "color_formats", "file_exts"]:
             self.settings[k] = sets.get(k)
 
         self.settings["color_fmts"] = list(map(get_format, self.settings["color_formats"]))
@@ -912,7 +918,10 @@ class Logic:
         view_obj["vars"] = {}
         self.clean_hl_all_regions(view)
 
-        if self.settings["enabled"] and self.settings["ha_style"] != "disabled":
+        if not self.settings["enabled"] or not self.valid_fname(view.file_name()):
+            return
+
+        if self.settings["ha_style"] != "disabled":
             parse_stylesheet(view, view_obj["vars"])
 
             htmlGen = view_obj["html_gen"]
@@ -935,13 +944,26 @@ class Logic:
 
         self.on_selection_modified(view)
 
+    def valid_fname(self, fname):
+        if self.settings["file_exts"] == "all":
+            return True
+
+        if fname is None or fname == "":
+            return False
+
+        (_, ext) = os.path.splitext(fname)
+        return ext in self.settings["file_exts"]
+
     def on_selection_modified(self, view):
         self.init()
         if not self.init_view(view):
             return
 
         self.clean_regions(view)
-        if self.settings["enabled"] and self.settings["style"] != "disabled":
+        if not self.settings["enabled"] or not self.valid_fname(view.file_name()):
+            return
+
+        if self.settings["style"] != "disabled":
             view_obj = self.views[view.id()]
 
             htmlGen = view_obj["html_gen"]
