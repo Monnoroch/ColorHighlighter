@@ -121,6 +121,7 @@ names_to_hex = {
     'powderblue': '#B0E0E6FF',
     'purple': '#800080FF',
     'red': '#FF0000FF',
+    'rebeccapurple': '#663399FF',
     'rosybrown': '#BC8F8FFF',
     'royalblue': '#4169E1FF',
     'saddlebrown': '#8B4513FF',
