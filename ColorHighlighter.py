@@ -596,6 +596,11 @@ def extract_sass_fname(dirname, line):
     res = _extract_sass_fname(dirname, name, ".sass")
     if res is None:
         res = _extract_sass_fname(dirname, name, ".scss")
+    if res is None:
+        name = "_" + line[se.start("name"):se.end("name")]
+        res = _extract_sass_fname(dirname, name, ".sass")
+    if res is None:
+        res = _extract_sass_fname(dirname, name, ".scss")
     return res
 
 def find_sass_vars(dirname, fname, text, cols):
