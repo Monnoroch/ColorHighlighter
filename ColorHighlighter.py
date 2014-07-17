@@ -602,13 +602,13 @@ def find_sass_vars(dirname, fname, text, cols):
     i = 0
     for line in map(lambda s: s.strip(), text.split("\n")):
         i += 1
-        if len(line) < 2 or line[0] != "$":
-            continue
-
+        
         if line.startswith("@import"):
             name = extract_sass_fname(dirname, line)
             if name != None:
                 find_sass_vars(dirname, name, read_file(name), cols)
+            continue
+        if len(line) < 2 or line[0] != "$":
             continue
 
         var, col, pos = extract_sass_name_val(line)
