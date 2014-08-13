@@ -723,7 +723,9 @@ def parse_stylesheet(view, colors):
 
 
 def create_icon(col):
-    fname = icons_path + "%s.png" % col[1:]
+    fname = icons_path + col[1:]
+    if not fname.endswith(".png"):
+        fname += ".png"
     full_name = os.path.join(full_icons_path, "%s.png" % col[1:])
     if os.path.exists(full_name):
         return fname
