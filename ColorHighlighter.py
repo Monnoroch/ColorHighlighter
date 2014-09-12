@@ -8,6 +8,7 @@ import colorsys
 import subprocess
 import threading
 import shutil
+import codecs
 
 try:
     import colors
@@ -38,15 +39,15 @@ def print_error(err):
 # files helpers
 
 def write_file(fl, s):
-    with open(fl, "w") as f:
+    with codecs.open(fl, "w", "utf-8") as f:
         f.write(s)
 
 def write_bin_file(fl, s):
-    with open(fl, "wb") as f:
+    with codecs.open(fl, "wb") as f:
         f.write(s)
 
 def read_file(fl):
-    with open(fl, "r") as f:
+    with codecs.open(fl, "r", "utf-8") as f:
         return f.read()
 
 
