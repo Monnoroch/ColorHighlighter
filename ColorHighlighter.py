@@ -38,7 +38,7 @@ def print_error(err):
 # files helpers
 
 def write_file(fl, s):
-    with open(fl, "w", encoding="utf8") as f:
+    with open(fl, "w") as f:
         f.write(s)
 
 def write_bin_file(fl, s):
@@ -46,7 +46,7 @@ def write_bin_file(fl, s):
         f.write(s)
 
 def read_file(fl):
-    with open(fl, "r", encoding="utf8") as f:
+    with open(fl, "r") as f:
         return f.read()
 
 
