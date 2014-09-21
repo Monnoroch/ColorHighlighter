@@ -356,7 +356,6 @@ def tohex(r, g, b, a=None):
     return "#%02X%02X%02X%02X" % (r, g, b, a)
 
 def get_cont_col(col):
-    def get_cont_col(col):
     r = int(col[1:3],16)
     g = int(col[3:5],16)
     b = int(col[5:7],16)
