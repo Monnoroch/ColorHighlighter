@@ -369,7 +369,6 @@ def get_cont_col(col):
     if abs(v1) > 1e-10:
         s1 = v * s / v1
     (r, g, b) = colorsys.hsv_to_rgb(h >= 0.5 and h - 0.5 or h + 0.5, s1, v1)
-
     return tohex(int(r * 255), int(g * 255), int(b * 255)) # true complementary
 
 def get_format(col):
