@@ -356,12 +356,11 @@ def tohex(r, g, b, a=None):
     return "#%02X%02X%02X%02X" % (r, g, b, a)
 
 def get_cont_col(col):
-    (h, s, v) = colorsys.rgb_to_hsv(int(col[1:3],16)/255.0, int(col[3:5],16)/255.0, int(col[5:7],16)/255.0)
-    v1 = v * (s - 1) + 1
-    s1 = 0
-    if abs(v1) > 1e-10:
-        s1 = v * s / v1
-    (r, g, b) = colorsys.hsv_to_rgb(h >= 0.5 and h - 0.5 or h + 0.5, s1, v1)
+    (h, l, s) = colorsys.rgb_to_hls(int(col[1:3],16)/255.0, int(col[3:5],16)/255.0, int(col[5:7],16)/255.0)
+    l1 = 1 - l
+    if abs(l1 - l) < .15:
+      l1 = .25
+    (r, g, b) = colorsys.hls_to_rgb(h, l1, s)
     return tohex(int(r * 255), int(g * 255), int(b * 255)) # true complementary
 
 
