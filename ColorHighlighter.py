@@ -359,7 +359,7 @@ def get_cont_col(col):
     (h, l, s) = colorsys.rgb_to_hls(int(col[1:3],16)/255.0, int(col[3:5],16)/255.0, int(col[5:7],16)/255.0)
     l1 = 1 - l
     if abs(l1 - l) < .15:
-        l1 = .25
+        l1 = .15
     (r, g, b) = colorsys.hls_to_rgb(h, l1, s)
     return tohex(int(r * 255), int(g * 255), int(b * 255)) # true complementary
 
