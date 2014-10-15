@@ -38,7 +38,7 @@ You can choose the highliting style from:
 
 You can also turn on highlighting all colors at once. This mode has own highlighting style, so you can highlight all colors with underline and selected colors with filled rect.
 
-You can also enable icons, which will be shown in the gutter of a file.
+You can also enable icons, which will be shown in the gutter of a file (ST3 only).
 
 You can always turn off default keybindings via main menu.
 
