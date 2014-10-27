@@ -58,7 +58,7 @@ Also, there is a Prev/Next color commands, triggered by `ctrl+shift+,` and `ctrl
 Just put cursor on a variable, right click on it and press "Go to variable definition" and the plugin will open it. There is also a shortcut `ctrl+alt+d`.
 
 
-**ACHTUNG!!! :**
+**WARNING!!! :**
 
-Color picker has a bug on OSX, i fixed it, but can't rebuild the binary to apply this fix.
+Color picker has a bug on OSX, I fixed it, but can't rebuild the binary to apply this fix.
 
