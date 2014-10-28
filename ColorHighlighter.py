@@ -1392,8 +1392,7 @@ class ColorSelection(sublime_plugin.EventListener):
         global_logic.on_selection_modified(view)
 
     def on_activated(self, view):
-        # global_logic.on_activated(view)
-        pass
+        global_logic.on_activated(view)
 
     def on_pre_save(self, view):
         global_logic.on_pre_save(view)
