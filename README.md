@@ -56,9 +56,3 @@ Also, there is a Prev/Next color commands, triggered by `ctrl+shift+,` and `ctrl
 **Less/sass/scss/stylus variables navigation:**
 
 Just put cursor on a variable, right click on it and press "Go to variable definition" and the plugin will open it. There is also a shortcut `ctrl+alt+d`.
-
-
-**WARNING!!! :**
-
-Color picker has a bug on OSX, I fixed it, but can't rebuild the binary to apply this fix.
-
