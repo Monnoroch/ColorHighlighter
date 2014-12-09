@@ -1235,17 +1235,34 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
 def reg_to_str(reg):
     return "%d,%d" % (reg.begin(), reg.end())
 
+def regs_to_str(regs):
+    return ";".join([reg_to_str(r) for r in regs])
+
 def reg_from_str(st):
     w = st.split(",")
     return sublime.Region(int(w[0]), int(w[1]))
 
+def regs_from_str(st):
+    ws = st.split(";")
+    return [reg_from_str(w) for w in ws]
+
 class ColorConvertCommandImpl(sublime_plugin.TextCommand):
     def run(self, edit, **args):
-        wd = reg_from_str(args["word"])
-        new_col = convert_format(args["format"], self.view.substr(wd))
-        if new_col is None:
-            return
-        self.view.replace(edit, wd, new_col)
+        print(args["words"])
+        wds = regs_from_str(args.get("words", args.get("word", "")))
+        # Replacing changes real regions, so we must offset rest regions
+        # Suppose you have regions [(0, 10), (100, 110)] and then replaced contents of first region
+        # with 'some', which is only 4 chars length
+        # we must move (100,110) region back to 6 (10 - 4) chars
+        offset = 0
+        for wd in wds:
+            wdo = sublime.Region(wd.a + offset, wd.b + offset)
+            old_col = self.view.substr(wdo)
+            new_col = convert_format(args["format"], old_col)
+            if new_col is None:
+                continue
+            self.view.replace(edit, wdo, new_col)
+            offset = offset + len(new_col) - len(old_col)
 
 class ColorConvertCommand(sublime_plugin.TextCommand):
     words = []
@@ -1266,10 +1283,8 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
         if psfmt is not None:
             fmt = psfmt
         if fmt != txt:
-            for w, c, v in self.words:
-                if w is None or v:
-                    continue
-                self.view.run_command("color_convert_command_impl", {"format": fmt, "word": reg_to_str(w)})
+            self.view.run_command("color_convert_command_impl", {"format": fmt, "words": regs_to_str(
+                [wd for wd, c, v in self.words if wd is not None and not v])})
         self.clear()
 
     def clear(self):
@@ -1284,9 +1299,9 @@ class ColorConvertCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         self.words = global_logic.get_words(self.view)
         self.wd = None
-        for w, c, v in self.words:
-            if w is not None and not v:
-                self.wd, _ = w, c
+        for wd, c, v in self.words:
+            if wd is not None and not v:
+                self.wd, _ = wd, c
                 return True
         return False
 
