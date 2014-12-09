@@ -1247,18 +1247,18 @@ def regs_from_str(st):
     return [reg_from_str(w) for w in ws]
 
 class ColorConvertCommandImpl(sublime_plugin.TextCommand):
-    def run(self, edit, **args):
-        print(args["words"])
-        wds = regs_from_str(args.get("words", args.get("word", "")))
+    def run(self, edit, format = "", formats = "", word = "", words = "", **args):
+        wds = regs_from_str(words or word)
+        fmts = formats.split(";") if formats else ([format] * len(wds))
         # Replacing changes real regions, so we must offset rest regions
         # Suppose you have regions [(0, 10), (100, 110)] and then replaced contents of first region
         # with 'some', which is only 4 chars length
         # we must move (100,110) region back to 6 (10 - 4) chars
         offset = 0
-        for wd in wds:
+        for wd, fmt in zip(wds, fmts):
             wdo = sublime.Region(wd.a + offset, wd.b + offset)
             old_col = self.view.substr(wdo)
-            new_col = convert_format(args["format"], old_col)
+            new_col = convert_format(fmt, old_col)
             if new_col is None:
                 continue
             self.view.replace(edit, wdo, new_col)
@@ -1315,6 +1315,8 @@ class ColorConvertNextCommand(sublime_plugin.TextCommand):
         samples = global_logic.settings["color_fmts"]
         l = len(samples)
 
+        wds = []
+        fmts = []
         for w, c, v in self.words:
             if w is None or v:
                 continue
@@ -1328,7 +1330,9 @@ class ColorConvertNextCommand(sublime_plugin.TextCommand):
                 val = 0
             if val == -1:
                 continue
-            self.view.run_command("color_convert_command_impl", {"format": global_logic.settings["color_formats"][val], "word": reg_to_str(w)})
+            wds.append(w)
+            fmts.append(global_logic.settings["color_formats"][val])
+        self.view.run_command("color_convert_command_impl", {"formats": ";".join(fmts), "words": regs_to_str(wds)})
         self.clear()
 
     def is_enabled(self):
@@ -1349,6 +1353,8 @@ class ColorConvertPrevCommand(sublime_plugin.TextCommand):
         samples = global_logic.settings["color_fmts"]
         l = len(samples)
 
+        wds = []
+        fmts = []
         for w, c, v in self.words:
             if w is None or v:
                 continue
@@ -1362,7 +1368,9 @@ class ColorConvertPrevCommand(sublime_plugin.TextCommand):
                 val = l - 1
             if val == -1:
                 continue
-            self.view.run_command("color_convert_command_impl", {"format": global_logic.settings["color_formats"][val], "word": reg_to_str(w)})
+            wds.append(w)
+            fmts.append(global_logic.settings["color_formats"][val])
+        self.view.run_command("color_convert_command_impl", {"formats": ";".join(fmts), "words": regs_to_str(wds)})
         self.clear()
 
     def is_enabled(self):
