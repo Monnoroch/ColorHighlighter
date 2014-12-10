@@ -1040,12 +1040,14 @@ class Logic:
         return res
 
     def _get_regions_flags(self, style):
-        if style == "default" or style == "filled":
-            return 0
         if get_version() < 3000:
+            if style == "default" or style == "filled":
+                return 0
             if style == "outlined":
                 return sublime.DRAW_OUTLINED
         else:
+            if style == "default" or style == "filled":
+                return sublime.DRAW_NO_OUTLINE
             if style == "outlined":
                 return sublime.DRAW_NO_FILL
             if style == "underlined" or style == "underlined_solid":
