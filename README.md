@@ -22,7 +22,8 @@ _ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively 
 Just click or move the cursor (or multiple cursors) on the color code e.g. "#FFFFFF" and it'll be highlighted with its real color.
 These color formats are currently supported:
 - All CSS color formats.
-- Hexademical RGBA ("#FFFFFFFF").
+- Hexadecimal RGBA ("#FFFFFFFF").
+- Hexadecimal ARGB ("#FFFFFFFF") (if you set the setting argb to true).
 - Named colors like "green", "black" and many others.
 - Less/sass/scss/stylus variables (supports importing from another files).
 - [VAL, VAL, VAL] and [VAL, VAL, VAL, VAL] when editing *.sublime-theme files. Where VAL can be the following:
@@ -39,6 +40,8 @@ You can choose the highliting style from:
 You can also turn on highlighting all colors at once. This mode has own highlighting style, so you can highlight all colors with underline and selected colors with filled rect.
 
 You can also enable icons, which will be shown in the gutter of a file (ST3 only).
+
+You can also set ColorHighlighter to use Hexadecimal ARGB instead of RGBA.
 
 You can always turn off default keybindings via main menu.
 
