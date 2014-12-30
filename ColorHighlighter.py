@@ -213,9 +213,17 @@ def conv_to_hex6(base, col):
     return col
 
 def conv_from_hex8(col):
+    argb = sublime.load_settings(settings_file).get("argb")
+    if argb == True:
+        # convert to argb instead of rgba
+        col = "#" + col[3:9] + col[1:3]
     return col.upper()
 
 def conv_to_hex8(base, col):
+    argb = sublime.load_settings(settings_file).get("argb")
+    if argb == True:
+        # convert to argb instead of rgba
+        col = "#" + col[3:9] + col[1:3]
     return col.upper()
 
 def conv_from_named(col):
