@@ -20,7 +20,7 @@
                         "mnemonic": "E"
                     },
                     {
-                        "caption": "Highlit style",
+                        "caption": "Highlight style",
                         "mnemonic": "S",
                         "children":
                         [
@@ -72,7 +72,7 @@
                         ]
                     },
                     {
-                        "caption": "Highlit all style",
+                        "caption": "Highlight all style",
                         "children":
                         [
                             {
