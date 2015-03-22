@@ -695,7 +695,7 @@ def extract_styl_name_val(line):
     if var == "":
         return None, None, None
     for c in var:
-        if not c.isalpha() and c != "-":
+        if not c.isalpha() and c != "-" and c != "_":
             return None, None, None
     col = line[pos+1:].strip()
     return var, col, line.find(col)
