@@ -17,11 +17,11 @@
                         "caption": "Disable",
                         "command": "ch_set_setting",
                         "args": {"setting": "enabled", "value": false},
-                        "mnemonic": "E"
+                        "mnemonic": "D"
                     },
                     {
                         "caption": "Highlight style",
-                        "mnemonic": "S",
+                        "mnemonic": "H",
                         "children":
                         [
                             {
@@ -142,14 +142,10 @@
         ]
     },
     {
-        "caption": "Preferences",
-        "mnemonic": "n",
         "id": "preferences",
         "children":
         [
             {
-                "caption": "Package Settings",
-                "mnemonic": "P",
                 "id": "package-settings",
                 "children":
                 [
