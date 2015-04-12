@@ -17,11 +17,11 @@
                         "caption": "Disable",
                         "command": "ch_set_setting",
                         "args": {"setting": "enabled", "value": false},
-                        "mnemonic": "E"
+                        "mnemonic": "e"
                     },
                     {
                         "caption": "Highlight style",
-                        "mnemonic": "S",
+                        "mnemonic": "s",
                         "children":
                         [
                             {
