@@ -7,6 +7,7 @@
     "icons_all": false,
     "default_keybindings": true,
     "convert_util_path" : "convert",
+    "highlight_all": false,
     "color_formats": [
         "white",
         "#FFF", "#FFFF", "#FFFFFF", "#FFFFFFFF",
