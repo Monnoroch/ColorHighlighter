@@ -3,20 +3,8 @@
     "style": "default",
     "icons": true,
     "ha_style": "underlined_solid",
-    "argb": false,
-    "icons_all": false,
+    "ha_icons": false,
     "default_keybindings": true,
     "convert_util_path" : "convert",
-    "highlight_all": false,
-    "color_formats": [
-        "white",
-        "#FFF", "#FFFF", "#FFFFFF", "#FFFFFFFF",
-        "rgb(255, 255, 255)",
-        "rgba(255, 255, 255, 1.0)",
-        "hsv(0, 0%, 100%)",
-        "hsva(0, 0%, 100%, 1.0)",
-        "hsl(0, 100%, 100%)",
-        "hsla(0, 100%, 100%, 1.0)"
-    ],
     "file_exts": [".css", ".sass", ".scss", ".less", ".styl", ".html", ".js", ".sublime-settings", ".tmTheme", ".erb", ".haml", ".back", ".py"]
 }
