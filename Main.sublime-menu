@@ -25,11 +25,6 @@
                         "children":
                         [
                             {
-                                "caption": "Disabled",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "style", "value": "disabled"}
-                            },
-                            {
                                 "caption": "None",
                                 "command": "ch_set_setting",
                                 "args": {"setting": "style", "value": "none"}
