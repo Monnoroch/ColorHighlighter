@@ -281,7 +281,8 @@ def create_icon(col):
 
 # the class for searching for colors in a region
 class ColorFinder:
-    regex = re.compile("[#][0-9a-fA-F]{8}")
+    regex_str = "[#][0-9a-fA-F]{8}"
+    regex = re.compile(regex_str)
 
     # if the @region is in some text, that represents color, return new region, containing that color text and parsed color value in #RRGGBBAA format
     def get_color(self, view, region):
@@ -301,18 +302,31 @@ class ColorFinder:
 
     # convert arbitrary color to #RRGGBBAA (optionally with type hint @fmt)
     def convert_color(self, color, fmt=None):
-        assert(fmt == "#8")
-        return color
+        if fmt == "named":
+            return colors.names_to_hex[color]
+        elif fmt == "#8":
+            return color
+        return None
 
     # convert color from #RRGGBBAA to different formats
     def convert_back_color(self, color, fmt):
-        assert(fmt == "#8")
-        return color
+        if fmt == "named":
+            for name in colors.names_to_hex:
+                if colors.names_to_hex[name] == color:
+                    return name
+                return color
+        elif fmt == "#8":
+            return color
+        return None
 
     # main functions
 
     # if the @region is in some text, that represents color, return new region, containing that color text and format type
     def find_color(self, view, region):
+        word = view.word(region)
+        if view.substr(word) in colors.names_to_hex.keys():
+            return word, "named"
+
         line = view.line(region)
         newreg = sublime.Region(max(region.a - 9, line.a), min(region.b + 9, line.b))
         text = view.substr(newreg)
@@ -327,13 +341,20 @@ class ColorFinder:
     def find_colors(self, view, region=None):
         if region is None:
             region = sublime.Region(0, view.size())
+
         text = view.substr(region)
         res = []
-        m = self.regex.search(text)
-        while m:
-            res.append((sublime.Region(region.a + m.start(), region.a + m.end()), "#8"));
-            m = self.regex.search(text, m.end())
+        find_all(self.regex, region, text, "#8", res)
+
+        for k in list(colors.names_to_hex.keys()):
+            find_all(re.compile("\\b" + k + "\\b"), region, text, "named", res)
         return res
+
+def find_all(regex, region, text, fmt, res):
+    m = regex.search(text)
+    while m:
+        res.append((sublime.Region(region.a + m.start(), region.a + m.end()), fmt));
+        m = regex.search(text, m.end())
 
 
 # main program
@@ -483,6 +504,7 @@ class ColorHighlighter:
             if self.started:
                 self.reset_scheme()
             self.redraw()
+            self.ha_redraw()
 
     def set_style(self, val):
         print("set_style(%s)" % val)
@@ -661,7 +683,7 @@ class ColorSelection(sublime_plugin.EventListener):
     def on_query_context(self, view, key, op, operand, match_all):
         if not key.startswith('color_highlighter.'):
             return None
-        return get_setting("default_keybindings")
+        return color_highlighter.settings.get("default_keybindings")
 
 
 # commands
