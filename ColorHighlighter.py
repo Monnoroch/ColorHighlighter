@@ -284,6 +284,11 @@ class ColorFinder:
     regex_str = "[#][0-9a-fA-F]{8}"
     regex = re.compile(regex_str)
 
+    names = ""
+    for k in list(colors.names_to_hex.keys()):
+        names += k + "|"
+    names_regex = re.compile("\\b(" + names[:-1] + ")\\b")
+
     # if the @region is in some text, that represents color, return new region, containing that color text and parsed color value in #RRGGBBAA format
     def get_color(self, view, region):
         reg, fmt = self.find_color(view, region)
@@ -345,9 +350,7 @@ class ColorFinder:
         text = view.substr(region)
         res = []
         find_all(self.regex, region, text, "#8", res)
-
-        for k in list(colors.names_to_hex.keys()):
-            find_all(re.compile("\\b" + k + "\\b"), region, text, "named", res)
+        find_all(self.names_regex, region, text, "named", res)
         return res
 
 def find_all(regex, region, text, fmt, res):
