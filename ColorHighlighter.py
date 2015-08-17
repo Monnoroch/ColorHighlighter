@@ -990,9 +990,19 @@ class ChReplaceColor(sublime_plugin.TextCommand):
         rest = s[pos+1:-1].split(",")
         return (sublime.Region(int(reg[0]), int(reg[1])), rest[1].strip()[1:-1], rest[2].strip()[1:-1])
 
-
-class ColorPickerCommand(sublime_plugin.TextCommand):
+class ColorCommand(sublime_plugin.TextCommand):
     words = []
+    vs = None
+
+    def clear(self):
+        self.words = []
+        self.vs = None
+
+    def is_enabled(self):
+        self.words = color_highlighter.get_colors_sel(self.view)
+        return len(self.words) != 0
+
+class ColorPickerCommand(ColorCommand):
     output = None
 
     def _do_run(self):
@@ -1029,31 +1039,58 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
             self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], x[1], self.output)), self.words))})
         self.output = None
 
-    def is_enabled(self):
-        self.words = color_highlighter.get_colors_sel(self.view)
-        return len(self.words) != 0
-
-class ColorConvertCommand(sublime_plugin.TextCommand):
-    words = []
-    vs = None
-
+class BaseColorConvertCommand(ColorCommand):
     def do_run(self, new_fmt):
         self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words))})
         self.clear()
 
-    def clear(self):
-        self.words = []
-        self.vs = None
-
+class ColorConvertCommand(BaseColorConvertCommand):
     def run(self, edit):
         self.vs = color_highlighter.get_vars(self.view)
         fmt = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
         panel = self.view.window().show_input_panel("Format: ", fmt, self.do_run, self.on_change, self.clear)
         panel.sel().add(sublime.Region(0, panel.size()))
 
-    def is_enabled(self):
-        self.words = color_highlighter.get_colors_sel(self.view)
-        return len(self.words) != 0
+class ColorConvertNextCommand(BaseColorConvertCommand):
+    def run(self, edit):
+        self.vs = color_highlighter.get_vars(self.view)
+        fmt = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
+        formats = list(filter(lambda f, fmt=fmt: f == fmt or (not f.startswith("@var-")), color_highlighter.settings.get("formats").keys()))
+        print(formats)
+        new_fmt = formats[0]
+        i = 0
+        for f in formats:
+            if f == fmt:
+                if i < len(formats) - 1:
+                    new_fmt = formats[i + 1]
+                break
+            i += 1
+
+        print(new_fmt)
+        self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words))})
+        self.clear()
+
+class ColorConvertPrevCommand(BaseColorConvertCommand):
+    def run(self, edit):
+        self.vs = color_highlighter.get_vars(self.view)
+        fmt = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
+        formats = list(filter(lambda f, fmt=fmt: f == fmt or (not f.startswith("@var-")), color_highlighter.settings.get("formats").keys()))
+        print(formats)
+        new_fmt = formats[len(formats) - 1]
+        i = 0
+        for f in formats:
+            if f == fmt:
+                if i > 0:
+                    new_fmt = formats[i - 1]
+                break
+            i += 1
+
+        print(new_fmt)
+        self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words))})
+        self.clear()
+
+# #FF0000FF
+# #00FF00FF
 
 # initialize all the stuff
 def plugin_loaded():
