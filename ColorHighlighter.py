@@ -329,7 +329,7 @@ class ColorFinder:
             for name in colors.names_to_hex:
                 if colors.names_to_hex[name] == color:
                     return name
-                return color
+            return color
         elif fmt.startswith("@var-"):
             for k in variables.keys():
                 v = variables[k]
@@ -364,12 +364,12 @@ class ColorFinder:
     def find_color(self, view, region, variables):
         word = get_word_css(view, region)
         word_str = view.substr(word)
-        if word_str in colors.names_to_hex.keys():
-            return word, "@named"
 
         # TODO: nice regexes?
         if word_str in variables.keys():
             return word, variables[word_str]["fmt"]
+        if word_str in colors.names_to_hex.keys():
+            return word, "@named"
 
         line = view.line(region)
         newreg = sublime.Region(max(region.a - 9, line.a), min(region.b + 9, line.b))
@@ -477,10 +477,8 @@ class ColorHighlighterView:
                 self.regions.append(st + "-ico")
                 self.view.add_regions(st + "-ico", [region], region_name(col) + "-ico", create_icon(col), sublime.HIDDEN)
 
-        scheme = self.ch.add_colors(cols)
-        if scheme is not None:
-            print("on_selection_modified(%d)" % self.view.id(), "changing color scheme to " + scheme)
-            self.set_scheme(scheme)
+        scheme, f = self.ch.add_colors(cols)
+        self.set_scheme(scheme, f)
 
     def on_activated(self):
         print("on_activated(%d)" % self.view.id())
@@ -505,10 +503,8 @@ class ColorHighlighterView:
                 self.ha_regions.append(st + "-ico")
                 self.view.add_regions(st + "-ico", [reg], region_name(col) + "-ico", create_icon(col), sublime.HIDDEN)
 
-        scheme = self.ch.add_colors(cols)
-        if scheme is not None:
-            print("on_selection_modified(%d)" % self.view.id(), "changing color scheme to " + scheme)
-            self.set_scheme(scheme)
+        scheme, f = self.ch.add_colors(cols)
+        self.set_scheme(scheme, f)
 
     def on_close(self):
         print("on_close(%d)" % self.view.id(), "changing color scheme to " + self.ch.color_scheme)
@@ -518,9 +514,10 @@ class ColorHighlighterView:
         cs = self.view.settings().get("color_scheme")
         print("ColorHighlighterView.on_settings_change: ", cs)
 
-    def set_scheme(self, val):
-        print("set_scheme(%d, %s)" % (self.view.id(), val))
-        self.view.settings().set("color_scheme", val)
+    def set_scheme(self, val, force=False):
+        if force or self.view.settings().get("color_scheme") != val:
+            print("set_scheme(%d, %s)" % (self.view.id(), val))
+            self.view.settings().set("color_scheme", val)
 
     def restore_scheme(self):
         self.set_scheme(self.ch.color_scheme)
@@ -578,13 +575,11 @@ class ColorHighlighter:
             self.ha_redraw()
 
     def set_style(self, val):
-        print("set_style(%s)" % val)
         self.style = val
         self.flags = self.get_regions_flags(self.style)
         self.redraw()
 
     def set_ha_style(self, val):
-        print("set_ha_style(%s)" % val)
         self.ha_style = val
         self.ha_flags = self.get_regions_flags(self.ha_style)
         self.ha_redraw()
@@ -599,7 +594,6 @@ class ColorHighlighter:
         return os.path.splitext(fname)[1] in self.settings.get("file_exts")
 
     def set_exts(self, val):
-        print("set_exts(%s)" % val)
         for k in self.views:
             v = self.views[k]
             v.enable(self.valid_fname(v.view.file_name()))
@@ -645,9 +639,8 @@ class ColorHighlighter:
         gen = self.color_schemes[self.color_scheme]
         for col in cols:
             gen.add_color(col)
-        if gen.flush():
-            return gen.scheme_name()
-        return None
+        res = gen.flush()
+        return gen.scheme_name(), res
 
     def add_view(self, view):
         print("add_view(%d, %s)" % (view.id(), view.file_name()))
@@ -719,6 +712,9 @@ class ColorHighlighter:
         fn = view.file_name()
         if fn is not None and fn in self.vars_file_cache.keys():
             del(self.vars_file_cache[fn])
+
+    def on_post_save(self, view):
+        self.on_activated(view)
 
     def on_activated(self, view):
         if self.disabled(view):
@@ -878,7 +874,6 @@ def extract_import(line):
     if end >= l:
         return None
 
-    print("extract_import:", line, start, end, line[start:end])
     return line[start:end]
 
 def read_file(fl):
@@ -928,6 +923,9 @@ class ColorSelection(sublime_plugin.EventListener):
     def on_modified(self, view):
         color_highlighter.on_modified(view)
 
+    def on_post_save(self, view):
+        color_highlighter.on_post_save(view)
+
     def on_activated(self, view):
         color_highlighter.on_activated(view)
 
@@ -975,14 +973,16 @@ class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
 
 class ChReplaceColor(sublime_plugin.TextCommand):
     def run(self, edit, **args):
+        print("ChReplaceColor:", args)
+        vs = color_highlighter.get_vars(self.view)
+        offset = 0
         for val in args["words"].split("\t"):
             reg, fmt, col = self.parse_word(val)
-            vs = color_highlighter.get_vars(self.view)
-            new_col = color_highlighter.color_finder.convert_back_color(args["output"], vs, fmt)
+            new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt)
             if new_col is None:
                 continue
-
-            self.view.replace(edit, reg, new_col)
+            self.view.replace(edit, sublime.Region(offset + reg.a, offset + reg.b), new_col)
+            offset += len(new_col) - (reg.b - reg.a)
 
     def parse_word(self, s):
         pos = s.find(")")
@@ -1026,8 +1026,30 @@ class ColorPickerCommand(sublime_plugin.TextCommand):
     def call_impl(self):
         if self.output is not None and len(self.output) == 9 and self.output != 'CANCEL':
             print("SEND DATA: ", "\t".join(list(map(str, self.words))))
-            self.view.run_command("ch_replace_color", {"output": self.output, "words": "\t".join(list(map(str, self.words)))})
+            self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], x[1], self.output)), self.words))})
         self.output = None
+
+    def is_enabled(self):
+        self.words = color_highlighter.get_colors_sel(self.view)
+        return len(self.words) != 0
+
+class ColorConvertCommand(sublime_plugin.TextCommand):
+    words = []
+    vs = None
+
+    def do_run(self, new_fmt):
+        self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words))})
+        self.clear()
+
+    def clear(self):
+        self.words = []
+        self.vs = None
+
+    def run(self, edit):
+        self.vs = color_highlighter.get_vars(self.view)
+        fmt = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
+        panel = self.view.window().show_input_panel("Format: ", fmt, self.do_run, self.on_change, self.clear)
+        panel.sel().add(sublime.Region(0, panel.size()))
 
     def is_enabled(self):
         self.words = color_highlighter.get_colors_sel(self.view)
