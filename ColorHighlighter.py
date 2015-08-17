@@ -738,7 +738,7 @@ class ColorHighlighter:
     vars_file_cache = {}
     vars_view_cache = {}
 
-    def parse_vars_text(self, text, fname, dirname, ext, cache):
+    def parse_vars_text(self, text, in_fname, dirname, ext, cache):
         vs = {}
         files = []
         i = 0
@@ -766,7 +766,7 @@ class ColorHighlighter:
                     files.append(fname)
                 continue
 
-            on_line(fname, line, i - 1, vs)
+            on_line(in_fname, line, i, vs)
 
 
         cache["vars"] = vs
@@ -1075,7 +1075,6 @@ class ColorConvertPrevCommand(BaseColorConvertCommand):
         self.vs = color_highlighter.get_vars(self.view)
         fmt = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
         formats = list(filter(lambda f, fmt=fmt: f == fmt or (not f.startswith("@var-")), color_highlighter.settings.get("formats").keys()))
-        print(formats)
         new_fmt = formats[len(formats) - 1]
         i = 0
         for f in formats:
@@ -1085,12 +1084,21 @@ class ColorConvertPrevCommand(BaseColorConvertCommand):
                 break
             i += 1
 
-        print(new_fmt)
         self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words))})
         self.clear()
 
-# #FF0000FF
-# #00FF00FF
+class GoToVarDefinitionCommand(ColorCommand):
+    def run(self, edit):
+        reg, _, _ = self.words[0]
+        self.vs = color_highlighter.get_vars(self.view)
+        obj = self.vs[self.view.substr(reg)]
+        print("GoToVarDefinitionCommand", self.vs, obj)
+        view = self.view.window().open_file(obj["file"] + ":%d:%d" % (obj["line"], obj["pos"] + 1), sublime.ENCODED_POSITION|sublime.TRANSIENT)
+        self.clear()
+
+    def is_enabled(self):
+        self.words = color_highlighter.get_colors_sel(self.view)
+        return len(self.words) != 0 and self.words[0][1].startswith("@var-")
 
 # initialize all the stuff
 def plugin_loaded():
