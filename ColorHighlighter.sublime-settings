@@ -20,8 +20,65 @@
         "@var-styl": {
             "description": "Styl variables: a-b-c"
         },
-        "#8": {
-            "description": "Hex #RRGGBBAA color format"
+        "sharp8": {
+            "description": "Hex #RRGGBBAA color format",
+            "regex": "#(?P<R>[0-9a-fA-F]{2})(?P<G>[0-9a-fA-F]{2})(?P<B>[0-9a-fA-F]{2})(?P<A>[0-9a-fA-F]{2})",
+            "types": ["hex2", "hex2", "hex2", "hex2"],
+        },
+        "sharp6": {
+            "description": "Hex #RRGGBB color format",
+            "regex": "#(?P<R>[0-9a-fA-F]{2})(?P<G>[0-9a-fA-F]{2})(?P<B>[0-9a-fA-F]{2})",
+            "types": ["hex2", "hex2", "hex2"],
+        },
+        "sharp4": {
+            "description": "Hex #RGBA color format",
+            "regex": "#(?P<R>[0-9a-fA-F])(?P<G>[0-9a-fA-F])(?P<B>[0-9a-fA-F])(?P<A>[0-9a-fA-F])",
+            "types": ["hex1", "hex1", "hex1", "hex1"],
+        },
+        "sharp3": {
+            "description": "Hex #RGB color format",
+            "regex": "#(?P<R>[0-9a-fA-F])(?P<G>[0-9a-fA-F])(?P<B>[0-9a-fA-F])",
+            "types": ["hex1", "hex1", "hex1"],
+        },
+        "hex8": {
+            "description": "Hex 0xRRGGBBAA color format",
+            "regex": "0x(?P<R>[0-9a-fA-F]{2})(?P<G>[0-9a-fA-F]{2})(?P<B>[0-9a-fA-F]{2})(?P<A>[0-9a-fA-F]{2})",
+            "types": ["hex2", "hex2", "hex2", "hex2"],
+        },
+        "hex6": {
+            "description": "Hex 0xRRGGBB color format",
+            "regex": "0x(?P<R>[0-9a-fA-F]{2})(?P<G>[0-9a-fA-F]{2})(?P<B>[0-9a-fA-F]{2})",
+            "types": ["hex2", "hex2", "hex2"],
+        },
+        "hex4": {
+            "description": "Hex 0xRGBA color format",
+            "regex": "0x(?P<R>[0-9a-fA-F])(?P<G>[0-9a-fA-F])(?P<B>[0-9a-fA-F])(?P<A>[0-9a-fA-F])",
+            "types": ["hex1", "hex1", "hex1", "hex1"],
+        },
+        "hex3": {
+            "description": "Hex 0xRGB color format",
+            "regex": "0x(?P<R>[0-9a-fA-F])(?P<G>[0-9a-fA-F])(?P<B>[0-9a-fA-F])",
+            "types": ["hex1", "hex1", "hex1"],
+        },
+        "rgba": {
+            "description": "rgba(255,255,255,1.) color format",
+            "regex": "rgba[(][ ]*(?P<R>\\d{1,3})[ ]*[,][ ]*(?P<G>\\d{1,3})[ ]*[,][ ]*(?P<B>\\d{1,3})[ ]*[,][ ]*(?P<A>(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))[ ]*[)]",
+            "types": ["dec", "dec", "dec", "float"],
+        },
+        "rgb": {
+            "description": "rgb(255,255,255) color format",
+            "regex": "rgba[(][ ]*(?P<R>\\d{1,3})[ ]*[,][ ]*(?P<G>\\d{1,3})[ ]*[,][ ]*(?P<B>\\d{1,3})[ ]*[)]",
+            "types": ["dec", "dec", "dec"],
+        },
+        "rgba_array": {
+            "description": "[r, g, b, a] color format, where each channel can be int(0..255) or float(0. .. 1.) or percentage (0..100)%. For example: [255, 100%, 1., 255]",
+            "regex": "[\\[][ ]*(?P<R>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[,][ ]*(?P<G>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[,][ ]*(?P<B>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[,][ ]*(?P<A>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[\\]]",
+            "types": ["dec|perc|float", "dec|perc|float", "dec|perc|float", "dec|perc|float"],
+        },
+        "rgb_array": {
+            "description": "[r, g, b] color format, where each channel can be int(0..255) or float(0. .. 1.) or percentage (0..100)%. For example: [255, 100%, 1., 255]",
+            "regex": "[\\[][ ]*(?P<R>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[,][ ]*(?P<G>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[,][ ]*(?P<B>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[\\]]",
+            "types": ["dec|perc|float", "dec|perc|float", "dec|perc|float"],
         },
     }
 }

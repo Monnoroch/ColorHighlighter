@@ -20,6 +20,8 @@ except ImportError:
 
 version = "7.0"
 
+### ST version helpers
+
 # get ST version as int
 def get_version():
     return int(sublime.version())
@@ -28,7 +30,7 @@ def get_version():
 def is_st3():
     return get_version() >= 3000
 
-# async helpers
+### async helpers
 
 if is_st3():
     def run_async(cb):
@@ -44,6 +46,8 @@ else:
 
     def run_async(cb):
         RunAsync(cb).start()
+
+### Paths helpers
 
 PRelative = True
 PAbsolute = False
@@ -91,8 +95,14 @@ def create_if_not_exists(path):
     if not os.path.exists(path):
         os.mkdir(path)
 
+### Theme builder
+
 def region_name(s):
     return "mcol_" + s[1:]
+
+def read_file(fl):
+    with codecs.open(fl, "r", "utf-8") as f:
+        return f.read()
 
 # html generator for color scheme
 class HtmlGen:
@@ -176,6 +186,8 @@ class HtmlGen:
             a = 255
         return "#%02X%02X%02X%02X" % (r, g, b, a)
 
+### Setting helper
+
 class Settings:
     pfname = "Preferences.sublime-settings"
     fname = "ColorHighlighter.sublime-settings"
@@ -246,6 +258,11 @@ class Settings:
             self.ha_icons = ha_icons
             self.callbacks.set_ha_icons(ha_icons)
 
+        formats = self.obj.get("formats")
+        if forse or self.formats != formats:
+            self.formats = formats
+            self.callbacks.set_formats(formats)
+
     def on_prefs_settings_change(self, forse=False):
         self.prefs = sublime.load_settings(self.pfname)
 
@@ -253,6 +270,280 @@ class Settings:
         if forse or self.color_scheme != color_scheme:
             self.color_scheme = color_scheme
             self.callbacks.set_scheme(color_scheme)
+
+
+### Color finder
+
+def conv_val_chan(val, typ):
+    if typ == "empty":
+        return "FF"
+    elif typ == "hex1":
+        return val*2
+    elif typ == "hex2":
+        return val
+    elif typ == "dec":
+        return hex(int(val))[2:].upper()
+    elif typ == "float":
+        return hex(int(round(float(val) * 255.0)))[2:].upper()
+    elif typ == "perc":
+        return hex(int(round(float(int(val[:-1]) * 255) / 100.0)))[2:].upper()
+    return None
+
+def conv_chans(chans):
+    print("conv_chans", chans)
+    if chans is None:
+        return None
+    if type(chans) == str:
+        return chans
+
+    res = "#"
+    for c in chans:
+        if c[0] is None or c[1] is None:
+            return None
+        res += conv_val_chan(c[0], c[1])
+    return res
+
+def get_match_fmt(match, conf):
+    fmt = None
+    for f in conf.keys():
+        if f in match.keys() and match[f] is not None:
+            fmt = f
+            break
+    return fmt
+
+def get_match_col(match, conf):
+    fmt = get_match_fmt(match, conf)
+    types = conf[fmt]["types"]
+    if len(types) < 3:
+        return None, None
+    if len(types) == 3:
+        types.append("empty")
+
+    return conv_chans([
+        [match.get(fmt + "R", -1), types[0]],
+        [match.get(fmt + "G", -1), types[1]],
+        [match.get(fmt + "B", -1), types[2]],
+        [match.get(fmt + "A", -1), types[3]]
+    ]), fmt
+
+# the class for searching for colors in a region
+class ColorFinder:
+    # if the @region is in some text, that represents color, return new region, containing that color text and parsed color value in #RRGGBBAA format
+    def get_color(self, view, region, variables):
+        reg, fmt, col = self.find_color(view, region, variables)
+        if reg is None:
+            return None, None
+
+        return reg, col
+
+    # get all colors from region
+    def get_colors(self, view, variables, region=None):
+        regs = self.find_colors(view, variables, region)
+        res = []
+        for (reg, _, col) in regs:
+            res.append((reg, col))
+        return res
+
+    # main functions
+
+    # convert color with type @fmt to #RRGGBBAA
+    def convert_color(self, color, variables, fmt=None):
+        chans = None
+        if fmt is None:
+            fmt, chans = self.get_fmt(color, variables)
+
+        if fmt == "@named":
+            return colors.names_to_hex[color]
+        elif fmt.startswith("@var-"):
+            return variables[color]["col"]
+
+        if chans is None:
+            chans = self.get_chans(color, fmt)
+        return conv_chans(chans)
+
+    # convert color from #RRGGBBAA to different formats
+    def convert_back_color(self, color, variables, fmt):
+        if fmt == "@named":
+            for name in colors.names_to_hex:
+                if colors.names_to_hex[name] == color:
+                    return name
+            return color
+        elif fmt.startswith("@var-"):
+            for k in variables.keys():
+                v = variables[k]
+                if v["fmt"] == fmt and color == v["col"]:
+                    return k
+            return color
+        elif fmt == "sharp8":
+            return color
+        return None
+
+
+    conf = None
+    regex_str = "(?P<sharp8>#(?P<sharp8R>[0-9a-fA-F]{2})(?P<sharp8G>[0-9a-fA-F]{2})(?P<sharp8B>[0-9a-fA-F]{2})(?P<sharp8A>[0-9a-fA-F]{2}))"
+    regex = re.compile(regex_str)
+
+    names = ""
+    for k in list(colors.names_to_hex.keys()):
+        names += k + "|"
+    names_regex = re.compile("\\b(" + names[:-1] + ")\\b")
+
+    # get color format type and channels (if not named or variable format)
+    def get_fmt(self, color, variables):
+        if color in colors.names_to_hex.keys():
+            return "@named", None
+        if color in variables.keys():
+            return variables[color]["fmt"], None
+
+        m = self.regex.search(color)
+        if m:
+            chans, fmt = get_match_col(m.groupdict(), self.conf)
+            if fmt is None:
+                return None, None
+            return fmt, chans
+        return None, None
+
+    regex_cache = {}
+
+    # get chans for not names and not variable formats
+    def get_chans(self, color, fmt):
+        obj = self.conf[fmt]
+        types = obj["types"]
+        if len(types) < 3:
+            return None
+        if len(types) == 3:
+            types.append("empty")
+
+        rx = obj["regex"]
+        if rx in self.regex_cache.keys():
+            reg = self.regex_cache[rx]
+        else:
+            reg = re.compile(rx)
+            self.regex_cache[rx] = reg
+
+        m = reg.search(color)
+        if m:
+            return [
+                [m.get("R", -1), types[0]],
+                [m.get("G", -1), types[1]],
+                [m.get("B", -1), types[2]],
+                [m.get("A", -1), types[3]]
+            ]
+        return None
+
+    def get_word_css(self, view, region):
+        word = view.word(region)
+        chars = "-"
+        while view.substr(word.b) in chars and view.substr(word.b + 1).isalnum():
+            word = sublime.Region(word.a, view.word(sublime.Region(word.b + 1, word.b + 1)).b)
+        while view.substr(word.a - 1) in chars and view.substr(word.a - 2).isalnum():
+            word = sublime.Region(view.word(sublime.Region(word.a - 2, word.a - 2)).a, word.b)
+        if view.substr(word.a - 1) in "@$":
+            word = sublime.Region(word.a - 1, word.b)
+        return word
+
+    # if the @region is in some text, that represents color, return new region, containing that color text and format type
+    def find_color(self, view, region, variables):
+        word = self.get_word_css(view, region)
+        word_str = view.substr(word)
+
+        # TODO: nice regexes?
+        if word_str in variables.keys():
+            v = variables[word_str]
+            return word, v["fmt"], v["col"]
+        if word_str in colors.names_to_hex.keys():
+            return word, "@named", colors.names_to_hex[word_str]
+
+        line = view.line(region)
+        newreg = line
+        text = view.substr(newreg)
+        m = self.regex.search(text)
+        while m:
+            if newreg.a + m.start() <= region.a and newreg.a + m.end() >= region.b:
+                col, fmt = get_match_col(m.groupdict(), self.conf)
+                if fmt is None:
+                    continue
+                return sublime.Region(newreg.a + m.start(), newreg.a + m.end()), fmt, col
+            m = self.regex.search(text, m.end())
+        return None, None, None
+
+    vars_prepend = {
+        "@var-less": "@",
+        "@var-sass": "$",
+        "@var-styl": "",
+    }
+
+    def vars_conv(self, fmt, val):
+        if fmt == "@var-less" or fmt == "@var-sass":
+            return val[1:]
+        return val
+
+    def find_all_name(self, regex, region, text, res):
+        m = regex.search(text)
+        while m:
+            res.append((sublime.Region(region.a + m.start(), region.a + m.end()), "@named", colors.names_to_hex[text[m.start() : m.end()]]));
+            m = regex.search(text, m.end())
+
+    def find_all_vars(self, regex, region, text, fmt, variables, res):
+        m = regex.search(text)
+        while m:
+            res.append((sublime.Region(region.a + m.start(), region.a + m.end()), fmt, variables[text[m.start() : m.end()]]["col"]));
+            m = regex.search(text, m.end())
+
+    def find_all(self, regex, region, text, conf, res):
+        m = regex.search(text)
+        while m:
+            col, fmt = get_match_col(m.groupdict(), conf)
+            if fmt is None:
+                continue
+            res.append((sublime.Region(region.a + m.start(), region.a + m.end()), fmt, col));
+            m = regex.search(text, m.end())
+
+    # find all colors and their formats in the view region
+    def find_colors(self, view, variables, region=None):
+        if region is None:
+            region = sublime.Region(0, view.size())
+
+        text = view.substr(region)
+        res = []
+        print("FIND ALL")
+        self.find_all(self.regex, region, text, self.conf, res)
+        print("FIND ALL DONE")
+        self.find_all_name(self.names_regex, region, text, res)
+        if len(variables) != 0:
+            var_regexs = {}
+            varss = list(variables.keys())
+            varss.sort(key=len, reverse=True)
+            for v in varss:
+                fmt = variables[v]["fmt"]
+                v = self.vars_conv(fmt, v)
+                if fmt not in var_regexs.keys():
+                    var_regexs[fmt] = v
+                else:
+                    var_regexs[fmt] += "|"
+                    var_regexs[fmt] += v
+            for fmt in var_regexs.keys():
+                self.find_all_vars(re.compile(self.vars_prepend[fmt] + "\\b(" + var_regexs[fmt] + ")\\b"), region, text, fmt, variables, res)
+        return res
+
+    def set_conf(self, conf):
+        self.conf = conf
+        self.regex = self.build_regex(conf)
+
+    def build_regex(self, conf):
+        print(conf)
+        res = []
+        for fmt in conf.keys():
+            val = conf[fmt]
+            if "regex" not in val.keys():
+                continue
+            res.append("(?P<" + fmt + ">" + val["regex"].replace("<R>", "<" + fmt + "R>").replace("<G>", "<" + fmt + "G>").replace("<B>", "<" + fmt + "B>").replace("<A>", "<" + fmt + "A>") + ")")
+        res.sort(key=len, reverse=True)
+        print("build_regex", "|".join(res))
+        return re.compile("|".join(res))
+
+
+### Main logic classes
 
 def print_error(err):
     print(err.replace("\\n", "\n"))
@@ -279,151 +570,6 @@ def create_icon(col):
         return fpath
     return ""
 
-def get_word_css(view, region):
-    word = view.word(region)
-    chars = "-"
-    while view.substr(word.b) in chars and view.substr(word.b + 1).isalnum():
-        word = sublime.Region(word.a, view.word(sublime.Region(word.b + 1, word.b + 1)).b)
-    while view.substr(word.a - 1) in chars and view.substr(word.a - 2).isalnum():
-        word = sublime.Region(view.word(sublime.Region(word.a - 2, word.a - 2)).a, word.b)
-    if view.substr(word.a - 1) in "@$":
-        word = sublime.Region(word.a - 1, word.b)
-    return word
-
-# the class for searching for colors in a region
-class ColorFinder:
-    # if the @region is in some text, that represents color, return new region, containing that color text and parsed color value in #RRGGBBAA format
-    def get_color(self, view, region, variables):
-        reg, fmt = self.find_color(view, region, variables)
-        if reg is None:
-            return None, None
-
-        return reg, self.convert_color(view.substr(reg), variables, fmt)
-
-    # get all colors from region
-    def get_colors(self, view, variables, region=None):
-        regs = self.find_colors(view, variables, region)
-        res = []
-        for (reg, fmt) in regs:
-            res.append((reg, self.convert_color(view.substr(reg), variables, fmt)))
-        return res
-
-    # main functions
-
-    # convert color with type @fmt to #RRGGBBAA
-    def convert_color(self, color, variables, fmt=None):
-        if fmt == None:
-            fmt = self.get_fmt(color, variables)
-
-        if fmt == "@named":
-            return colors.names_to_hex[color]
-        elif fmt.startswith("@var-"):
-            return variables[color]["col"]
-        elif fmt == "#8":
-            return color
-        return None
-
-    # convert color from #RRGGBBAA to different formats
-    def convert_back_color(self, color, variables, fmt):
-        if fmt == "@named":
-            for name in colors.names_to_hex:
-                if colors.names_to_hex[name] == color:
-                    return name
-            return color
-        elif fmt.startswith("@var-"):
-            for k in variables.keys():
-                v = variables[k]
-                if v["fmt"] == fmt and color == v["col"]:
-                    return k
-            return color
-        elif fmt == "#8":
-            return color
-        return None
-
-
-    regex_str = "[#][0-9a-fA-F]{8}"
-    regex = re.compile(regex_str)
-
-    names = ""
-    for k in list(colors.names_to_hex.keys()):
-        names += k + "|"
-    names_regex = re.compile("\\b(" + names[:-1] + ")\\b")
-
-    # get color format type
-    def get_fmt(self, color, variables):
-        if color in colors.names_to_hex.keys():
-            return "@named"
-        if color in variables.keys():
-            return variables[color]["fmt"]
-        m = self.regex.search(color)
-        if m:
-            return "#8"
-        return None
-
-    # if the @region is in some text, that represents color, return new region, containing that color text and format type
-    def find_color(self, view, region, variables):
-        word = get_word_css(view, region)
-        word_str = view.substr(word)
-
-        # TODO: nice regexes?
-        if word_str in variables.keys():
-            return word, variables[word_str]["fmt"]
-        if word_str in colors.names_to_hex.keys():
-            return word, "@named"
-
-        line = view.line(region)
-        newreg = sublime.Region(max(region.a - 9, line.a), min(region.b + 9, line.b))
-        text = view.substr(newreg)
-        m = self.regex.search(text)
-        while m:
-            if newreg.a + m.start() <= region.a and newreg.a + m.end() >= region.b:
-                return sublime.Region(newreg.a + m.start(), newreg.a + m.end()), "#8"
-            m = self.regex.search(text, m.end())
-        return None, None
-
-    vars_prepend = {
-        "@var-less": "@",
-        "@var-sass": "$",
-        "@var-styl": "",
-    }
-
-    def vars_conv(self, fmt, val):
-        if fmt == "@var-less" or fmt == "@var-sass":
-            return val[1:]
-        return val
-
-    def find_all(self, regex, region, text, fmt, res):
-        m = regex.search(text)
-        while m:
-            res.append((sublime.Region(region.a + m.start(), region.a + m.end()), fmt));
-            m = regex.search(text, m.end())
-
-    # find all colors and their formats in the view region
-    def find_colors(self, view, variables, region=None):
-        if region is None:
-            region = sublime.Region(0, view.size())
-
-        text = view.substr(region)
-        res = []
-        self.find_all(self.regex, region, text, "#8", res)
-        self.find_all(self.names_regex, region, text, "@named", res)
-        if len(variables) != 0:
-            var_regexs = {}
-            varss = list(variables.keys())
-            varss.sort(key=len, reverse=True)
-            for v in varss:
-                fmt = variables[v]["fmt"]
-                v = self.vars_conv(fmt, v)
-                if fmt not in var_regexs.keys():
-                    var_regexs[fmt] = v
-                else:
-                    var_regexs[fmt] += "|"
-                    var_regexs[fmt] += v
-            for fmt in var_regexs.keys():
-                self.find_all(re.compile(self.vars_prepend[fmt] + "\\b(" + var_regexs[fmt] + ")\\b"), region, text, fmt, res)
-        return res
-
-
 # main program
 class ColorHighlighterView:
     ch = None
@@ -446,9 +592,8 @@ class ColorHighlighterView:
         vs = self.ch.get_vars(self.view)
         res = []
         for s in self.view.sel():
-            region, fmt = self.ch.color_finder.find_color(self.view, s, vs)
+            region, fmt, col = self.ch.color_finder.find_color(self.view, s, vs)
             if region is not None:
-                col = self.ch.color_finder.convert_color(self.view.substr(region), vs, fmt)
                 res.append((region, fmt, col))
         return res
 
@@ -533,6 +678,68 @@ class ColorHighlighterView:
         for reg in self.ha_regions:
             self.view.erase_regions(reg)
         self.ha_regions = []
+
+def on_line_less(fname, line, i, res):
+    if line[0] != "@":
+        return
+
+    var, col, pos = extract_less_sass_name_val(line)
+    if var != None:
+        res[var] = {"text": col, "file": fname, "line": i, "pos": pos, "fmt": "@var-less"}
+
+def on_line_sass(fname, line, i, res):
+    if line[0] != "$":
+        return
+
+    var, col, pos = extract_less_sass_name_val(line)
+    if var != None:
+        res[var] = {"text": col, "file": fname, "line": i, "pos": pos, "fmt": "@var-sass"}
+
+def on_line_styl(fname, line, i, res):
+    var, col, pos = extract_styl_name_val(line)
+    if var != None:
+        res[var] = {"text": col, "file": fname, "line": i, "pos": pos, "fmt": "@var-styl"}
+
+def extract_import(line):
+    l = len(line)
+    i = len("@import")
+    while i < l and line[i] not in "'\"":
+        i += 1
+    i += 1
+    start = i
+    if start >= l:
+        return None
+
+    while i < l and line[i] not in "'\"":
+        i += 1
+    end = i
+    if end >= l:
+        return None
+
+    return line[start:end]
+
+def extract_less_sass_name_val(line):
+    pos = line.find(":")
+    if pos == -1:
+        return None, None, None
+
+    var = line[:pos].rstrip()
+    col = line[pos+1:-1].strip()
+    return var, col, line.find(col)
+
+def extract_styl_name_val(line):
+    pos = line.find("=")
+    if pos == -1:
+        return None, None, None
+
+    var = line[:pos].strip()
+    if var == "":
+        return None, None, None
+    for c in var:
+        if not c.isalpha() and c != "-" and c != "_":
+            return None, None, None
+    col = line[pos+1:].strip()
+    return var, col, line.find(col)
 
 # main program
 class ColorHighlighter:
@@ -835,73 +1042,11 @@ class ColorHighlighter:
             v["col"] = self.color_finder.convert_color(text, {})
         return v["col"]
 
+    def set_formats(self, formats):
+        self.color_finder.set_conf(formats)
+
+
 color_highlighter = None
-
-def on_line_less(fname, line, i, res):
-    if line[0] != "@":
-        return
-
-    var, col, pos = extract_less_sass_name_val(line)
-    if var != None:
-        res[var] = {"text": col, "file": fname, "line": i, "pos": pos, "fmt": "@var-less"}
-
-def on_line_sass(fname, line, i, res):
-    if line[0] != "$":
-        return
-
-    var, col, pos = extract_less_sass_name_val(line)
-    if var != None:
-        res[var] = {"text": col, "file": fname, "line": i, "pos": pos, "fmt": "@var-sass"}
-
-def on_line_styl(fname, line, i, res):
-    var, col, pos = extract_styl_name_val(line)
-    if var != None:
-        res[var] = {"text": col, "file": fname, "line": i, "pos": pos, "fmt": "@var-styl"}
-
-def extract_import(line):
-    l = len(line)
-    i = len("@import")
-    while i < l and line[i] not in "'\"":
-        i += 1
-    i += 1
-    start = i
-    if start >= l:
-        return None
-
-    while i < l and line[i] not in "'\"":
-        i += 1
-    end = i
-    if end >= l:
-        return None
-
-    return line[start:end]
-
-def read_file(fl):
-    with codecs.open(fl, "r", "utf-8") as f:
-        return f.read()
-
-def extract_less_sass_name_val(line):
-    pos = line.find(":")
-    if pos == -1:
-        return None, None, None
-
-    var = line[:pos].rstrip()
-    col = line[pos+1:-1].strip()
-    return var, col, line.find(col)
-
-def extract_styl_name_val(line):
-    pos = line.find("=")
-    if pos == -1:
-        return None, None, None
-
-    var = line[:pos].strip()
-    if var == "":
-        return None, None, None
-    for c in var:
-        if not c.isalpha() and c != "-" and c != "_":
-            return None, None, None
-    col = line[pos+1:].strip()
-    return var, col, line.find(col)
 
 # main event listener
 class ColorSelection(sublime_plugin.EventListener):
@@ -1124,6 +1269,8 @@ def plugin_loaded():
 
 # unload all the stuff
 def plugin_unloaded():
+    if color_highlighter is None:
+        return
     color_highlighter.unload()
 
 # ST2 support. Maby need set_timeout?
