@@ -589,7 +589,7 @@ class ColorHighlighter:
             return True
 
         if fname is None or fname == "":
-            return False
+            return True
 
         return os.path.splitext(fname)[1] in self.settings.get("file_exts")
 
@@ -790,7 +790,7 @@ class ColorHighlighter:
 
         obj = {}
         self.vars_view_cache[view.id()] = obj
-        self.parse_vars_text(view.substr(0, view.size()), "@view:" + str(view.id()), "", "", obj)
+        self.parse_vars_text(view.substr(sublime.Region(0, view.size())), "@view:" + str(view.id()), "", "", obj)
 
     def _get_vars(self, obj, res):
         vs = obj["vars"]
