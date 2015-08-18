@@ -274,83 +274,234 @@ class Settings:
 
 ### Color finder
 
-def conv_val_chan(val, typ):
-    if typ == "empty":
-        return "FF"
-    elif typ == "hex1":
-        return val*2
-    elif typ == "hex2":
-        return val
-    elif typ == "dec":
-        return hex(int(val))[2:].upper()
-    elif typ == "float":
-        return hex(int(round(float(val) * 255.0)))[2:].upper()
-    elif typ == "perc":
-        return hex(int(round(float(int(val[:-1]) * 255) / 100.0)))[2:].upper()
-    return None
+class ColorConverter:
+    conf = None
+    regex = None
+    regex_cache = {}
 
-def conv_chans(chans):
-    print("conv_chans", chans)
-    if chans is None:
+    def set_conf(self, conf):
+        self.conf = conf
+        self.regex = self._build_regex(conf)
+
+    def _build_regex(self, conf): # -> regex object
+        res = []
+        for fmt in conf.keys():
+            val = conf[fmt]
+            if "regex" not in val.keys():
+                continue
+            res.append(
+                "(?P<" + fmt + ">" +
+                    val["regex"]
+                        .replace("(?P<R>", "(?P<" + fmt + "R>")
+                        .replace("(?P<G>", "(?P<" + fmt + "G>")
+                        .replace("(?P<B>", "(?P<" + fmt + "B>")
+                        .replace("(?P<A>", "(?P<" + fmt + "A>") +
+                ")"
+            )
+        res.sort(key=len, reverse=True)
+        return re.compile("|".join(res))
+
+    def _get_regex(self, regex): # -> regex object
+        if type(regex) is not str:
+            return regex
+
+        if regex in self.regex_cache.keys():
+            return self.regex_cache[regex]
+        res = re.compile(regex)
+        self.regex_cache[regex] = res
+        return res
+
+    def _match_regex(self, regex, text): # -> match result
+        m = self._get_regex(regex).search(text)
+        if m:
+            return m.groupdict()
         return None
-    if type(chans) == str:
-        return chans
 
-    res = "#"
-    for c in chans:
-        if c[0] is None or c[1] is None:
-            return None
-        res += conv_val_chan(c[0], c[1])
-    return res
+    def _conv_val_chan(self, val, typ):
+        if typ == "empty":
+            return "FF"
+        elif typ == "hex1":
+            return val*2
+        elif typ == "hex2":
+            return val
+        elif typ == "dec":
+            res = hex(int(val))[2:].upper()
+            if len(res) == 1:
+                res = "0" + res
+            return res
+        elif typ == "float":
+            res = hex(int(round(float(val) * 255.0)))[2:].upper()
+            if len(res) == 1:
+                res = "0" + res
+            return res
+        elif typ == "perc":
+            res = hex(int(round(float(int(val[:-1]) * 255) / 100.0)))[2:].upper()
+            if len(res) == 1:
+                res = "0" + res
+            return res
+        return None
 
-def get_match_fmt(match, conf):
-    fmt = None
-    for f in conf.keys():
-        if f in match.keys() and match[f] is not None:
-            fmt = f
-            break
-    return fmt
+    def _chans_to_col(self, chans): # -> col
+        # TODO: special hsv, hsl, etc.
+        res = "#"
+        for c in chans:
+            res += self._conv_val_chan(c[0], c[1])
+        return res
 
-def get_match_col(match, conf):
-    fmt = get_match_fmt(match, conf)
-    types = conf[fmt]["types"]
-    if len(types) < 3:
+    def _get_match_fmt(self, match): # -> fmt
+        for fmt in self.conf.keys():
+            if fmt in match.keys() and match[fmt] is not None:
+                return fmt
+        return None
+
+    def _get_color_fmt(self, color): # -> fmt
+        match = self._match_regex(self.regex, color)
+        if match is not None:
+            return self._get_match_fmt(match)
+        return None
+
+    def _get_chans(self, match, fmt, small=False): # -> chans
+        types = self.conf[fmt]["types"]
+        if small:
+            res = [
+                [match.get("R", -1), types[0]],
+                [match.get("G", -1), types[1]],
+                [match.get("B", -1), types[2]],
+                [match.get("A", -1), types[3]]
+            ]
+        else:
+            res = [
+                [match.get(fmt + "R", -1), types[0]],
+                [match.get(fmt + "G", -1), types[1]],
+                [match.get(fmt + "B", -1), types[2]],
+                [match.get(fmt + "A", -1), types[3]]
+            ]
+        for c in res:
+            if c[0] is None:
+                return None
+        return res
+
+    def _col_to_chans(self, col, fmt): # -> chans
+        # TODO
+        return None
+
+    def _get_color_fmt_chans(self, color): # -> fmt, chans
+        match = self._match_regex(self.regex, color)
+        if match is not None:
+            for fmt in self.conf.keys():
+                if fmt in match.keys() and match[fmt] is not None:
+                    types = self.conf[fmt]["types"]
+                    chans = self._get_chans(match, fmt)
+                    if chans is None:
+                        return None, None
+                    return fmt, chans
         return None, None
-    if len(types) == 3:
-        types.append("empty")
 
-    return conv_chans([
-        [match.get(fmt + "R", -1), types[0]],
-        [match.get(fmt + "G", -1), types[1]],
-        [match.get(fmt + "B", -1), types[2]],
-        [match.get(fmt + "A", -1), types[3]]
-    ]), fmt
+    def _get_color_fmt_col(self, color): # -> fmt, col
+        fmt, chans = self._get_color_fmt_chans(color)
+        if fmt is None:
+            return None, None
+        return fmt, self._chans_to_col(chans)
+
+    def _get_color_chans(self, color, fmt): # -> chans
+        match = self._match_regex(self.conf[fmt]["regex"], color)
+        if match is not None:
+            return self._get_chans(match, fmt, True)
+        return None
+
+    def _get_color_col(self, color, fmt): # -> col
+        chans = self._get_color_chans(color, fmt)
+        if chans is None:
+            return None
+        return self._chans_to_col(chans)
+
+    def get_color_fmt_col(self, color, fmt=None): # -> fmt, col
+        if fmt is None:
+            return fmt, self._get_color_fmt_col(color)
+        else:
+            return fmt, self._get_color_col(color, fmt)
+
+    def get_col_color(self, col, fmt, example): # -> color
+        if fmt == "sharp8":
+            return col
+        chans = self._col_to_chans(col, fmt)
+        m = self._get_regex(self.conf[fmt]["regex"]).search(example)
+        if m:
+            example = example[:m.start("R")] + chans[0][0] + example[m.end("R"):]
+            example = example[:m.start("G")] + chans[1][0] + example[m.end("G"):]
+            example = example[:m.start("B")] + chans[2][0] + example[m.end("B"):]
+            example = example[:m.start("A")] + chans[3][0] + example[m.end("A"):]
+            return example
+        return None
+
+    def append_text_reg_fmt_col(self, text, offset, res): # -> [(reg, fmt, col)]
+        m = self.regex.search(text)
+        while m:
+            match = m.groupdict()
+            fmt = self._get_match_fmt(match)
+            if fmt is not None:
+                chans = self._get_chans(match, fmt)
+                if chans is not None:
+                    res.append((sublime.Region(offset + m.start(), offset + m.end()), fmt, self._chans_to_col(chans)));
+            m = self.regex.search(text, m.end())
+        return res
+
+    def get_text_reg_fmt_col(self, text, offset): # -> [(reg, fmt, col)]
+        return self.append_text_reg_fmt_col(text, offset, [])
+
+    def get_view_reg_fmt_col(self, view, region=None): # -> [(reg, fmt, col)]
+        if region is None:
+            region = sublime.Region(0, view.size())
+        return self.get_text_reg_fmt_col(view.substr(region), region.begin())
+
+    def find_text_reg_fmt_col(self, text, offset, reg_in): # -> (reg, fmt, col)
+        m = self.regex.search(text)
+        while m:
+            if offset + m.start() <= reg_in.begin() and offset + m.end() >= reg_in.end():
+                match = m.groupdict()
+                fmt = self._get_match_fmt(match)
+                if fmt is not None:
+                    chans = self._get_chans(match, fmt)
+                    if chans is not None:
+                        return sublime.Region(offset + m.start(), offset + m.end()), fmt, self._chans_to_col(chans)
+            m = self.regex.search(text, m.end())
+        return None, None, None
+
+    def find_view_reg_fmt_col(self, view, region, reg_in): # -> (reg, fmt, col)
+        return self.find_text_reg_fmt_col(view.substr(region), region.begin(), reg_in)
+
 
 # the class for searching for colors in a region
 class ColorFinder:
+    conv = ColorConverter()
+
+    names = ""
+    for k in list(colors.names_to_hex.keys()):
+        names += k + "|"
+    names_regex = re.compile("\\b(" + names[:-1] + ")\\b")
+
     # if the @region is in some text, that represents color, return new region, containing that color text and parsed color value in #RRGGBBAA format
-    def get_color(self, view, region, variables):
+    def get_color(self, view, region, variables): # -> (reg, col)
         reg, fmt, col = self.find_color(view, region, variables)
         if reg is None:
             return None, None
-
         return reg, col
 
     # get all colors from region
-    def get_colors(self, view, variables, region=None):
+    def get_colors(self, view, variables, region=None): # -> [(reg, col)]
         regs = self.find_colors(view, variables, region)
         res = []
         for (reg, _, col) in regs:
             res.append((reg, col))
         return res
 
-    # main functions
-
     # convert color with type @fmt to #RRGGBBAA
-    def convert_color(self, color, variables, fmt=None):
+    def convert_color(self, color, variables, fmt=None): # -> col
         chans = None
         if fmt is None:
             fmt, chans = self.get_fmt(color, variables)
+            if fmt is None:
+                return None
 
         if fmt == "@named":
             return colors.names_to_hex[color]
@@ -358,78 +509,46 @@ class ColorFinder:
             return variables[color]["col"]
 
         if chans is None:
-            chans = self.get_chans(color, fmt)
-        return conv_chans(chans)
+            chans = self.conv._get_color_chans(color, fmt)
+            if chans is None:
+                return None
+        return self.conv._chans_to_col(chans)
+
+    # convert color to #RRGGBBAA
+    def convert_color_novars(self, color): # -> col
+        fmt, chans = self.get_fmt_novars(color)
+        if fmt is None:
+            return None
+        if fmt == "@named":
+            return colors.names_to_hex[color]
+        return self.conv._chans_to_col(chans)
 
     # convert color from #RRGGBBAA to different formats
-    def convert_back_color(self, color, variables, fmt):
+    def convert_back_color(self, col, variables, fmt, example): # -> color
         if fmt == "@named":
             for name in colors.names_to_hex:
-                if colors.names_to_hex[name] == color:
+                if colors.names_to_hex[name] == col:
                     return name
-            return color
+            return col
         elif fmt.startswith("@var-"):
             for k in variables.keys():
                 v = variables[k]
-                if v["fmt"] == fmt and color == v["col"]:
+                if v["fmt"] == fmt and col == v["col"]:
                     return k
-            return color
-        elif fmt == "sharp8":
-            return color
-        return None
+            return col
+        return self.conv.get_col_color(col, fmt, example)
 
-
-    conf = None
-    regex_str = "(?P<sharp8>#(?P<sharp8R>[0-9a-fA-F]{2})(?P<sharp8G>[0-9a-fA-F]{2})(?P<sharp8B>[0-9a-fA-F]{2})(?P<sharp8A>[0-9a-fA-F]{2}))"
-    regex = re.compile(regex_str)
-
-    names = ""
-    for k in list(colors.names_to_hex.keys()):
-        names += k + "|"
-    names_regex = re.compile("\\b(" + names[:-1] + ")\\b")
-
-    # get color format type and channels (if not named or variable format)
-    def get_fmt(self, color, variables):
+    def get_fmt(self, color, variables): # -> fmt, chans
         if color in colors.names_to_hex.keys():
             return "@named", None
         if color in variables.keys():
             return variables[color]["fmt"], None
+        return self.conv._get_color_fmt_chans(color)
 
-        m = self.regex.search(color)
-        if m:
-            chans, fmt = get_match_col(m.groupdict(), self.conf)
-            if fmt is None:
-                return None, None
-            return fmt, chans
-        return None, None
-
-    regex_cache = {}
-
-    # get chans for not names and not variable formats
-    def get_chans(self, color, fmt):
-        obj = self.conf[fmt]
-        types = obj["types"]
-        if len(types) < 3:
-            return None
-        if len(types) == 3:
-            types.append("empty")
-
-        rx = obj["regex"]
-        if rx in self.regex_cache.keys():
-            reg = self.regex_cache[rx]
-        else:
-            reg = re.compile(rx)
-            self.regex_cache[rx] = reg
-
-        m = reg.search(color)
-        if m:
-            return [
-                [m.get("R", -1), types[0]],
-                [m.get("G", -1), types[1]],
-                [m.get("B", -1), types[2]],
-                [m.get("A", -1), types[3]]
-            ]
-        return None
+    def get_fmt_novars(self, color): # -> fmt, chans
+        if color in colors.names_to_hex.keys():
+            return "@named", None
+        return self.conv._get_color_fmt_chans(color)
 
     def get_word_css(self, view, region):
         word = view.word(region)
@@ -443,7 +562,7 @@ class ColorFinder:
         return word
 
     # if the @region is in some text, that represents color, return new region, containing that color text and format type
-    def find_color(self, view, region, variables):
+    def find_color(self, view, region, variables): # -> (reg, fmt, col)
         word = self.get_word_css(view, region)
         word_str = view.substr(word)
 
@@ -455,16 +574,15 @@ class ColorFinder:
             return word, "@named", colors.names_to_hex[word_str]
 
         line = view.line(region)
-        newreg = line
-        text = view.substr(newreg)
-        m = self.regex.search(text)
-        while m:
-            if newreg.a + m.start() <= region.a and newreg.a + m.end() >= region.b:
-                col, fmt = get_match_col(m.groupdict(), self.conf)
-                if fmt is None:
-                    continue
-                return sublime.Region(newreg.a + m.start(), newreg.a + m.end()), fmt, col
-            m = self.regex.search(text, m.end())
+        return self.conv.find_text_reg_fmt_col(view.substr(line), line.begin(), region)
+
+    # if the @region is in some text, that represents color, return new region, containing that color text and format type
+    def find_color_var(self, view, region, variables): # -> (reg, fmt, col)
+        word = self.get_word_css(view, region)
+        word_str = view.substr(word)
+        if word_str in variables.keys():
+            v = variables[word_str]
+            return word, v["fmt"], v["col"]
         return None, None, None
 
     vars_prepend = {
@@ -490,25 +608,13 @@ class ColorFinder:
             res.append((sublime.Region(region.a + m.start(), region.a + m.end()), fmt, variables[text[m.start() : m.end()]]["col"]));
             m = regex.search(text, m.end())
 
-    def find_all(self, regex, region, text, conf, res):
-        m = regex.search(text)
-        while m:
-            col, fmt = get_match_col(m.groupdict(), conf)
-            if fmt is None:
-                continue
-            res.append((sublime.Region(region.a + m.start(), region.a + m.end()), fmt, col));
-            m = regex.search(text, m.end())
-
     # find all colors and their formats in the view region
-    def find_colors(self, view, variables, region=None):
+    def find_colors(self, view, variables, region=None): # -> [(reg, fmt, col)]
         if region is None:
             region = sublime.Region(0, view.size())
 
         text = view.substr(region)
         res = []
-        print("FIND ALL")
-        self.find_all(self.regex, region, text, self.conf, res)
-        print("FIND ALL DONE")
         self.find_all_name(self.names_regex, region, text, res)
         if len(variables) != 0:
             var_regexs = {}
@@ -523,25 +629,13 @@ class ColorFinder:
                     var_regexs[fmt] += "|"
                     var_regexs[fmt] += v
             for fmt in var_regexs.keys():
-                self.find_all_vars(re.compile(self.vars_prepend[fmt] + "\\b(" + var_regexs[fmt] + ")\\b"), region, text, fmt, variables, res)
-        return res
+                regex = self.conv._get_regex(self.vars_prepend[fmt] + "\\b(" + var_regexs[fmt] + ")\\b")
+                self.find_all_vars(regex, region, text, fmt, variables, res)
+
+        return self.conv.append_text_reg_fmt_col(text, region.begin(), res)
 
     def set_conf(self, conf):
-        self.conf = conf
-        self.regex = self.build_regex(conf)
-
-    def build_regex(self, conf):
-        print(conf)
-        res = []
-        for fmt in conf.keys():
-            val = conf[fmt]
-            if "regex" not in val.keys():
-                continue
-            res.append("(?P<" + fmt + ">" + val["regex"].replace("<R>", "<" + fmt + "R>").replace("<G>", "<" + fmt + "G>").replace("<B>", "<" + fmt + "B>").replace("<A>", "<" + fmt + "A>") + ")")
-        res.sort(key=len, reverse=True)
-        print("build_regex", "|".join(res))
-        return re.compile("|".join(res))
-
+        self.conv.set_conf(conf)
 
 ### Main logic classes
 
@@ -583,7 +677,6 @@ class ColorHighlighterView:
         self.view = view
 
     def enable(self, val=True):
-        print("ColorHighlighterView.enable(%d, %s)" % (self.view.id(), val))
         self.disabled = not val
         if self.disabled:
             self.restore_scheme()
@@ -593,6 +686,15 @@ class ColorHighlighterView:
         res = []
         for s in self.view.sel():
             region, fmt, col = self.ch.color_finder.find_color(self.view, s, vs)
+            if region is not None:
+                res.append((region, fmt, col))
+        return res
+
+    def get_colors_sel_var(self):
+        vs = self.ch.get_vars(self.view)
+        res = []
+        for s in self.view.sel():
+            region, fmt, col = self.ch.color_finder.find_color_var(self.view, s, vs)
             if region is not None:
                 res.append((region, fmt, col))
         return res
@@ -626,7 +728,6 @@ class ColorHighlighterView:
         self.set_scheme(scheme, f)
 
     def on_activated(self):
-        print("on_activated(%d)" % self.view.id())
         self.on_selection_modified()
 
         self.ha_clear()
@@ -652,16 +753,13 @@ class ColorHighlighterView:
         self.set_scheme(scheme, f)
 
     def on_close(self):
-        print("on_close(%d)" % self.view.id(), "changing color scheme to " + self.ch.color_scheme)
         self.restore_scheme()
 
     def on_settings_change(self):
         cs = self.view.settings().get("color_scheme")
-        print("ColorHighlighterView.on_settings_change: ", cs)
 
     def set_scheme(self, val, force=False):
         if force or self.view.settings().get("color_scheme") != val:
-            print("set_scheme(%d, %s)" % (self.view.id(), val))
             self.view.settings().set("color_scheme", val)
 
     def restore_scheme(self):
@@ -792,6 +890,7 @@ class ColorHighlighter:
         self.ha_redraw()
 
     def valid_fname(self, fname):
+        print("valid_fname(%s)" % fname)
         if self.settings.get("file_exts") == "all":
             return True
 
@@ -830,7 +929,6 @@ class ColorHighlighter:
         self.ha_redraw()
 
     def set_scheme(self, val):
-        print("set_scheme(%s)" % val)
         self.color_scheme = val
         if val not in self.color_schemes.keys():
             self.color_schemes[val] = HtmlGen(val)
@@ -850,7 +948,6 @@ class ColorHighlighter:
         return gen.scheme_name(), res
 
     def add_view(self, view):
-        print("add_view(%d, %s)" % (view.id(), view.file_name()))
         v = ColorHighlighterView(self, view)
         v.enable(self.valid_fname(view.file_name()))
         if self.started:
@@ -870,7 +967,6 @@ class ColorHighlighter:
         return self.views[view.id()].disabled
 
     def get_regions_flags(self, style):
-        print("get_regions_flags", style)
         if is_st3():
             if style == "default" or style == "filled":
                 return sublime.DRAW_NO_OUTLINE
@@ -926,7 +1022,6 @@ class ColorHighlighter:
     def on_activated(self, view):
         if self.disabled(view):
             return
-
         self.views[view.id()].on_activated()
 
     def unload(self):
@@ -937,8 +1032,12 @@ class ColorHighlighter:
     def get_colors_sel(self, view):
         if self.disabled(view):
             return []
-
         return self.views[view.id()].get_colors_sel()
+
+    def get_colors_sel_var(self, view):
+        if self.disabled(view):
+            return []
+        return self.views[view.id()].get_colors_sel_var()
 
     # vars extract
 
@@ -1035,11 +1134,11 @@ class ColorHighlighter:
         if "col" in v.keys():
             return v["col"]
 
-        text = v["text"]
-        if text in variables.keys():
-            v["col"] = self.get_col(text, variables)
+        color = v["text"]
+        if color in variables.keys():
+            v["col"] = self.get_col(color, variables)
         else:
-            v["col"] = self.color_finder.convert_color(text, {})
+            v["col"] = self.color_finder.convert_color_novars(color)
         return v["col"]
 
     def set_formats(self, formats):
@@ -1123,7 +1222,7 @@ class ChReplaceColor(sublime_plugin.TextCommand):
         offset = 0
         for val in args["words"].split("\t"):
             reg, fmt, col = self.parse_word(val)
-            new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt)
+            new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt, self.view.substr(reg))
             if new_col is None:
                 continue
             self.view.replace(edit, sublime.Region(offset + reg.a, offset + reg.b), new_col)
@@ -1180,7 +1279,6 @@ class ColorPickerCommand(ColorCommand):
 
     def call_impl(self):
         if self.output is not None and len(self.output) == 9 and self.output != 'CANCEL':
-            print("SEND DATA: ", "\t".join(list(map(str, self.words))))
             self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], x[1], self.output)), self.words))})
         self.output = None
 
@@ -1192,16 +1290,15 @@ class BaseColorConvertCommand(ColorCommand):
 class ColorConvertCommand(BaseColorConvertCommand):
     def run(self, edit):
         self.vs = color_highlighter.get_vars(self.view)
-        fmt = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
-        panel = self.view.window().show_input_panel("Format: ", fmt, self.do_run, self.on_change, self.clear)
+        fmt, _ = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
+        panel = self.view.window().show_input_panel("Format: ", fmt, self.do_run, None, self.clear)
         panel.sel().add(sublime.Region(0, panel.size()))
 
 class ColorConvertNextCommand(BaseColorConvertCommand):
     def run(self, edit):
         self.vs = color_highlighter.get_vars(self.view)
-        fmt = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
+        fmt, _ = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
         formats = list(filter(lambda f, fmt=fmt: f == fmt or (not f.startswith("@var-")), color_highlighter.settings.get("formats").keys()))
-        print(formats)
         new_fmt = formats[0]
         i = 0
         for f in formats:
@@ -1211,14 +1308,13 @@ class ColorConvertNextCommand(BaseColorConvertCommand):
                 break
             i += 1
 
-        print(new_fmt)
         self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words))})
         self.clear()
 
 class ColorConvertPrevCommand(BaseColorConvertCommand):
     def run(self, edit):
         self.vs = color_highlighter.get_vars(self.view)
-        fmt = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
+        fmt, _ = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
         formats = list(filter(lambda f, fmt=fmt: f == fmt or (not f.startswith("@var-")), color_highlighter.settings.get("formats").keys()))
         new_fmt = formats[len(formats) - 1]
         i = 0
@@ -1237,12 +1333,11 @@ class GoToVarDefinitionCommand(ColorCommand):
         reg, _, _ = self.words[0]
         self.vs = color_highlighter.get_vars(self.view)
         obj = self.vs[self.view.substr(reg)]
-        print("GoToVarDefinitionCommand", self.vs, obj)
         view = self.view.window().open_file(obj["file"] + ":%d:%d" % (obj["line"], obj["pos"] + 1), sublime.ENCODED_POSITION|sublime.TRANSIENT)
         self.clear()
 
     def is_enabled(self):
-        self.words = color_highlighter.get_colors_sel(self.view)
+        self.words = color_highlighter.get_colors_sel_var(self.view)
         return len(self.words) != 0 and self.words[0][1].startswith("@var-")
 
 # initialize all the stuff
@@ -1269,8 +1364,6 @@ def plugin_loaded():
 
 # unload all the stuff
 def plugin_unloaded():
-    if color_highlighter is None:
-        return
     color_highlighter.unload()
 
 # ST2 support. Maby need set_timeout?
