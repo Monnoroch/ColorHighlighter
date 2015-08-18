@@ -1142,6 +1142,14 @@ class ColorHighlighter:
         return v["col"]
 
     def set_formats(self, formats):
+        for k in formats.keys():
+            if "types" not in formats[k].keys():
+                continue
+            types = formats[k]["types"]
+            if len(types) < 3:
+                raise Error("")
+            if len(types) == 3:
+                types.append("empty")
         self.color_finder.set_conf(formats)
 
 
