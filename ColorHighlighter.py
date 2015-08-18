@@ -289,17 +289,17 @@ class ColorConverter:
             val = conf[fmt]
             if "regex" not in val.keys():
                 continue
-            res.append(
+            res.append((val["order"],
                 "(?P<" + fmt + ">" +
                     val["regex"]
                         .replace("(?P<R>", "(?P<" + fmt + "R>")
                         .replace("(?P<G>", "(?P<" + fmt + "G>")
                         .replace("(?P<B>", "(?P<" + fmt + "B>")
                         .replace("(?P<A>", "(?P<" + fmt + "A>") +
-                ")"
+                ")")
             )
-        res.sort(key=len, reverse=True)
-        return re.compile("|".join(res))
+        res.sort(key=lambda x: x[0])
+        return re.compile("|".join(map(lambda x: x[1], res)))
 
     def _get_regex(self, regex): # -> regex object
         if type(regex) is not str:
@@ -890,7 +890,6 @@ class ColorHighlighter:
         self.ha_redraw()
 
     def valid_fname(self, fname):
-        print("valid_fname(%s)" % fname)
         if self.settings.get("file_exts") == "all":
             return True
 
@@ -1142,16 +1141,118 @@ class ColorHighlighter:
         return v["col"]
 
     def set_formats(self, formats):
+        to_del = []
         for k in formats.keys():
-            if "types" not in formats[k].keys():
-                continue
-            types = formats[k]["types"]
-            if len(types) < 3:
-                raise Error("")
-            if len(types) == 3:
-                types.append("empty")
+            obj = formats[k]
+            if "disable" in obj.keys():
+                to_del.append(k)
+        for k in to_del:
+            del(formats[k])
+
+        deps = {
+            "": {
+                "deps": {}
+            }
+        }
+        for k in formats.keys():
+            obj = formats[k]
+            if "types" in obj.keys():
+                types = obj["types"]
+                if len(types) < 3:
+                    raise Error("")
+                if len(types) == 3:
+                    types.append("empty")
+            if "regex" in obj.keys():
+                deps[k] = {
+                    "rlen": len(obj["regex"]),
+                }
+                if "after" in obj.keys():
+                    ds = obj["after"]
+                    if type(ds) == str:
+                        deps[k]["deps"] = {
+                            ds: True,
+                        }
+                    else:
+                        deps[k]["deps"] = {}
+                        for d in ds:
+                            deps[k]["deps"][d] = True
+
+                deps[""]["deps"][k] = True
+
+        self.get_deps("", deps, {})
+        arr = []
+        for k in deps.keys():
+            if k != "":
+                arr.append((k, deps[k]["rlen"], deps[k]["deps_arr"]))
+        arr.sort(key=cmp_to_key(deps_order))
+        i = 0
+        for (k, _, _) in arr:
+            formats[k]["order"] = i
+            i += 1
         self.color_finder.set_conf(formats)
 
+    def get_deps(self, k, deps, doing):
+        if k in doing.keys():
+            raise Error("Reccurent dependencies!")
+
+        doing[k] = True
+        obj = deps[k]
+        if "deps_arr" in obj.keys():
+            del(doing[k])
+            return
+
+        if "deps" not in obj.keys():
+            obj["deps_arr"] = {}
+            del(doing[k])
+            return
+
+        da = {}
+        ds = obj["deps"]
+        for d in ds.keys():
+            da[d] = True
+            self.get_deps(d, deps, doing)
+
+        for d in ds:
+            for v in deps[d]["deps_arr"]:
+                da[v] = True
+        obj["deps_arr"] = da
+        del(doing[k])
+
+def deps_order(a, b):
+    keyA, rlenA, depsA = a
+    keyB, rlenB, depsB = b
+    if keyB in depsA.keys():
+        return 1
+    if keyA in depsB.keys():
+        return -1
+
+    if rlenA != rlenB:
+        return rlenB - rlenA
+
+    if keyB > keyA:
+        return 1
+    elif keyB < keyA:
+        return -1
+    return 0
+
+def cmp_to_key(mycmp):
+    'Convert a cmp= function into a key= function'
+    class K(object):
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
 
 color_highlighter = None
 

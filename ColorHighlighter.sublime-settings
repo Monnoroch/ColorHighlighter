@@ -31,18 +31,21 @@
             "regex": "#(?P<R>[0-9a-fA-F]{2})(?P<G>[0-9a-fA-F]{2})(?P<B>[0-9a-fA-F]{2})",
             "types": ["hex2", "hex2", "hex2"],
             "white": "#FFFFFF",
+            "after": "sharp8",
         },
         "sharp4": {
             "description": "Hex #RGBA color format",
             "regex": "#(?P<R>[0-9a-fA-F])(?P<G>[0-9a-fA-F])(?P<B>[0-9a-fA-F])(?P<A>[0-9a-fA-F])",
             "types": ["hex1", "hex1", "hex1", "hex1"],
             "white": "#FFFF",
+            "after": "sharp6",
         },
         "sharp3": {
             "description": "Hex #RGB color format",
             "regex": "#(?P<R>[0-9a-fA-F])(?P<G>[0-9a-fA-F])(?P<B>[0-9a-fA-F])",
             "types": ["hex1", "hex1", "hex1"],
             "white": "#FFF",
+            "after": "sharp4",
         },
         "hex8": {
             "description": "Hex 0xRRGGBBAA color format",
@@ -55,18 +58,21 @@
             "regex": "0x(?P<R>[0-9a-fA-F]{2})(?P<G>[0-9a-fA-F]{2})(?P<B>[0-9a-fA-F]{2})",
             "types": ["hex2", "hex2", "hex2"],
             "white": "0xFFFFFF",
+            "after": "hex8",
         },
         "hex4": {
             "description": "Hex 0xRGBA color format",
             "regex": "0x(?P<R>[0-9a-fA-F])(?P<G>[0-9a-fA-F])(?P<B>[0-9a-fA-F])(?P<A>[0-9a-fA-F])",
             "types": ["hex1", "hex1", "hex1", "hex1"],
             "white": "0xFFFF",
+            "after": "hex6",
         },
         "hex3": {
             "description": "Hex 0xRGB color format",
             "regex": "0x(?P<R>[0-9a-fA-F])(?P<G>[0-9a-fA-F])(?P<B>[0-9a-fA-F])",
             "types": ["hex1", "hex1", "hex1"],
             "white": "0xFFF",
+            "after": "hex4",
         },
         "rgba": {
             "description": "rgba(255,255,255,1.) color format",
@@ -79,6 +85,20 @@
             "regex": "rgb[(][ ]*(?P<R>\\d{1,3})[ ]*[,][ ]*(?P<G>\\d{1,3})[ ]*[,][ ]*(?P<B>\\d{1,3})[ ]*[)]",
             "types": ["dec", "dec", "dec"],
             "white": "rgb(255, 255, 255)",
+        },
+        "rgba_array": {
+            "description": "[r, g, b, a] color format, where each channel can be int(0..255) or float(0. .. 1.) or percentage (0..100)%. For example: [255, 100%, 1., 255]",
+            "regex": "[\\[][ ]*(?P<R>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[,][ ]*(?P<G>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[,][ ]*(?P<B>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[,][ ]*(?P<A>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[\\]]",
+            "types": ["dec|perc|float", "dec|perc|float", "dec|perc|float", "dec|perc|float"],
+            "white": "[255, 255, 255, 255]",
+            "disable": true,
+        },
+        "rgb_array": {
+            "description": "[r, g, b] color format, where each channel can be int(0..255) or float(0. .. 1.) or percentage (0..100)%. For example: [255, 100%, 1., 255]",
+            "regex": "[\\[][ ]*(?P<R>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[,][ ]*(?P<G>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[,][ ]*(?P<B>(?:\\d{1,3})|(?:(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*))|(?:\\d{1,3}[%]))[ ]*[\\]]",
+            "types": ["dec|perc|float", "dec|perc|float", "dec|perc|float"],
+            "white": "[255, 255, 255]",
+            "disable": true,
         },
     }
 }
