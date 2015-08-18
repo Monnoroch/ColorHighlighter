@@ -25,6 +25,7 @@
             "regex": "#(?P<R>[0-9a-fA-F]{2})(?P<G>[0-9a-fA-F]{2})(?P<B>[0-9a-fA-F]{2})(?P<A>[0-9a-fA-F]{2})",
             "types": ["hex2", "hex2", "hex2", "hex2"],
             "white": "#FFFFFFFF",
+            "disable_exts": [".py"],
         },
         "sharp6": {
             "description": "Hex #RRGGBB color format",
@@ -32,6 +33,7 @@
             "types": ["hex2", "hex2", "hex2"],
             "white": "#FFFFFF",
             "after": "sharp8",
+            "disable_exts": ".py",
         },
         "sharp4": {
             "description": "Hex #RGBA color format",
