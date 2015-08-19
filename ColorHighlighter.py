@@ -341,8 +341,30 @@ class ColorConverter:
             return res
         return None
 
+    def hue_to_flt(self, val):
+        h = int(val)
+        if h == 360:
+            return 0
+        return h / 360.0
+
+    def per_to_flt(self, val):
+        return int(val[:-1])/100.0
+
+    def tohex(self, r, g, b):
+        return "#%02X%02X%02X" % (r, g, b)
+
     def _chans_to_col(self, chans): # -> col
-        # TODO: special hsv, hsl, etc.
+        if chans[0][1] == "hue" and chans[1][1] == "saturation" and chans[2][1] == "value":
+            (r, g, b) = colorsys.hsv_to_rgb(self.hue_to_flt(chans[0][0]), self.per_to_flt(chans[1][0]), self.per_to_flt(chans[2][0]))
+            (vr, vg, vb) = (round(int(r*255)), round(int(g*255)), round(int(b*255)))
+            return self.tohex(vr, vg, vb) + self._conv_val_chan(chans[3][0], chans[3][1])
+
+        if chans[0][1] == "hue" and chans[1][1] == "saturation" and chans[2][1] == "lightness":
+            (r, g, b) = colorsys.hls_to_rgb(self.hue_to_flt(chans[0][0]), self.per_to_flt(chans[2][0]), self.per_to_flt(chans[1][0]))
+            (vr, vg, vb) = (round(int(r*255)), round(int(g*255)), round(int(b*255)))
+            return self.tohex(vr, vg, vb) + self._conv_val_chan(chans[3][0], chans[3][1])
+
+
         res = "#"
         for c in chans:
             res += self._conv_val_chan(c[0], c[1])
