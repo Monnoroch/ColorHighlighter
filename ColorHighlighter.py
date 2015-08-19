@@ -411,19 +411,26 @@ class ColorConverter:
                 return None
         return res
 
-
-
-    def _col_to_chans(self, col, fmt): # -> chans
+    def _col_to_chans_match(self, col, fmt, match): # -> chans
         types_orig = self.conf[fmt]["types"]
 
         # easy way: choose the first channel type
         # TODO: better way!
+        chs = ["R", "G", "B", "A"]
         types = []
         for i in range(0, len(types_orig)):
-            if type(types_orig[i]) != str:
-                types.append(types_orig[i][0])
-            else:
+            if type(types_orig[i]) == str:
                 types.append(types_orig[i])
+            else:
+                fmtch = fmt + chs[i]
+                done = False
+                for t in types_orig[i]:
+                    if match.get(fmtch + t, -1) is not None:
+                        done = True
+                        types.append(t)
+                        break
+                if not done:
+                    types.append(t)
 
         chans = [[col[1:3], types[0]], [col[3:5], types[1]], [col[5:7], types[2]]]
         if types[3] != "empty":
@@ -481,13 +488,17 @@ class ColorConverter:
     def get_col_color(self, col, fmt, example): # -> color
         if fmt == "sharp8":
             return col
-        chans = self._col_to_chans(col, fmt)
         m = self._get_regex(self.conf[fmt]["regex"]).search(example)
         if m:
-            example = example[:m.start(fmt + "R")] + chans[0][0] + example[m.end(fmt + "R"):]
-            example = example[:m.start(fmt + "G")] + chans[1][0] + example[m.end(fmt + "G"):]
-            example = example[:m.start(fmt + "B")] + chans[2][0] + example[m.end(fmt + "B"):]
-            example = example[:m.start(fmt + "A")] + chans[3][0] + example[m.end(fmt + "A"):]
+            chans = self._col_to_chans_match(col, fmt, m.groupdict())
+            chs = ["R", "G", "B", "A"]
+            offset = 0
+            for i in range(0, 4):
+                fmtch = fmt + chs[i]
+                start = m.start(fmtch)
+                end = m.end(fmtch)
+                example = example[:start + offset] + chans[i][0] + example[end + offset:]
+                offset += len(chans[i][0]) - (end - start)
             return example
         return None
 
