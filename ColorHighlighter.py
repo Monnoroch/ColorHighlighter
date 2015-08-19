@@ -261,7 +261,7 @@ class Settings:
         formats = self.obj.get("formats")
         if forse or self.formats != formats:
             self.formats = formats
-            self.callbacks.set_formats(formats)
+            self.callbacks.set_formats(formats, self.obj.get("channels"))
 
     def on_prefs_settings_change(self, forse=False):
         self.prefs = sublime.load_settings(self.pfname)
@@ -279,25 +279,23 @@ class ColorConverter:
     regex = None
     regex_cache = {}
 
-    def set_conf(self, conf):
+    def set_conf(self, conf, channels):
         self.conf = conf
-        self.regex = self._build_regex(conf)
+        self.regex = self._build_regex(conf, channels)
 
-    def _build_regex(self, conf): # -> regex object
+    def _build_regex(self, conf, channels): # -> regex object
         res = []
         for fmt in conf.keys():
             val = conf[fmt]
             if "regex" not in val.keys():
                 continue
-            res.append((val["order"],
-                "(?P<" + fmt + ">" +
-                    val["regex"]
-                        .replace("(?P<R>", "(?P<" + fmt + "R>")
-                        .replace("(?P<G>", "(?P<" + fmt + "G>")
-                        .replace("(?P<B>", "(?P<" + fmt + "B>")
-                        .replace("(?P<A>", "(?P<" + fmt + "A>") +
-                ")")
-            )
+            types = val["types"]
+            s = val["regex"]
+            s = s.replace("(?P<R>)", "(?P<" + fmt + "R>" + channels[types[0]] + ")")
+            s = s.replace("(?P<G>)", "(?P<" + fmt + "G>" + channels[types[1]] + ")")
+            s = s.replace("(?P<B>)", "(?P<" + fmt + "B>" + channels[types[2]] + ")")
+            s = s.replace("(?P<A>)", "(?P<" + fmt + "A>" + channels[types[3]] + ")")
+            res.append((val["order"], "(?P<" + fmt + ">" + s + ")"))
         res.sort(key=lambda x: x[0])
         return re.compile("|".join(map(lambda x: x[1], res)))
 
@@ -656,8 +654,8 @@ class ColorFinder:
 
         return self.conv.append_text_reg_fmt_col(text, region.begin(), res)
 
-    def set_conf(self, conf):
-        self.conv.set_conf(conf)
+    def set_conf(self, conf, channels):
+        self.conv.set_conf(conf, channels)
 
 ### Main logic classes
 
@@ -1162,7 +1160,7 @@ class ColorHighlighter:
             v["col"] = self.color_finder.convert_color_novars(color)
         return v["col"]
 
-    def set_formats(self, formats):
+    def set_formats(self, formats, channels):
         to_del = []
         for k in formats.keys():
             obj = formats[k]
@@ -1211,11 +1209,14 @@ class ColorHighlighter:
         for (k, _, _) in arr:
             formats[k]["order"] = i
             i += 1
-        self.color_finder.set_conf(formats)
+
+        for k in channels.keys():
+            self.get_chan(k, channels, {})
+        self.color_finder.set_conf(formats, channels)
 
     def get_deps(self, k, deps, doing):
         if k in doing.keys():
-            raise Error("Reccurent dependencies!")
+            raise ValueError("Reccurent dependencies!")
 
         doing[k] = True
         obj = deps[k]
@@ -1239,6 +1240,20 @@ class ColorHighlighter:
                 da[v] = True
         obj["deps_arr"] = da
         del(doing[k])
+
+    def get_chan(self, k, channels, doing):
+        if k in doing.keys():
+            raise ValueError("Reccurent dependencies!")
+
+        doing[k] = True
+        obj = channels[k]
+        if obj not in channels.keys():
+            del(doing[k])
+            return
+        self.get_chan(obj, channels, doing)
+        channels[k] = channels[obj]
+        del(doing[k])
+
 
 def deps_order(a, b):
     keyA, rlenA, depsA = a
