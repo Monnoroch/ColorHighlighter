@@ -711,7 +711,10 @@ def print_error(err):
     print(err.replace("\\n", "\n"))
 
 def create_icon(col):
-    fname = "%s.png" % col[1:]
+    if sublime.platform() == "windows":
+        fname = col[1:]
+    else:
+        fname = "%s.png" % col[1:]
     fpath = os.path.join(icons_path(), fname)
     fpath_full = os.path.join(icons_path(PAbsolute), fname)
 
@@ -790,7 +793,7 @@ class ColorHighlighterView:
                 self.view.add_regions(st, [region], region_name(col), "", flags)
             if self.ch.icons:
                 self.regions.append(st + "-ico")
-                self.view.add_regions(st + "-ico", [region], region_name(col) + "-ico", create_icon(col), sublime.HIDDEN)
+                self.view.add_regions(st + "-ico", [region], region_name(col) + "-ico", create_icon(col).replace("\\", "/"), sublime.HIDDEN)
 
         scheme, f = self.ch.add_colors(cols)
         self.set_scheme(scheme, f)
@@ -815,7 +818,7 @@ class ColorHighlighterView:
                 self.view.add_regions(st, [reg], region_name(col), "", flags)
             if self.ch.ha_icons:
                 self.ha_regions.append(st + "-ico")
-                self.view.add_regions(st + "-ico", [reg], region_name(col) + "-ico", create_icon(col), sublime.HIDDEN)
+                self.view.add_regions(st + "-ico", [reg], region_name(col) + "-ico", create_icon(col).replace("\\", "/"), sublime.HIDDEN)
 
         scheme, f = self.ch.add_colors(cols)
         self.set_scheme(scheme, f)
@@ -828,7 +831,7 @@ class ColorHighlighterView:
 
     def set_scheme(self, val, force=False):
         if force or self.view.settings().get("color_scheme") != val:
-            self.view.settings().set("color_scheme", val)
+            self.view.settings().set("color_scheme", val.replace("\\", "/"))
 
     def restore_scheme(self):
         self.set_scheme(self.ch.color_scheme)
@@ -1408,33 +1411,42 @@ color_highlighter = None
 # main event listener
 class ColorSelection(sublime_plugin.EventListener):
     def on_new(self, view):
-        color_highlighter.on_new(view)
+        if color_highlighter is not None:
+            color_highlighter.on_new(view)
 
     def on_clone(self, view):
-        color_highlighter.on_clone(view)
+        if color_highlighter is not None:
+            color_highlighter.on_clone(view)
 
     def on_load(self, view):
-        color_highlighter.on_load(view)
+        if color_highlighter is not None:
+            color_highlighter.on_load(view)
 
     def on_close(self, view):
-        color_highlighter.on_close(view)
+        if color_highlighter is not None:
+            color_highlighter.on_close(view)
 
     def on_selection_modified(self, view):
-        color_highlighter.on_selection_modified(view)
+        if color_highlighter is not None:
+            color_highlighter.on_selection_modified(view)
 
     def on_modified(self, view):
-        color_highlighter.on_modified(view)
+        if color_highlighter is not None:
+            color_highlighter.on_modified(view)
 
     def on_post_save(self, view):
-        color_highlighter.on_post_save(view)
+        if color_highlighter is not None:
+            color_highlighter.on_post_save(view)
 
     def on_activated(self, view):
-        color_highlighter.on_activated(view)
+        if color_highlighter is not None:
+            color_highlighter.on_activated(view)
 
     def on_query_context(self, view, key, op, operand, match_all):
         if not key.startswith('color_highlighter.'):
             return None
-        return color_highlighter.settings.get("default_keybindings")
+        if color_highlighter is not None:
+            return color_highlighter.settings.get("default_keybindings")
 
 
 # commands
@@ -1612,7 +1624,7 @@ def plugin_loaded():
     if not os.path.exists(cpupath):
         if is_st3():
             with codecs.open(cpupath, "wb") as f:
-                f.write(sublime.load_binary_resource(color_picker_path()))
+                f.write(sublime.load_binary_resource(color_picker_path().replace("\\", "/")))
         else:
             shutil.copy(color_picker_path(PAbsolute), cpupath)
         os.chmod(cpupath, chflags)
@@ -1622,7 +1634,8 @@ def plugin_loaded():
 
 # unload all the stuff
 def plugin_unloaded():
-    color_highlighter.unload()
+    if color_highlighter is not None:
+        color_highlighter.unload()
 
 # ST2 support. Maby need set_timeout?
 if not is_st3():
