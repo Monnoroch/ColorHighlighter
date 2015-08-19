@@ -380,6 +380,18 @@ class ColorConverter:
             return res
         return None
 
+    def _conv_val_chan_back(self, val, typ):
+        if typ == "hex1" and val[0] == val[1]:
+            return val[0]
+        elif typ == "dec":
+            return str(int(val, 16))
+        elif typ == "float":
+            return str(int(val, 16) / 255.0)
+        elif typ == "perc":
+            return str(round((int(val, 16) * 100.0) / 255.0)) + "%"
+        return val
+
+
     def hue_to_flt(self, val):
         h = int(val)
         if h == 360:
@@ -443,8 +455,24 @@ class ColorConverter:
         return res
 
     def _col_to_chans(self, col, fmt): # -> chans
-        # TODO
-        return None
+        types = self.conf[fmt]["types"]
+        chans = [[col[1:3], types[0]], [col[3:5], types[1]], [col[5:7], types[2]]]
+        if types[3] != "empty":
+            chans.append([col[7:9], types[3]])
+        else:
+            chans.append(["FF", types[3]])
+
+        if chans[0][1] == "hue" and chans[1][1] == "saturation" and chans[2][1] == "value":
+            (nh, ns, nv) = colorsys.rgb_to_hsv(int(chans[0][0], 16)/255.0, int(chans[1][0], 16)/255.0, int(chans[2][0], 16)/255.0)
+            return (str(int(nh * 360)), str(int(ns * 100)) + '%', str(int(nv * 100)) + '%')
+
+        if chans[0][1] == "hue" and chans[1][1] == "saturation" and chans[2][1] == "lightness":
+            (nh, nv, ns) = colorsys.rgb_to_hls(int(chans[0][0], 16)/255.0, int(chans[1][0], 16)/255.0, int(chans[2][0], 16)/255.0)
+            return (str(int(nh * 360)), str(int(ns * 100)) + '%', str(int(nv * 100)) + '%')
+
+        for c in chans:
+            c[0] = self._conv_val_chan_back(c[0], c[1])
+        return chans
 
     def _get_color_fmt_chans(self, color): # -> fmt, chans
         match = self._match_regex(self.regex, color)
@@ -953,10 +981,8 @@ class ColorHighlighter:
     def valid_fname(self, fname):
         if self.settings.get("file_exts") == "all":
             return True
-
         if fname is None or fname == "":
             return True
-
         return os.path.splitext(fname)[1] in self.settings.get("file_exts")
 
     def set_exts(self, val):
@@ -967,7 +993,6 @@ class ColorHighlighter:
     def redraw(self):
         if not self.started:
             return
-
         for k in self.views:
             v = self.views[k]
             v.on_selection_modified()
@@ -975,7 +1000,6 @@ class ColorHighlighter:
     def ha_redraw(self):
         if not self.started:
             return
-
         for k in self.views:
             v = self.views[k]
             v.on_activated()
