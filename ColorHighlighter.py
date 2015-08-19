@@ -386,33 +386,25 @@ class ColorConverter:
             return self._get_match_fmt(match)
         return None
 
-    def _get_chans(self, match, fmt, small=False): # -> chans
+    def _get_chans(self, match, fmt): # -> chans
         types = self.conf[fmt]["types"]
         chans = ["R", "G", "B", "A"]
-        if small:
-            res = [
-                [match.get("R", -1), ""],
-                [match.get("G", -1), ""],
-                [match.get("B", -1), ""],
-                [match.get("A", -1), ""]
-            ]
-        else:
-            res = []
-            for i in range(0, 4):
-                fmtch = fmt + chans[i]
-                typ = types[i]
-                if type(typ) == str:
-                    res.append([match.get(fmtch, -1), typ])
-                else:
-                    done = False
-                    for t in typ:
-                        r = match.get(fmtch + t)
-                        if r is not None:
-                            res.append([r, t])
-                            done = True
-                            break
-                    if not done:
-                        res.append([match.get(fmtch, -1), "empty"])
+        res = []
+        for i in range(0, 4):
+            fmtch = fmt + chans[i]
+            typ = types[i]
+            if type(typ) == str:
+                res.append([match.get(fmtch, -1), typ])
+            else:
+                done = False
+                for t in typ:
+                    r = match.get(fmtch + t)
+                    if r is not None:
+                        res.append([r, t])
+                        done = True
+                        break
+                if not done:
+                    res.append([match.get(fmtch, -1), "empty"])
 
         for c in res:
             if c[0] is None:
@@ -422,7 +414,17 @@ class ColorConverter:
 
 
     def _col_to_chans(self, col, fmt): # -> chans
-        types = self.conf[fmt]["types"]
+        types_orig = self.conf[fmt]["types"]
+
+        # easy way: choose the first channel type
+        # TODO: better way!
+        types = []
+        for i in range(0, len(types_orig)):
+            if type(types_orig[i]) != str:
+                types.append(types_orig[i][0])
+            else:
+                types.append(types_orig[i])
+
         chans = [[col[1:3], types[0]], [col[3:5], types[1]], [col[5:7], types[2]]]
         if types[3] != "empty":
             chans.append([col[7:9], types[3]])
@@ -461,7 +463,7 @@ class ColorConverter:
     def _get_color_chans(self, color, fmt): # -> chans
         match = self._match_regex(self.conf[fmt]["regex"], color)
         if match is not None:
-            return self._get_chans(match, fmt, True)
+            return self._get_chans(match, fmt)
         return None
 
     def _get_color_col(self, color, fmt): # -> col
@@ -482,10 +484,10 @@ class ColorConverter:
         chans = self._col_to_chans(col, fmt)
         m = self._get_regex(self.conf[fmt]["regex"]).search(example)
         if m:
-            example = example[:m.start("R")] + chans[0][0] + example[m.end("R"):]
-            example = example[:m.start("G")] + chans[1][0] + example[m.end("G"):]
-            example = example[:m.start("B")] + chans[2][0] + example[m.end("B"):]
-            example = example[:m.start("A")] + chans[3][0] + example[m.end("A"):]
+            example = example[:m.start(fmt + "R")] + chans[0][0] + example[m.end(fmt + "R"):]
+            example = example[:m.start(fmt + "G")] + chans[1][0] + example[m.end(fmt + "G"):]
+            example = example[:m.start(fmt + "B")] + chans[2][0] + example[m.end(fmt + "B"):]
+            example = example[:m.start(fmt + "A")] + chans[3][0] + example[m.end(fmt + "A"):]
             return example
         return None
 
