@@ -9,6 +9,7 @@ import subprocess
 import threading
 import shutil
 import codecs
+import time
 
 plugin_name = "Color Highlighter"
 
@@ -46,6 +47,17 @@ else:
 
     def run_async(cb):
         RunAsync(cb).start()
+
+# python helpers
+
+if is_st3():
+    def is_str(val):
+        return type(val) == str
+else:
+    def is_str(val):
+        t = type(val)
+        return t == str or t == unicode
+
 
 ### Paths helpers
 
@@ -188,8 +200,9 @@ class HtmlGen:
 
 ### Setting helper
 
+pref_fname = "Preferences.sublime-settings"
+
 class Settings:
-    pfname = "Preferences.sublime-settings"
     fname = "ColorHighlighter.sublime-settings"
     callbacks = None
     obj = None
@@ -206,7 +219,7 @@ class Settings:
         self.obj.clear_on_change("ColorHighlighter")
         self.obj.add_on_change("ColorHighlighter", lambda: self.on_ch_settings_change())
 
-        self.prefs = sublime.load_settings(self.pfname)
+        self.prefs = sublime.load_settings(pref_fname)
         self.prefs.clear_on_change("ColorHighlighter")
         self.prefs.add_on_change("ColorHighlighter", lambda: self.on_prefs_settings_change())
 
@@ -264,7 +277,7 @@ class Settings:
             self.callbacks.set_formats(formats, self.obj.get("channels"))
 
     def on_prefs_settings_change(self, forse=False):
-        self.prefs = sublime.load_settings(self.pfname)
+        self.prefs = sublime.load_settings(pref_fname)
 
         color_scheme = self.prefs.get("color_scheme")
         if forse or self.color_scheme != color_scheme:
@@ -294,7 +307,7 @@ class ColorConverter:
         return re.compile("|".join(map(lambda x: x[1], res)))
 
     def _get_regex(self, regex): # -> regex object
-        if type(regex) is not str:
+        if not is_str(regex):
             return regex
 
         if regex in self.regex_cache.keys():
@@ -393,7 +406,7 @@ class ColorConverter:
         for i in range(0, 4):
             fmtch = fmt + chans[i]
             typ = types[i]
-            if type(typ) == str:
+            if is_str(typ):
                 res.append([match.get(fmtch, -1), typ])
             else:
                 done = False
@@ -419,8 +432,9 @@ class ColorConverter:
         chs = ["R", "G", "B", "A"]
         types = []
         for i in range(0, len(types_orig)):
-            if type(types_orig[i]) == str:
-                types.append(types_orig[i])
+            to = types_orig[i]
+            if is_str(to):
+                types.append(to)
             else:
                 fmtch = fmt + chs[i]
                 done = False
@@ -743,6 +757,10 @@ class ColorHighlighterView:
     regions = []
     ha_regions = []
 
+    # Need theese for ST2, it has an odd events order (activate, then load)
+    last_activate = None
+    last_osm = None
+
     def __init__(self, ch, view):
         self.ch = ch
         self.view = view
@@ -771,6 +789,16 @@ class ColorHighlighterView:
         return res
 
     def on_selection_modified(self):
+        if self.last_osm is None:
+            self.last_osm = time.clock()
+        if time.clock() - self.last_osm <= 1:
+            return
+
+        cl = time.clock()
+        if self.last_osm is not None and cl - self.last_osm <= 0.1:
+            return
+        self.last_osm = cl
+
         self.clear()
         if self.ch.style == "disabled":
             return
@@ -799,6 +827,11 @@ class ColorHighlighterView:
         self.set_scheme(scheme, f)
 
     def on_activated(self):
+        cl = time.clock()
+        if self.last_activate is not None and cl - self.last_activate <= 0.1:
+            return
+        self.last_activate = cl
+
         self.on_selection_modified()
 
         self.ha_clear()
@@ -1019,6 +1052,7 @@ class ColorHighlighter:
         if self.started:
             v.set_scheme(self.scheme_name())
         self.views[view.id()] = v
+        return v
 
     def scheme_name(self):
         if self.color_scheme in self.color_schemes.keys():
@@ -1053,13 +1087,16 @@ class ColorHighlighter:
         return 0
 
     def on_new(self, view):
-        self.add_view(view)
+        # Need on_activate for ST2, it has an odd events order (activate, then load)
+        self.add_view(view).on_activated()
 
     def on_clone(self, view):
-        self.add_view(view)
+        # Need on_activate for ST2, it has an odd events order (activate, then load)
+        self.add_view(view).on_activated()
 
     def on_load(self, view):
-        self.add_view(view)
+        # Need on_activate for ST2, it has an odd events order (activate, then load)
+        self.add_view(view).on_activated()
 
     def on_close(self, view):
         if self.disabled(view):
@@ -1320,7 +1357,7 @@ class ColorHighlighter:
                 }
                 if "after" in obj.keys():
                     ds = obj["after"]
-                    if type(ds) == str:
+                    if is_str(ds):
                         deps[k]["deps"] = {
                             ds: True,
                         }
@@ -1639,4 +1676,10 @@ def plugin_unloaded():
 
 # ST2 support. Maby need set_timeout?
 if not is_st3():
-    plugin_loaded()
+    def plugin_loaded_wait():
+        if sublime.load_settings(pref_fname).get("color_scheme") != None:
+            plugin_loaded()
+        else:
+            sublime.set_timeout(plugin_loaded_wait, 100)
+
+    plugin_loaded_wait()
