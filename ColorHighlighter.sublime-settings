@@ -81,7 +81,7 @@
             "after": "hex4",
         },
         "rgba": {
-            "description": "rgba(255,255,255,1.) color format",
+            "description": "rgba(255,255,255,1) color format",
             "regex": "rgba[(][ ]*(?P<R>dec)[ ]*[,][ ]*(?P<G>dec)[ ]*[,][ ]*(?P<B>dec)[ ]*[,][ ]*(?P<A>float)[ ]*[)]",
             "white": "rgba(255, 255, 255, 1)",
         },
@@ -94,13 +94,11 @@
             "description": "[r, g, b, a] color format, where each channel can be int(0..255) or float(0. .. 1.) or percentage (0..100)%. For example: [255, 100%, 1., 255]",
             "regex": "[\\[][ ]*(?P<R>dec|perc|float)[ ]*[,][ ]*(?P<G>dec|perc|float)[ ]*[,][ ]*(?P<B>dec|perc|float)[ ]*[,][ ]*(?P<A>dec|perc|float)[ ]*[\\]]",
             "white": "[255, 255, 255, 255]",
-            "disable": true,
         },
         "rgb_array": {
             "description": "[r, g, b] color format, where each channel can be int(0..255) or float(0. .. 1.) or percentage (0..100)%. For example: [255, 100%, 1., 255]",
             "regex": "[\\[][ ]*(?P<R>dec|perc|float)[ ]*[,][ ]*(?P<G>dec|perc|float)[ ]*[,][ ]*(?P<B>dec|perc|float)[ ]*[\\]]",
             "white": "[255, 255, 255]",
-            "disable": true,
         },
         "hsva": {
             "description": "hsva(hue 0..255, s%, v%, alpha 0.0 .. 1.0) color format",

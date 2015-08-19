@@ -289,54 +289,7 @@ class ColorConverter:
             val = conf[fmt]
             if "regex" not in val.keys():
                 continue
-            types = []
-            s = val["regex"]
-            pos = s.find("(?P<R>")
-            if pos == -1:
-                raise ValueError("Regex must contain R channel!")
-            pos += len("(?P<R>")
-            start = pos
-            while s[pos] != ")":
-               pos += 1
-            chan = s[start:pos]
-            types.append(chan)
-            s = s.replace("(?P<R>" + chan + ")", "(?P<" + fmt + "R>" + channels[chan] + ")")
-
-            pos = s.find("(?P<G>")
-            if pos == -1:
-                raise ValueError("Regex must contain G channel!")
-            pos += len("(?P<G>")
-            start = pos
-            while s[pos] != ")":
-               pos += 1
-            chan = s[start:pos]
-            types.append(chan)
-            s = s.replace("(?P<G>" + chan + ")", "(?P<" + fmt + "G>" + channels[chan] + ")")
-
-            pos = s.find("(?P<B>")
-            if pos == -1:
-                raise ValueError("Regex must contain B channel!")
-            pos += len("(?P<B>")
-            start = pos
-            while s[pos] != ")":
-               pos += 1
-            chan = s[start:pos]
-            types.append(chan)
-            s = s.replace("(?P<B>" + chan + ")", "(?P<" + fmt + "B>" + channels[chan] + ")")
-
-            pos = s.find("(?P<A>")
-            if pos == -1:
-                types.append("empty")
-            else:
-                pos += len("(?P<A>")
-                start = pos
-                while s[pos] != ")":
-                   pos += 1
-                chan = s[start:pos]
-                types.append(chan)
-                s = s.replace("(?P<A>" + chan + ")", "(?P<" + fmt + "A>" + channels[chan] + ")")
-            res.append((val["order"], "(?P<" + fmt + ">" + s + ")"))
-            val["types"] = types
+            res.append((val["order"], "(?P<" + fmt + ">" + val["regex"] + ")"))
         res.sort(key=lambda x: x[0])
         return re.compile("|".join(map(lambda x: x[1], res)))
 
@@ -435,24 +388,38 @@ class ColorConverter:
 
     def _get_chans(self, match, fmt, small=False): # -> chans
         types = self.conf[fmt]["types"]
+        chans = ["R", "G", "B", "A"]
         if small:
             res = [
-                [match.get("R", -1), types[0]],
-                [match.get("G", -1), types[1]],
-                [match.get("B", -1), types[2]],
-                [match.get("A", -1), types[3]]
+                [match.get("R", -1), ""],
+                [match.get("G", -1), ""],
+                [match.get("B", -1), ""],
+                [match.get("A", -1), ""]
             ]
         else:
-            res = [
-                [match.get(fmt + "R", -1), types[0]],
-                [match.get(fmt + "G", -1), types[1]],
-                [match.get(fmt + "B", -1), types[2]],
-                [match.get(fmt + "A", -1), types[3]]
-            ]
+            res = []
+            for i in range(0, 4):
+                fmtch = fmt + chans[i]
+                typ = types[i]
+                if type(typ) == str:
+                    res.append([match.get(fmtch, -1), typ])
+                else:
+                    done = False
+                    for t in typ:
+                        r = match.get(fmtch + t)
+                        if r is not None:
+                            res.append([r, t])
+                            done = True
+                            break
+                    if not done:
+                        res.append([match.get(fmtch, -1), "empty"])
+
         for c in res:
             if c[0] is None:
                 return None
         return res
+
+
 
     def _col_to_chans(self, col, fmt): # -> chans
         types = self.conf[fmt]["types"]
@@ -479,7 +446,6 @@ class ColorConverter:
         if match is not None:
             for fmt in self.conf.keys():
                 if fmt in match.keys() and match[fmt] is not None:
-                    types = self.conf[fmt]["types"]
                     chans = self._get_chans(match, fmt)
                     if chans is None:
                         return None, None
@@ -1225,19 +1191,104 @@ class ColorHighlighter:
             v["col"] = self.color_finder.convert_color_novars(color)
         return v["col"]
 
+    def build_chan_regex(self, chstr, fmt, chan, channels): # -> str, list
+        lst = chstr.split("|")
+        if len(lst) == 1:
+            return channels[chstr], chstr
+
+        fmt = "(?P<" + fmt + chan + "%s>%s)|"
+        res = ""
+        for l in lst:
+            res += fmt % (l, channels[l])
+        return res[:-1], lst
+
+    def fix_regexes(self, formats, channels):
+        for fmt in formats.keys():
+            val = formats[fmt]
+            if "regex" not in val.keys():
+                continue
+
+            types = []
+            s = val["regex"]
+            pos = s.find("(?P<R>")
+            if pos == -1:
+                raise ValueError("Regex must contain R channel!")
+            pos += len("(?P<R>")
+            start = pos
+            while s[pos] != ")":
+               pos += 1
+            chan = s[start:pos]
+            chanrx, lst = self.build_chan_regex(chan, fmt, "R", channels)
+            types.append(lst)
+            s = s.replace("(?P<R>" + chan + ")", "(?P<" + fmt + "R>" + chanrx + ")")
+
+            pos = s.find("(?P<G>")
+            if pos == -1:
+                raise ValueError("Regex must contain G channel!")
+            pos += len("(?P<G>")
+            start = pos
+            while s[pos] != ")":
+               pos += 1
+            chan = s[start:pos]
+            chanrx, lst = self.build_chan_regex(chan, fmt, "G", channels)
+            types.append(lst)
+            s = s.replace("(?P<G>" + chan + ")", "(?P<" + fmt + "G>" + chanrx + ")")
+
+            pos = s.find("(?P<B>")
+            if pos == -1:
+                raise ValueError("Regex must contain B channel!")
+            pos += len("(?P<B>")
+            start = pos
+            while s[pos] != ")":
+               pos += 1
+            chan = s[start:pos]
+            chanrx, lst = self.build_chan_regex(chan, fmt, "B", channels)
+            types.append(lst)
+            s = s.replace("(?P<B>" + chan + ")", "(?P<" + fmt + "B>" + chanrx + ")")
+
+            pos = s.find("(?P<A>")
+            if pos == -1:
+                types.append("empty")
+            else:
+                pos += len("(?P<A>")
+                start = pos
+                while s[pos] != ")":
+                   pos += 1
+                chan = s[start:pos]
+                chanrx, lst = self.build_chan_regex(chan, fmt, "A", channels)
+                types.append(lst)
+                s = s.replace("(?P<A>" + chan + ")", "(?P<" + fmt + "A>" + chanrx + ")")
+            val["regex"] = s
+            val["types"] = types
+
     def set_formats(self, formats, channels):
         to_del = []
-        for k in formats.keys():
-            obj = formats[k]
-            if "disable" in obj.keys():
-                to_del.append(k)
-        for k in to_del:
-            del(formats[k])
+        for fmt in formats.keys():
+            val = formats[fmt]
+            if "disable" in val.keys():
+                to_del.append(fmt)
+        for fmt in to_del:
+            del(formats[fmt])
 
+
+        self.fix_regexes(formats, channels)
         self.order_formats(formats)
         for k in channels.keys():
             self.get_chan(k, channels, {})
         self.color_finder.set_conf(formats, channels)
+
+    def get_chan(self, k, channels, doing):
+        if k in doing.keys():
+            raise ValueError("Reccurent dependencies!")
+
+        doing[k] = True
+        obj = channels[k]
+        if obj not in channels.keys():
+            del(doing[k])
+            return
+        self.get_chan(obj, channels, doing)
+        channels[k] = channels[obj]
+        del(doing[k])
 
     def order_formats(self, formats):
         deps = {
@@ -1300,19 +1351,6 @@ class ColorHighlighter:
             for v in deps[d]["deps_arr"]:
                 da[v] = True
         obj["deps_arr"] = da
-        del(doing[k])
-
-    def get_chan(self, k, channels, doing):
-        if k in doing.keys():
-            raise ValueError("Reccurent dependencies!")
-
-        doing[k] = True
-        obj = channels[k]
-        if obj not in channels.keys():
-            del(doing[k])
-            return
-        self.get_chan(obj, channels, doing)
-        channels[k] = channels[obj]
         del(doing[k])
 
 
