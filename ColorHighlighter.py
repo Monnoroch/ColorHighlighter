@@ -289,13 +289,54 @@ class ColorConverter:
             val = conf[fmt]
             if "regex" not in val.keys():
                 continue
-            types = val["types"]
+            types = []
             s = val["regex"]
-            s = s.replace("(?P<R>)", "(?P<" + fmt + "R>" + channels[types[0]] + ")")
-            s = s.replace("(?P<G>)", "(?P<" + fmt + "G>" + channels[types[1]] + ")")
-            s = s.replace("(?P<B>)", "(?P<" + fmt + "B>" + channels[types[2]] + ")")
-            s = s.replace("(?P<A>)", "(?P<" + fmt + "A>" + channels[types[3]] + ")")
+            pos = s.find("(?P<R>")
+            if pos == -1:
+                raise ValueError("Regex must contain R channel!")
+            pos += len("(?P<R>")
+            start = pos
+            while s[pos] != ")":
+               pos += 1
+            chan = s[start:pos]
+            types.append(chan)
+            s = s.replace("(?P<R>" + chan + ")", "(?P<" + fmt + "R>" + channels[chan] + ")")
+
+            pos = s.find("(?P<G>")
+            if pos == -1:
+                raise ValueError("Regex must contain G channel!")
+            pos += len("(?P<G>")
+            start = pos
+            while s[pos] != ")":
+               pos += 1
+            chan = s[start:pos]
+            types.append(chan)
+            s = s.replace("(?P<G>" + chan + ")", "(?P<" + fmt + "G>" + channels[chan] + ")")
+
+            pos = s.find("(?P<B>")
+            if pos == -1:
+                raise ValueError("Regex must contain B channel!")
+            pos += len("(?P<B>")
+            start = pos
+            while s[pos] != ")":
+               pos += 1
+            chan = s[start:pos]
+            types.append(chan)
+            s = s.replace("(?P<B>" + chan + ")", "(?P<" + fmt + "B>" + channels[chan] + ")")
+
+            pos = s.find("(?P<A>")
+            if pos == -1:
+                types.append("empty")
+            else:
+                pos += len("(?P<A>")
+                start = pos
+                while s[pos] != ")":
+                   pos += 1
+                chan = s[start:pos]
+                types.append(chan)
+                s = s.replace("(?P<A>" + chan + ")", "(?P<" + fmt + "A>" + channels[chan] + ")")
             res.append((val["order"], "(?P<" + fmt + ">" + s + ")"))
+            val["types"] = types
         res.sort(key=lambda x: x[0])
         return re.compile("|".join(map(lambda x: x[1], res)))
 
@@ -1169,6 +1210,12 @@ class ColorHighlighter:
         for k in to_del:
             del(formats[k])
 
+        self.order_formats(formats)
+        for k in channels.keys():
+            self.get_chan(k, channels, {})
+        self.color_finder.set_conf(formats, channels)
+
+    def order_formats(self, formats):
         deps = {
             "": {
                 "deps": {}
@@ -1176,12 +1223,6 @@ class ColorHighlighter:
         }
         for k in formats.keys():
             obj = formats[k]
-            if "types" in obj.keys():
-                types = obj["types"]
-                if len(types) < 3:
-                    raise Error("")
-                if len(types) == 3:
-                    types.append("empty")
             if "regex" in obj.keys():
                 deps[k] = {
                     "rlen": len(obj["regex"]),
@@ -1209,10 +1250,6 @@ class ColorHighlighter:
         for (k, _, _) in arr:
             formats[k]["order"] = i
             i += 1
-
-        for k in channels.keys():
-            self.get_chan(k, channels, {})
-        self.color_finder.set_conf(formats, channels)
 
     def get_deps(self, k, deps, doing):
         if k in doing.keys():
