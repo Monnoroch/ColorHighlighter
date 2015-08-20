@@ -58,6 +58,12 @@ else:
         t = type(val)
         return t == str or t == unicode
 
+if sublime.platform() == "windows":
+    def conv_path(path):
+        return path.replace("\\", "/")
+else:
+    def conv_path(path):
+        return path
 
 ### Paths helpers
 
@@ -724,31 +730,6 @@ class ColorFinder:
 def print_error(err):
     print(err.replace("\\n", "\n"))
 
-def create_icon(col):
-    if sublime.platform() == "windows":
-        fname = col[1:]
-    else:
-        fname = "%s.png" % col[1:]
-    fpath = os.path.join(icons_path(), fname)
-    fpath_full = os.path.join(icons_path(PAbsolute), fname)
-
-    if os.path.exists(fpath_full):
-        return fpath
-
-    cmd =  color_highlighter.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
-    popen = subprocess.Popen(cmd % (col, fpath_full), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    _, err = popen.communicate()
-    try:
-        err = err.decode("utf-8")
-    except UnicodeDecodeError as ex:
-        err = str(ex)
-    if err is not None and len(err) != 0:
-        print_error("convert error:\n" + err)
-
-    if os.path.exists(fpath_full): # might not...
-        return fpath
-    return ""
-
 # main program
 class ColorHighlighterView:
     ch = None
@@ -821,7 +802,7 @@ class ColorHighlighterView:
                 self.view.add_regions(st, [region], region_name(col), "", flags)
             if self.ch.icons:
                 self.regions.append(st + "-ico")
-                self.view.add_regions(st + "-ico", [region], region_name(col) + "-ico", create_icon(col).replace("\\", "/"), sublime.HIDDEN)
+                self.view.add_regions(st + "-ico", [region], region_name(col) + "-ico", conv_path(self.ch.create_icon(col)), sublime.HIDDEN)
 
         scheme, f = self.ch.add_colors(cols)
         self.set_scheme(scheme, f)
@@ -851,7 +832,7 @@ class ColorHighlighterView:
                 self.view.add_regions(st, [reg], region_name(col), "", flags)
             if self.ch.ha_icons:
                 self.ha_regions.append(st + "-ico")
-                self.view.add_regions(st + "-ico", [reg], region_name(col) + "-ico", create_icon(col).replace("\\", "/"), sublime.HIDDEN)
+                self.view.add_regions(st + "-ico", [reg], region_name(col) + "-ico", conv_path(self.ch.create_icon(col)), sublime.HIDDEN)
 
         scheme, f = self.ch.add_colors(cols)
         self.set_scheme(scheme, f)
@@ -864,7 +845,7 @@ class ColorHighlighterView:
 
     def set_scheme(self, val, force=False):
         if force or self.view.settings().get("color_scheme") != val:
-            self.view.settings().set("color_scheme", val.replace("\\", "/"))
+            self.view.settings().set("color_scheme", conv_path(val))
 
     def restore_scheme(self):
         self.set_scheme(self.ch.color_scheme)
@@ -1141,6 +1122,31 @@ class ColorHighlighter:
         if self.disabled(view):
             return []
         return self.views[view.id()].get_colors_sel_var()
+
+    def create_icon(self, col):
+        if sublime.platform() == "windows":
+            fname = col[1:]
+        else:
+            fname = "%s.png" % col[1:]
+        fpath = os.path.join(icons_path(), fname)
+        fpath_full = os.path.join(icons_path(PAbsolute), fname)
+
+        if os.path.exists(fpath_full):
+            return fpath
+
+        cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
+        popen = subprocess.Popen(cmd % (col, fpath_full), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        _, err = popen.communicate()
+        try:
+            err = err.decode("utf-8")
+        except UnicodeDecodeError as ex:
+            err = str(ex)
+        if err is not None and len(err) != 0:
+            print_error("convert error:\n" + err)
+
+        if os.path.exists(fpath_full): # might not...
+            return fpath
+        return ""
 
     # vars extract
 
@@ -1661,7 +1667,7 @@ def plugin_loaded():
     if not os.path.exists(cpupath):
         if is_st3():
             with codecs.open(cpupath, "wb") as f:
-                f.write(sublime.load_binary_resource(color_picker_path().replace("\\", "/")))
+                f.write(sublime.load_binary_resource(conv_path(color_picker_path())))
         else:
             shutil.copy(color_picker_path(PAbsolute), cpupath)
         os.chmod(cpupath, chflags)
