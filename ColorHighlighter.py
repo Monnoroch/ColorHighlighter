@@ -278,9 +278,11 @@ class Settings:
             self.callbacks.set_ha_icons(ha_icons)
 
         formats = self.obj.get("formats")
-        if forse or self.formats != formats:
+        channels = self.obj.get("channels")
+        if forse or self.formats != formats or self.channels != channels:
             self.formats = formats
-            self.callbacks.set_formats(formats, self.obj.get("channels"))
+            self.channels = channels
+            self.callbacks.set_formats(formats, channels)
 
     def on_prefs_settings_change(self, forse=False):
         self.prefs = sublime.load_settings(pref_fname)
