@@ -216,18 +216,25 @@ class Settings:
 
     enabled = None
     style = None
+    ha_style = None
+    icons = None
+    ha_icons = None
     file_exts = None
+    formats = None
+    channels = None
     color_scheme = None
 
     def __init__(self, callbacks):
         self.callbacks = callbacks
         self.obj = sublime.load_settings(self.fname)
-        self.obj.clear_on_change("ColorHighlighter")
-        self.obj.add_on_change("ColorHighlighter", lambda: self.on_ch_settings_change())
-
         self.prefs = sublime.load_settings(pref_fname)
-        self.prefs.clear_on_change("ColorHighlighter")
+        self.clear_callbacks()
+        self.obj.add_on_change("ColorHighlighter", lambda: self.on_ch_settings_change())
         self.prefs.add_on_change("ColorHighlighter", lambda: self.on_prefs_settings_change())
+
+    def clear_callbacks(self):
+        self.obj.clear_on_change("ColorHighlighter")
+        self.prefs.clear_on_change("ColorHighlighter")
 
     def has(self, name):
         return self.obj.has(name)
@@ -248,37 +255,53 @@ class Settings:
         self.obj = sublime.load_settings(self.fname)
 
         enabled = self.obj.get("enabled")
+        if enabled is None:
+            enabled = True
         if forse or self.enabled != enabled:
             self.enabled = enabled
             self.callbacks.enable(enabled)
 
         style = self.obj.get("style")
+        if style is None:
+            style = "default"
         if forse or self.style != style:
             self.style = style
             self.callbacks.set_style(style)
 
         ha_style = self.obj.get("ha_style")
+        if ha_style is None:
+            ha_style = "default"
         if forse or self.ha_style != ha_style:
             self.ha_style = ha_style
             self.callbacks.set_ha_style(ha_style)
 
-        file_exts = self.obj.get("file_exts")
-        if forse or self.file_exts != file_exts:
-            self.file_exts = file_exts
-            self.callbacks.set_exts(file_exts)
-
         icons = self.obj.get("icons")
+        if icons is None:
+            icons = False
         if forse or self.icons != icons:
             self.icons = icons
             self.callbacks.set_icons(icons)
 
         ha_icons = self.obj.get("ha_icons")
+        if ha_icons is None:
+            ha_icons = False
         if forse or self.ha_icons != ha_icons:
             self.ha_icons = ha_icons
             self.callbacks.set_ha_icons(ha_icons)
 
+        file_exts = self.obj.get("file_exts")
+        if file_exts is None:
+            file_exts = "all"
+        if forse or self.file_exts != file_exts:
+            self.file_exts = file_exts
+            self.callbacks.set_exts(file_exts)
+
         formats = self.obj.get("formats")
+        if formats is None:
+            formats = {}
         channels = self.obj.get("channels")
+        if channels is None:
+            channels = {}
         if forse or self.formats != formats or self.channels != channels:
             self.formats = formats
             self.channels = channels
@@ -297,6 +320,7 @@ class Settings:
 
 class ColorConverter:
     conf = None
+    regex_str = None
     regex = None
     regex_cache = {}
 
@@ -312,7 +336,10 @@ class ColorConverter:
                 continue
             res.append((val["order"], "(?P<" + fmt + ">" + val["regex"] + ")"))
         res.sort(key=lambda x: x[0])
-        return re.compile("|".join(map(lambda x: x[1], res)))
+        self.regex_str = "|".join(map(lambda x: x[1], res))
+        if self.regex_str == "":
+            return None
+        return re.compile(self.regex_str)
 
     def _get_regex(self, regex): # -> regex object
         if not is_str(regex):
@@ -325,6 +352,8 @@ class ColorConverter:
         return res
 
     def _match_regex(self, regex, text): # -> match result
+        if regex is None:
+            return None
         m = self._get_regex(regex).search(text)
         if m:
             return m.groupdict()
@@ -525,6 +554,9 @@ class ColorConverter:
         return None
 
     def append_text_reg_fmt_col(self, text, offset, res): # -> [(reg, fmt, col)]
+        if self.regex is None:
+            return []
+
         m = self.regex.search(text)
         while m:
             match = m.groupdict()
@@ -545,6 +577,8 @@ class ColorConverter:
         return self.get_text_reg_fmt_col(view.substr(region), region.begin())
 
     def find_text_reg_fmt_col(self, text, offset, reg_in): # -> (reg, fmt, col)
+        if self.regex is None:
+            return None, None, None
         m = self.regex.search(text)
         while m:
             if offset + m.start() <= reg_in.begin() and offset + m.end() >= reg_in.end():
@@ -747,7 +781,7 @@ class ColorHighlighterView:
     def enable(self, val=True):
         self.disabled = not val
         if self.disabled:
-            self.restore_scheme()
+            self.clear_all()
 
     def get_colors_sel(self):
         vs = self.ch.get_vars(self.view)
@@ -771,6 +805,7 @@ class ColorHighlighterView:
         self.clear()
         if self.ch.style == "disabled":
             return
+
 
         vs = self.ch.get_vars(self.view)
 
@@ -832,6 +867,9 @@ class ColorHighlighterView:
 
     def restore_scheme(self):
         self.set_scheme(self.ch.color_scheme)
+
+    def clear_all(self):
+        self.restore_scheme()
         self.clear()
         self.ha_clear()
 
@@ -940,7 +978,7 @@ class ColorHighlighter:
     def enable(self, val=True):
         self.is_disabled = not val
         if self.is_disabled:
-            self.unload()
+            self.clear_views()
         else:
             if self.started:
                 self.reset_scheme()
@@ -958,11 +996,15 @@ class ColorHighlighter:
         self.ha_redraw()
 
     def valid_fname(self, fname):
-        if self.settings.get("file_exts") == "all":
+        fe = self.settings.get("file_exts")
+        if fe is None:
+            fe = "all"
+
+        if fe == "all":
             return True
         if fname is None or fname == "":
             return True
-        return os.path.splitext(fname)[1] in self.settings.get("file_exts")
+        return os.path.splitext(fname)[1] in fe
 
     def set_exts(self, val):
         for k in self.views:
@@ -977,7 +1019,7 @@ class ColorHighlighter:
             v.on_selection_modified()
 
     def ha_redraw(self):
-        if not self.started:
+        if not (self.started and False):
             return
         for k in self.views:
             v = self.views[k]
@@ -1098,9 +1140,13 @@ class ColorHighlighter:
         self.views[view.id()].on_activated()
 
     def unload(self):
+        self.settings.clear_callbacks()
+        self.clear_views()
+
+    def clear_views(self):
         for k in self.views:
             v = self.views[k]
-            v.restore_scheme()
+            v.clear_all()
 
     def get_colors_sel(self, view):
         if self.disabled(view):
@@ -1486,10 +1532,14 @@ class ColorSelection(sublime_plugin.EventListener):
 # command to change setting
 class ChSetSetting(sublime_plugin.TextCommand):
     def run(self, edit, **args):
+        if color_highlighter is None:
+            return
         color_highlighter.settings.set(args["setting"], args["value"])
         color_highlighter.settings.save()
 
     def is_visible(self, **args):
+        if color_highlighter is None:
+            return False
         setting = args["setting"]
 
         if setting == "default_keybindings":
@@ -1515,10 +1565,14 @@ class ChSetSetting(sublime_plugin.TextCommand):
 # command to restore color scheme
 class RestoreColorSchemeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        color_highlighter.unload()
+        if color_highlighter is None:
+            return False
+        color_highlighter.clear_views()
 
 class ChReplaceColor(sublime_plugin.TextCommand):
     def run(self, edit, **args):
+        if color_highlighter is None:
+            return False
         print("ChReplaceColor:", args)
         vs = color_highlighter.get_vars(self.view)
         offset = 0
@@ -1545,6 +1599,8 @@ class ColorCommand(sublime_plugin.TextCommand):
         self.vs = None
 
     def is_enabled(self):
+        if color_highlighter is None:
+            return False
         self.words = color_highlighter.get_colors_sel(self.view)
         return len(self.words) != 0
 
@@ -1591,6 +1647,8 @@ class BaseColorConvertCommand(ColorCommand):
 
 class ColorConvertCommand(BaseColorConvertCommand):
     def run(self, edit):
+        if color_highlighter is None:
+            return
         self.vs = color_highlighter.get_vars(self.view)
         fmt, _ = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
         panel = self.view.window().show_input_panel("Format: ", fmt, self.do_run, None, self.clear)
@@ -1598,6 +1656,8 @@ class ColorConvertCommand(BaseColorConvertCommand):
 
 class ColorConvertNextCommand(BaseColorConvertCommand):
     def run(self, edit):
+        if color_highlighter is None:
+            return
         self.vs = color_highlighter.get_vars(self.view)
         fmt, _ = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
         formats = list(filter(lambda f, fmt=fmt: f == fmt or (not f.startswith("@var-")), color_highlighter.settings.get("formats").keys()))
@@ -1615,6 +1675,8 @@ class ColorConvertNextCommand(BaseColorConvertCommand):
 
 class ColorConvertPrevCommand(BaseColorConvertCommand):
     def run(self, edit):
+        if color_highlighter is None:
+            return
         self.vs = color_highlighter.get_vars(self.view)
         fmt, _ = color_highlighter.color_finder.get_fmt(self.view.substr(self.words[0][0]), self.vs)
         formats = list(filter(lambda f, fmt=fmt: f == fmt or (not f.startswith("@var-")), color_highlighter.settings.get("formats").keys()))
@@ -1632,6 +1694,8 @@ class ColorConvertPrevCommand(BaseColorConvertCommand):
 
 class GoToVarDefinitionCommand(ColorCommand):
     def run(self, edit):
+        if color_highlighter is None:
+            return
         reg, _, _ = self.words[0]
         self.vs = color_highlighter.get_vars(self.view)
         obj = self.vs[self.view.substr(reg)]
@@ -1639,6 +1703,8 @@ class GoToVarDefinitionCommand(ColorCommand):
         self.clear()
 
     def is_enabled(self):
+        if color_highlighter is None:
+            return False
         self.words = color_highlighter.get_colors_sel_var(self.view)
         return len(self.words) != 0 and self.words[0][1].startswith("@var-")
 
@@ -1666,8 +1732,10 @@ def plugin_loaded():
 
 # unload all the stuff
 def plugin_unloaded():
+    global color_highlighter
     if color_highlighter is not None:
         color_highlighter.unload()
+        color_highlighter = None
 
 # ST2 support. Maby need set_timeout?
 if not is_st3():
