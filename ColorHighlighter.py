@@ -806,7 +806,6 @@ class ColorHighlighterView:
         if self.ch.style == "disabled":
             return
 
-
         vs = self.ch.get_vars(self.view)
 
         flags = self.ch.flags
@@ -1271,6 +1270,13 @@ class ColorHighlighter:
         # map text to colors
         for k in res.keys():
             self.get_col(k, res)
+
+        to_del = []
+        for k in res.keys():
+            if res[k]["col"] is None:
+                to_del.append(k)
+        for k in to_del:
+            del(res[k])
         return res
 
     def get_col(self, key, variables):
