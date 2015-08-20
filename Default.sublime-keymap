@@ -40,7 +40,7 @@
 		"command": "go_to_var_definition",
 		"context": [
 			{
-				"key": "color_highlighter.color_convert_next"
+				"key": "color_highlighter.go_to_var_definition"
 			}
 		]
 	}

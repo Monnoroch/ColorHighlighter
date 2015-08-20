@@ -25,7 +25,7 @@
                         "children":
                         [
                             {
-                                "caption": "Disabled",
+                                "caption": "Disable",
                                 "command": "ch_set_setting",
                                 "args": {"setting": "style", "value": "disabled"}
                             },
@@ -113,12 +113,12 @@
                             {
                                 "caption": "Show icons",
                                 "command": "ch_set_setting",
-                                "args": {"setting": "icons_all", "value": true}
+                                "args": {"setting": "ha_icons", "value": true}
                             },
                             {
                                 "caption": "Hide icons",
                                 "command": "ch_set_setting",
-                                "args": {"setting": "icons_all", "value": false}
+                                "args": {"setting": "ha_icons", "value": false}
                             }
                         ]
                     },
