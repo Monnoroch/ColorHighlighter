@@ -738,10 +738,6 @@ class ColorHighlighterView:
     regions = []
     ha_regions = []
 
-    # Need theese for ST2, it has an odd events order (activate, then load)
-    last_activate = None
-    last_osm = None
-
     def __init__(self, ch, view):
         self.ch = ch
         self.view = view
@@ -770,16 +766,6 @@ class ColorHighlighterView:
         return res
 
     def on_selection_modified(self):
-        if self.last_osm is None:
-            self.last_osm = time.clock()
-        if time.clock() - self.last_osm <= 1:
-            return
-
-        cl = time.clock()
-        if self.last_osm is not None and cl - self.last_osm <= 0.1:
-            return
-        self.last_osm = cl
-
         self.clear()
         if self.ch.style == "disabled":
             return
@@ -808,11 +794,6 @@ class ColorHighlighterView:
         self.set_scheme(scheme, f)
 
     def on_activated(self):
-        cl = time.clock()
-        if self.last_activate is not None and cl - self.last_activate <= 0.1:
-            return
-        self.last_activate = cl
-
         self.on_selection_modified()
 
         self.ha_clear()
@@ -1068,16 +1049,22 @@ class ColorHighlighter:
         return 0
 
     def on_new(self, view):
+        v = self.add_view(view)
         # Need on_activate for ST2, it has an odd events order (activate, then load)
-        self.add_view(view).on_activated()
+        if not is_st3():
+            v.on_activated()
 
     def on_clone(self, view):
+        v = self.add_view(view)
         # Need on_activate for ST2, it has an odd events order (activate, then load)
-        self.add_view(view).on_activated()
+        if not is_st3():
+            v.on_activated()
 
     def on_load(self, view):
+        v = self.add_view(view)
         # Need on_activate for ST2, it has an odd events order (activate, then load)
-        self.add_view(view).on_activated()
+        if not is_st3():
+            v.on_activated()
 
     def on_close(self, view):
         if self.disabled(view):
