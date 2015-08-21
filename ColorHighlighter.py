@@ -1316,6 +1316,7 @@ class ColorHighlighter:
         self._get_vars(self.vars_view_cache[view.id()], res)
 
     def get_vars(self, view):
+        color_vars_file = None
         if is_st3():
             wnd = view.window()
             if wnd is not None:
