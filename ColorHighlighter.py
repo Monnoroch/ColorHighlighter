@@ -167,7 +167,7 @@ class HtmlGen:
 
         if any:
             data = None
-            if get_version() >= 3000:
+            if is_st3():
                 data = sublime.load_resource(self.color_scheme)
             else:
                 data = read_file(self.color_scheme_abs).decode("utf-8")
