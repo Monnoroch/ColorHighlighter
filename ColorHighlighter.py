@@ -1416,13 +1416,10 @@ class ColorHighlighter:
                 deps[""]["deps"][k] = True
 
         self.get_deps("", deps, {})
-        arr = []
-        for k in deps.keys():
-            if k != "":
-                arr.append((k, deps[k]["rlen"], deps[k]["deps_arr"]))
-        arr.sort(key=cmp_to_key(deps_order))
+        del(deps[""])
+        arr = top_sort(deps)
         i = 0
-        for (k, _, _) in arr:
+        for k in arr:
             formats[k]["order"] = i
             i += 1
 
@@ -1453,42 +1450,39 @@ class ColorHighlighter:
         obj["deps_arr"] = da
         del(doing[k])
 
+def top_sort(deps):
+    res = []
+    for k in deps.keys():
+        deps[k]["markt"] = False
+        deps[k]["mark"] = False
 
-def deps_order(a, b):
-    keyA, rlenA, depsA = a
-    keyB, rlenB, depsB = b
-    if keyB in depsA.keys():
-        return 1
-    if keyA in depsB.keys():
-        return -1
+    any = True
+    while any:
+        any = False
+        for k in deps.keys():
+            if deps[k]["mark"] == 0:
+                visit(deps, k, res)
+                any = True
+                break
 
-    if rlenA != rlenB:
-        return rlenB - rlenA
+    for k in deps.keys():
+        del(deps[k]["markt"])
+        del(deps[k]["mark"])
+    return res
 
-    if keyB > keyA:
-        return 1
-    elif keyB < keyA:
-        return -1
-    return 0
+def visit(deps, k, res):
+    if deps[k]["markt"]:
+        raise ValueError("Not a DAG!")
+    if deps[k]["mark"]:
+        return
 
-def cmp_to_key(mycmp):
-    'Convert a cmp= function into a key= function'
-    class K(object):
-        def __init__(self, obj, *args):
-            self.obj = obj
-        def __lt__(self, other):
-            return mycmp(self.obj, other.obj) < 0
-        def __gt__(self, other):
-            return mycmp(self.obj, other.obj) > 0
-        def __eq__(self, other):
-            return mycmp(self.obj, other.obj) == 0
-        def __le__(self, other):
-            return mycmp(self.obj, other.obj) <= 0
-        def __ge__(self, other):
-            return mycmp(self.obj, other.obj) >= 0
-        def __ne__(self, other):
-            return mycmp(self.obj, other.obj) != 0
-    return K
+    deps[k]["markt"] = True
+    for key in deps[k]["deps_arr"]:
+        visit(deps, key, res)
+    deps[k]["mark"] = True
+    deps[k]["markt"] = False
+    res.append(k)
+
 
 color_highlighter = None
 
