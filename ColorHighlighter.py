@@ -1319,9 +1319,11 @@ class ColorHighlighter:
         if is_st3():
             wnd = view.window()
             if wnd is not None:
-                color_vars_file = wnd.project_data().get("color_variables_file", None)
-                if color_vars_file is not None:
-                    self.parse_vars_file(color_vars_file)
+                pdata = wnd.project_data()
+                if pdata is not None:
+                    color_vars_file = pdata.get("color_variables_file", None)
+                    if color_vars_file is not None:
+                        self.parse_vars_file(color_vars_file)
 
         fn = view.file_name()
         if fn is not None:
