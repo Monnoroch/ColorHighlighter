@@ -170,15 +170,15 @@ class HtmlGen:
             if is_st3():
                 data = sublime.load_resource(self.color_scheme)
             else:
-                data = read_file(self.color_scheme_abs).decode("utf-8")
+                data = read_file(self.color_scheme_abs)
 
             n = data.find("<array>") + len("<array>")
-            with codecs.open(self.fake_scheme_abs, "wb") as f:
-                f.write(data[:n].encode("utf-8"))
+            with codecs.open(self.fake_scheme_abs, "w", "utf-8") as f:
+                f.write(data[:n])
                 for col in self.colors.keys():
                     cont = self.colors[col]
-                    f.write((self.gen_string % (region_name(col), col, cont, cont)).encode("utf-8"))
-                f.write(data[n:].encode("utf-8"))
+                    f.write((self.gen_string % (region_name(col), col, cont, cont)))
+                f.write(data[n:])
         self.to_add = []
         return any
 
@@ -1746,7 +1746,7 @@ def plugin_loaded():
     cpupath = color_picker_user_path(PAbsolute)
     if not os.path.exists(cpupath):
         if is_st3():
-            with codecs.open(cpupath, "wb") as f:
+            with open(cpupath, "wb") as f:
                 f.write(sublime.load_binary_resource(conv_path(color_picker_path())))
         else:
             shutil.copy(color_picker_path(PAbsolute), cpupath)
