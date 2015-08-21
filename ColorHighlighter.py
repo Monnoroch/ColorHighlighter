@@ -1370,11 +1370,11 @@ class ColorHighlighter:
         for fmt in to_del:
             del(formats[fmt])
 
+        for k in channels.keys():
+            self.get_chan(k, channels, {})
 
         self.fix_regexes(formats, channels)
         self.order_formats(formats)
-        for k in channels.keys():
-            self.get_chan(k, channels, {})
         self.color_finder.set_conf(formats, channels)
 
     def get_chan(self, k, channels, doing):
