@@ -1257,6 +1257,10 @@ class ColorHighlighter:
         self._get_vars(self.vars_view_cache[view.id()], res)
 
     def get_vars(self, view):
+        color_vars_file = view.window().project_data().get("color_variables_file", None)
+        if color_vars_file is not None:
+            self.parse_vars_file(color_vars_file)
+
         fn = view.file_name()
         if fn is not None:
             self.parse_vars_file(fn)
@@ -1266,6 +1270,9 @@ class ColorHighlighter:
             self.parse_vars_view(view)
             res = {}
             self.get_view_vars(view, res)
+
+        if color_vars_file is not None:
+            self.get_file_vars(color_vars_file, res)
 
         # map text to colors
         for k in res.keys():

@@ -31,6 +31,9 @@ These color formats are currently supported:
   - A float value from 0.0 to 1.0, you can also skip leading zero (like that: .25)
   - A percentage from 0% to 100%.
 
+**Variables file :**
+You can define field `color_variables_file` in your .sublime-project file to automatically include all less/sass/scss/stylus color variables from it for every file you edit.
+
 **Settings :**
 
 You can choose the highliting style from:
