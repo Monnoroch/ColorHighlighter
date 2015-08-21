@@ -35,6 +35,11 @@
                                 "args": {"setting": "style", "value": "none"}
                             },
                             {
+                                "caption": "Colored text",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "style", "value": "text"}
+                            },
+                            {
                                 "caption": "Filled",
                                 "command": "ch_set_setting",
                                 "args": {"setting": "style", "value": "filled"}
@@ -84,6 +89,11 @@
                                 "caption": "None",
                                 "command": "ch_set_setting",
                                 "args": {"setting": "ha_style", "value": "none"}
+                            },
+                            {
+                                "caption": "Colored text",
+                                "command": "ch_set_setting",
+                                "args": {"setting": "ha_style", "value": "text"}
                             },
                             {
                                 "caption": "Filled",
