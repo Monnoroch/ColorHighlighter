@@ -23,13 +23,13 @@
         "@named": {
             "description": "Named css colors"
         },
-        "@var-less": {
+        "@varless": {
             "description": "Less variables: @a-b-c"
         },
-        "@var-sass": {
+        "@varsass": {
             "description": "Sass variables: $a-b-c"
         },
-        "@var-styl": {
+        "@varstyl": {
             "description": "Styl variables: a-b-c"
         },
         "sharp8": {
