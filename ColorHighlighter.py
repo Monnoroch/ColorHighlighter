@@ -1665,7 +1665,7 @@ class ChReplaceColor(sublime_plugin.TextCommand):
         offset = 0
         for val in args["words"].split("\t"):
             reg, fmt, col = self.parse_word(val)
-            new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt, self.view.substr(reg))
+            new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt, color_highlighter.settings.get("formats")[fmt].get("white", None))
             if new_col is None:
                 continue
             self.view.replace(edit, sublime.Region(offset + reg.a, offset + reg.b), new_col)
