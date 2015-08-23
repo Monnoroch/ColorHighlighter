@@ -753,6 +753,7 @@ class ColorFinder:
     vars_prepend = {
         "@varless": "@",
         "@varsass": "$",
+        "@varstyldollar": "$",
         "@varstyl": "",
         "@named": "",
     }
@@ -782,11 +783,7 @@ class ColorFinder:
                     res.append((sublime.Region(offset + start, offset + end), fmt, col))
             m = regex.search(text, m.end())
 
-    # find all colors and their formats in the view region
-    def find_colors(self, view, variables, region=None): # -> [(reg, fmt, col)]
-        if region is None:
-            region = sublime.Region(0, view.size())
-
+    def get_regex(self, variables, fext=".css"):
         names = {}
         for k in self.vars_prepend.keys():
             names[k] = []
@@ -800,19 +797,33 @@ class ColorFinder:
         for fmt in names.keys():
             arrs.append((names[fmt], self.vars_prepend[fmt], fmt))
         arrs.sort(key=lambda x: len(x[1]), reverse=True)
-
         regex_str = ""
         for (arr, prep, fmt) in arrs:
             if len(arr) == 0:
                 continue
             if fmt != "@named":
                 arr.sort(key=len, reverse=True)
+                if prep != "":
+                    prep = "[" + prep + "]"
                 regex_str += "(?P<" + fmt[1:] + ">" + prep + "\\b(" + "|".join(arr) + ")\\b)|"
             else: # @named is already sorted and joined
                 regex_str += "(?P<" + fmt[1:] + ">" + prep + "\\b(" + self.names_str + ")\\b)|"
+        return self.conv._get_regex(regex_str[:-1])
+
+    def get_ext(self, view):
+        fname = view.file_name()
+        if fname is None:
+            return None
+        return os.path.splitext(fname)[1]
+
+    # find all colors and their formats in the view region
+    def find_colors(self, view, variables, region=None): # -> [(reg, fmt, col)]
+        if region is None:
+            region = sublime.Region(0, view.size())
+
         text = view.substr(region)
         res = []
-        self.find_all_named(self.conv._get_regex(regex_str[:-1]), region.begin(), text, variables, res)
+        self.find_all_named(self.get_regex(variables, self.get_ext(view)), region.begin(), text, variables, res)
         return self.conv.append_text_reg_fmt_col(text, region.begin(), res)
 
     def set_conf(self, conf, channels):
@@ -960,7 +971,7 @@ def on_line_sass(fname, line, i, res):
 def on_line_styl(fname, line, i, res):
     var, col, pos = extract_styl_name_val(line)
     if var != None:
-        res[var] = {"text": col, "file": fname, "line": i, "pos": pos, "fmt": "@varstyl"}
+        res[var] = {"text": col, "file": fname, "line": i, "pos": pos, "fmt": var[0] == '$' and "@varstyldollar" or "@varstyl"}
 
 def extract_import(line):
     l = len(line)
@@ -997,8 +1008,11 @@ def extract_styl_name_val(line):
     var = line[:pos].strip()
     if var == "":
         return None, None, None
-    for c in var:
-        if not c.isalpha() and c != "-" and c != "_":
+    c = var[0]
+    if (not c.isalnum()) and c != "-" and c != "_" and c != "$":
+        return None, None, None
+    for c in var[1:]:
+        if (not c.isalnum()) and c != "-" and c != "_":
             return None, None, None
     col = line[pos+1:].strip()
     return var, col, line.find(col)

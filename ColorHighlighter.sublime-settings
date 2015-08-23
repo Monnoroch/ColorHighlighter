@@ -32,6 +32,9 @@
         "@varstyl": {
             "description": "Styl variables: a-b-c"
         },
+        "@varstyldollar": {
+            "description": "Styl variables: $a-b-c"
+        },
         "sharp8": {
             "description": "Hex #RRGGBBAA color format",
             "regex": "#(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?P<A>hex2)",
