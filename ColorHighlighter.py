@@ -1325,10 +1325,12 @@ class ColorHighlighter:
             self.get_file_vars(f, res)
 
     def get_file_vars(self, fname, res):
-        self._get_vars(self.vars_file_cache[fname], res)
+        if fname in self.vars_file_cache.keys():
+            self._get_vars(self.vars_file_cache[fname], res)
 
     def get_view_vars(self, view, res):
-        self._get_vars(self.vars_view_cache[view.id()], res)
+        if view.id() in self.vars_view_cache.keys():
+            self._get_vars(self.vars_view_cache[view.id()], res)
 
     def get_vars(self, view):
         color_vars_file = None
@@ -1342,13 +1344,12 @@ class ColorHighlighter:
                         self.parse_vars_file(color_vars_file)
 
         fn = view.file_name()
+        res = {}
         if fn is not None:
             self.parse_vars_file(fn)
-            res = {}
             self.get_file_vars(fn, res)
         else:
             self.parse_vars_view(view)
-            res = {}
             self.get_view_vars(view, res)
 
         if is_st3():
