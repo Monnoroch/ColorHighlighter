@@ -935,7 +935,8 @@ class ColorHighlighterView:
             self.view.settings().set("color_scheme", conv_path(val))
 
     def restore_scheme(self):
-        self.set_scheme(self.ch.color_scheme)
+        if self.ch.color_scheme is not None:
+            self.set_scheme(self.ch.color_scheme)
 
     def clear_all(self):
         self.restore_scheme()
