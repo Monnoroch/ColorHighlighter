@@ -1273,6 +1273,10 @@ class ColorHighlighter:
             on_line = on_line_sass
         elif ext == ".styl":
             on_line = on_line_styl
+        else:
+            cache["vars"] = {}
+            cache["files"] = []
+            return
 
         for line in map(lambda s: s.strip(), text.split("\n")):
             i += 1
@@ -1282,8 +1286,12 @@ class ColorHighlighter:
             if line.startswith("@import"):
                 fname = extract_import(line)
                 if fname is not None:
-                    if os.path.splitext(fname)[1] == "":
-                        fname += ext
+                    fext = os.path.splitext(fname)[1]
+                    if fext == "":
+                        fext = ext
+                    if fext != ext:
+                        continue
+                    fname += fext
                     if not os.path.isabs(fname):
                         fname = os.path.normpath(os.path.join(dirname, fname))
                     files.append(fname)
