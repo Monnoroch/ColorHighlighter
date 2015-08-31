@@ -11,7 +11,7 @@ import shutil
 import codecs
 import time
 
-plugin_name = "Color Highlighter"
+plugin_name = "ColorHighlighter"
 
 try:
     import colors
