@@ -567,6 +567,8 @@ class ColorConverter:
             offset = 0
             for i in range(0, 4):
                 fmtch = fmt + chs[i]
+                if chs[i] == "A" and fmtch not in m.groupdict().keys():
+                    continue
                 start = m.start(fmtch)
                 end = m.end(fmtch)
                 example = example[:start + offset] + chans[i][0] + example[end + offset:]
@@ -1284,9 +1286,9 @@ class ColorHighlighter:
                     fext = os.path.splitext(fname)[1]
                     if fext == "":
                         fext = ext
+                        fname += fext
                     if fext != ext:
                         continue
-                    fname += fext
                     if not os.path.isabs(fname):
                         fname = os.path.normpath(os.path.join(dirname, fname))
                     files.append(fname)
