@@ -1672,7 +1672,10 @@ class ChReplaceColor(sublime_plugin.TextCommand):
         offset = 0
         for val in args["words"].split("\t"):
             reg, fmt, col = self.parse_word(val)
-            new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt, color_highlighter.settings.get("formats")[fmt].get("white", None))
+            example = args.get("example", None)
+            if example is None:
+                example = self.view.substr(reg)
+            new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt, example)
             if new_col is None:
                 continue
             self.view.replace(edit, sublime.Region(offset + reg.a, offset + reg.b), new_col)
@@ -1731,12 +1734,16 @@ class ColorPickerCommand(ColorCommand):
 
     def call_impl(self):
         if self.output is not None and len(self.output) == 9 and self.output != 'CANCEL':
+            self.view.substr(self.words[0][0])
             self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], x[1], self.output)), self.words))})
         self.output = None
 
 class BaseColorConvertCommand(ColorCommand):
     def do_run(self, new_fmt):
-        self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words))})
+        self.view.run_command("ch_replace_color", {
+            "words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words)),
+            "example": color_highlighter.settings.get("formats")[fmt].get("white", None)
+        })
         self.clear()
 
 class ColorConvertCommand(BaseColorConvertCommand):
