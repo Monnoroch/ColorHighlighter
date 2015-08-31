@@ -290,48 +290,48 @@ class Settings:
     def save(self):
         sublime.save_settings(self.fname)
 
-    def on_ch_settings_change(self, forse=False):
+    def on_ch_settings_change(self, force=False):
         self.obj = sublime.load_settings(self.fname)
 
         enabled = self.obj.get("enabled")
         if enabled is None:
             enabled = True
-        if forse or self.enabled != enabled:
+        if force or self.enabled != enabled:
             self.enabled = enabled
             self.callbacks.enable(enabled)
 
         style = self.obj.get("style")
         if style is None:
             style = "default"
-        if forse or self.style != style:
+        if force or self.style != style:
             self.style = style
             self.callbacks.set_style(style)
 
         ha_style = self.obj.get("ha_style")
         if ha_style is None:
             ha_style = "default"
-        if forse or self.ha_style != ha_style:
+        if force or self.ha_style != ha_style:
             self.ha_style = ha_style
             self.callbacks.set_ha_style(ha_style)
 
         icons = self.obj.get("icons")
         if icons is None:
             icons = False
-        if forse or self.icons != icons:
+        if force or self.icons != icons:
             self.icons = icons
             self.callbacks.set_icons(icons)
 
         ha_icons = self.obj.get("ha_icons")
         if ha_icons is None:
             ha_icons = False
-        if forse or self.ha_icons != ha_icons:
+        if force or self.ha_icons != ha_icons:
             self.ha_icons = ha_icons
             self.callbacks.set_ha_icons(ha_icons)
 
         file_exts = self.obj.get("file_exts")
         if file_exts is None:
             file_exts = "all"
-        if forse or self.file_exts != file_exts:
+        if force or self.file_exts != file_exts:
             self.file_exts = file_exts
             self.callbacks.set_exts(file_exts)
 
@@ -341,16 +341,16 @@ class Settings:
         channels = self.obj.get("channels")
         if channels is None:
             channels = {}
-        if forse or self.formats != formats or self.channels != channels:
+        if force or self.formats != formats or self.channels != channels:
             self.formats = formats
             self.channels = channels
             self.callbacks.set_formats(formats, channels)
 
-    def on_prefs_settings_change(self, forse=False):
+    def on_prefs_settings_change(self, force=False):
         self.prefs = sublime.load_settings(pref_fname)
 
         color_scheme = self.prefs.get("color_scheme")
-        if forse or self.color_scheme != color_scheme:
+        if force or self.color_scheme != color_scheme:
             self.color_scheme = color_scheme
             self.callbacks.set_scheme(color_scheme)
 
