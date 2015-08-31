@@ -259,6 +259,7 @@ class Settings:
     icons = None
     ha_icons = None
     file_exts = None
+    ignored_views = []
     formats = None
     channels = None
     color_scheme = None
@@ -334,6 +335,13 @@ class Settings:
         if force or self.file_exts != file_exts:
             self.file_exts = file_exts
             self.callbacks.set_exts(file_exts)
+
+        ignored_views = self.obj.get("ignored_views")
+        if ignored_views is not None:
+            if force or self.ignored_views != ignored_views:
+                for i in ignored_views:
+                    self.ignored_views.append(i)
+
 
         formats = self.obj.get("formats")
         if formats is None:
@@ -871,6 +879,10 @@ class ColorHighlighterView:
 
     def on_selection_modified(self):
         self.clear()
+
+        if self.is_ignored_view(self.view):
+            return
+
         if self.ch.style == "disabled":
             return
 
@@ -899,6 +911,9 @@ class ColorHighlighterView:
         self.set_scheme(scheme, f)
 
     def on_activated(self):
+        if self.is_ignored_view(self.view):
+            return
+
         self.on_selection_modified()
 
         self.ha_clear()
@@ -952,6 +967,13 @@ class ColorHighlighterView:
         for reg in self.ha_regions:
             self.view.erase_regions(reg)
         self.ha_regions = []
+
+    def is_ignored_view(self, view):
+        if len(str(view.name())) > 0:
+            for i in self.ch.settings.ignored_views:
+                if i in view.name() and view.is_scratch():
+                    return True
+        return False
 
 def on_line_less(fname, line, i, res):
     if line[0] != "@":
