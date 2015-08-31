@@ -1742,7 +1742,7 @@ class BaseColorConvertCommand(ColorCommand):
     def do_run(self, new_fmt):
         self.view.run_command("ch_replace_color", {
             "words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words)),
-            "example": color_highlighter.settings.get("formats")[fmt].get("white", None)
+            "example": color_highlighter.settings.get("formats")[new_fmt].get("white", None)
         })
         self.clear()
 
