@@ -293,54 +293,38 @@ class Settings:
     def on_ch_settings_change(self, force=False):
         self.obj = sublime.load_settings(self.fname)
 
-        enabled = self.obj.get("enabled")
-        if enabled is None:
-            enabled = True
+        enabled = self.obj.get("enabled", True)
         if force or self.enabled != enabled:
             self.enabled = enabled
             self.callbacks.enable(enabled)
 
-        style = self.obj.get("style")
-        if style is None:
-            style = "default"
+        style = self.obj.get("style", "default")
         if force or self.style != style:
             self.style = style
             self.callbacks.set_style(style)
 
-        ha_style = self.obj.get("ha_style")
-        if ha_style is None:
-            ha_style = "default"
+        ha_style = self.obj.get("ha_style", "default")
         if force or self.ha_style != ha_style:
             self.ha_style = ha_style
             self.callbacks.set_ha_style(ha_style)
 
-        icons = self.obj.get("icons")
-        if icons is None:
-            icons = False
+        icons = self.obj.get("icons", False)
         if force or self.icons != icons:
             self.icons = icons
             self.callbacks.set_icons(icons)
 
-        ha_icons = self.obj.get("ha_icons")
-        if ha_icons is None:
-            ha_icons = False
+        ha_icons = self.obj.get("ha_icons", False)
         if force or self.ha_icons != ha_icons:
             self.ha_icons = ha_icons
             self.callbacks.set_ha_icons(ha_icons)
 
-        file_exts = self.obj.get("file_exts")
-        if file_exts is None:
-            file_exts = "all"
+        file_exts = self.obj.get("file_exts", "all")
         if force or self.file_exts != file_exts:
             self.file_exts = file_exts
             self.callbacks.set_exts(file_exts)
 
-        formats = self.obj.get("formats")
-        if formats is None:
-            formats = {}
-        channels = self.obj.get("channels")
-        if channels is None:
-            channels = {}
+        formats = self.obj.get("formats", {})
+        channels = self.obj.get("channels", {})
         if force or self.formats != formats or self.channels != channels:
             self.formats = formats
             self.channels = channels
@@ -503,8 +487,6 @@ class ColorConverter:
     def _col_to_chans_match(self, col, fmt, match): # -> chans
         types_orig = self.conf[fmt]["types"]
 
-        # easy way: choose the first channel type
-        # TODO: better way!
         chs = ["R", "G", "B", "A"]
         types = []
         for i in range(0, len(types_orig)):
@@ -845,11 +827,23 @@ class ColorHighlighterView:
     def __init__(self, ch, view):
         self.ch = ch
         self.view = view
+        self.set_callbacks()
+
+    def clear_callbacks(self):
+        self.view.settings().clear_on_change("ColorHighlighter")
+
+    def set_callbacks(self):
+        self.view.settings().add_on_change("ColorHighlighter", lambda: self.on_settings_change())
+
+    def on_settings_change(self):
+        color_scheme = self.view.settings().get("color_scheme", None)
 
     def enable(self, val=True):
         self.disabled = not val
         if self.disabled:
             self.clear_all()
+        else:
+            self.set_callbacks()
 
     def get_colors_sel(self):
         vs = self.ch.get_vars(self.view)
@@ -942,6 +936,7 @@ class ColorHighlighterView:
         self.restore_scheme()
         self.clear()
         self.ha_clear()
+        self.clear_callbacks()
 
     def clear(self):
         for reg in self.regions:
@@ -1837,7 +1832,7 @@ def plugin_unloaded():
 # ST2 support. Maby need set_timeout?
 if not is_st3():
     def plugin_loaded_wait():
-        if sublime.load_settings(pref_fname).get("color_scheme") != None:
+        if sublime.load_settings(pref_fname).get("color_scheme", None) is not None:
             plugin_loaded()
         else:
             sublime.set_timeout(plugin_loaded_wait, 100)
