@@ -116,12 +116,12 @@
         "hsla": {
             "description": "hsla(hue 0..255, s%, v%, alpha 0.0 .. 1.0) color format",
             "regex": "hsla[(][ ]*(?P<R>hue)[ ]*[,][ ]*(?P<G>saturation)[ ]*[,][ ]*(?P<B>lightness)[ ]*[,][ ]*(?P<A>float)[ ]*[)]",
-            "white": "hsva(0, 0%, 100%, 1.)"
+            "white": "hsla(0, 0%, 100%, 1.)"
         },
         "hsl": {
             "description": "hsl(hue 0..255, s%, v%) color format",
             "regex": "hsl[(][ ]*(?P<R>hue)[ ]*[,][ ]*(?P<G>saturation)[ ]*[,][ ]*(?P<B>lightness)[ ]*[)]",
-            "white": "hsv(0, 0%, 100%)"
+            "white": "hsl(0, 0%, 100%)"
         }
     }
 }
