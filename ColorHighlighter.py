@@ -512,11 +512,11 @@ class ColorConverter:
 
         if chans[0][1] == "hue" and chans[1][1] == "saturation" and chans[2][1] == "value":
             (nh, ns, nv) = colorsys.rgb_to_hsv(int(chans[0][0], 16)/255.0, int(chans[1][0], 16)/255.0, int(chans[2][0], 16)/255.0)
-            return (str(int(nh * 360)), str(int(ns * 100)) + '%', str(int(nv * 100)) + '%')
+            return [[str(int(nh * 360)), chans[0][1]], [str(int(ns * 100)) + '%', chans[1][1]], [str(int(nv * 100)) + '%', chans[2][1]], [self._conv_val_chan_back(chans[3][0], chans[3][1]), chans[3][1]]]
 
         if chans[0][1] == "hue" and chans[1][1] == "saturation" and chans[2][1] == "lightness":
             (nh, nv, ns) = colorsys.rgb_to_hls(int(chans[0][0], 16)/255.0, int(chans[1][0], 16)/255.0, int(chans[2][0], 16)/255.0)
-            return (str(int(nh * 360)), str(int(ns * 100)) + '%', str(int(nv * 100)) + '%')
+            return [[str(int(nh * 360)), chans[0][1]], [str(int(ns * 100)) + '%', chans[1][1]], [str(int(nv * 100)) + '%', chans[2][1]], [self._conv_val_chan_back(chans[3][0], chans[3][1]), chans[3][1]]]
 
         for c in chans:
             c[0] = self._conv_val_chan_back(c[0], c[1])
