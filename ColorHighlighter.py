@@ -602,6 +602,7 @@ class ColorConverter:
                     types.append(t)
 
         chans = [[col[1:3], types[0]], [col[3:5], types[1]], [col[5:7], types[2]]]
+        print("_col_to_chans_match: chans 1", chans, col, col[1:3])
         if types[3] != "empty":
             chans.append([col[7:9], types[3]])
         else:
@@ -615,6 +616,7 @@ class ColorConverter:
             (nh, nv, ns) = colorsys.rgb_to_hls(int(chans[0][0], 16)/255.0, int(chans[1][0], 16)/255.0, int(chans[2][0], 16)/255.0)
             return [[str(int(nh * 360)), chans[0][1]], [str(int(ns * 100)) + '%', chans[1][1]], [str(int(nv * 100)) + '%', chans[2][1]], [self._conv_val_chan_back(chans[3][0], chans[3][1]), chans[3][1]]]
 
+        print("_col_to_chans_match: chans 2", chans)
         for c in chans:
             c[0] = self._conv_val_chan_back(c[0], c[1])
         return chans
@@ -655,10 +657,12 @@ class ColorConverter:
             return fmt, self._get_color_col(color, fmt)
 
     def get_col_color(self, col, fmt, example): # -> color
+        print("get_col_color", col, fmt, example)
         if fmt == "sharp8":
             return col
         m = self._get_regex(self.conf[fmt]["regex"]).search(example)
         if m:
+            print("get_col_color 1", col, fmt, m.groupdict())
             chans = self._col_to_chans_match(col, fmt, m.groupdict())
             chs = ["R", "G", "B", "A"]
             offset = 0
@@ -1443,11 +1447,16 @@ class ColorHighlighter:
         v.enable(self._get_enable(view), True)
         return v
 
-    def _disabled(self, view):
+    def _disabled(self, view, add=False):
         if self.is_disabled:
             return True
         v = self.views.get(view.id(), None)
-        return v is None or v.disabled
+        if v is None:
+            if not add:
+                return True
+            # because of ST2 bugs I need that for Disabling/Enabling CH via PC
+            v = self._add_view(view)
+        return v.disabled
 
     def _get_regions_flags(self, style, ha=False):
         print("CH._get_regions_flags:", style, ha)
@@ -1513,7 +1522,7 @@ class ColorHighlighter:
         del(self.views[view.id()])
 
     def on_selection_modified(self, view):
-        if self._disabled(view):
+        if self._disabled(view, not is_st3()):
             return
         self.views[view.id()].on_selection_modified()
 
@@ -1526,7 +1535,7 @@ class ColorHighlighter:
 
     @st_time
     def on_activated(self, view):
-        if self._disabled(view):
+        if self._disabled(view, not is_st3()):
             return
         self.views[view.id()].on_activated()
 
@@ -1866,17 +1875,28 @@ class ChReplaceColor(sublime_plugin.TextCommand):
             example = args.get("example", None)
             if example is None:
                 example = self.view.substr(reg)
+            print("convert_back_color", col, fmt, example)
             new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt, example)
             if new_col is None:
                 continue
             self.view.replace(edit, sublime.Region(offset + reg.a, offset + reg.b), new_col)
             offset += len(new_col) - (reg.b - reg.a)
 
-    def parse_word(self, s):
-        pos = s.find(")")
-        reg = s[2:pos].split(",")
-        rest = s[pos+1:-1].split(",")
-        return (sublime.Region(int(reg[0]), int(reg[1])), rest[1].strip()[1:-1], rest[2].strip()[1:-1])
+    if is_st3():
+        def parse_word(self, s):
+            pos = s.find(")")
+            reg = s[2:pos].split(",")
+            rest = s[pos+1:-1].split(",")
+            return (sublime.Region(int(reg[0]), int(reg[1])), rest[1].strip()[1:-1], rest[2].strip()[1:-1])
+    else:
+        def parse_word(self, s):
+            pos = s.find(")")
+            reg = s[2:pos].split(",")
+            rest = s[pos+1:-1].split(",")
+            col = rest[2].strip()[1:-1]
+            if col[0] == '\'' or col[0] == '\"':
+                col = col[1:]
+            return (sublime.Region(int(reg[0]), int(reg[1])), rest[1].strip()[1:-1], col)
 
 class ColorCommand(sublime_plugin.TextCommand):
     words = []
@@ -1984,6 +2004,13 @@ class ColorConvertPrevCommand(BaseColorConvertCommand):
         self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words))})
         self.clear()
 
+def center_view_async(view, row, col):
+    if not view.is_loading():
+        view.show_at_center(view.text_point(row, col))
+        print("CENTERED", row, col)
+    else:
+        sublime.set_timeout(lambda view=view, row=row, col=col: center_view_async(view, row, col), 100)
+
 class GoToVarDefinitionCommand(ColorCommand):
     def run(self, edit):
         if color_highlighter is None:
@@ -1991,7 +2018,11 @@ class GoToVarDefinitionCommand(ColorCommand):
         reg, _, _ = self.words[0]
         self.vs = color_highlighter.get_vars(self.view)
         obj = self.vs[self.view.substr(reg)]
-        view = self.view.window().open_file(obj["file"] + ":%d:%d" % (obj["line"], obj["pos"] + 1), sublime.ENCODED_POSITION|sublime.TRANSIENT)
+        row, col = obj["line"], obj["pos"] + 1
+        view = self.view.window().open_file(obj["file"] + ":%d:%d" % (row, col), sublime.ENCODED_POSITION|sublime.TRANSIENT)
+        if not is_st3():
+            # ENCODED_POSITION does not work in ST2
+            center_view_async(view, row, col)
         self.clear()
 
     def is_enabled(self):
@@ -1999,7 +2030,6 @@ class GoToVarDefinitionCommand(ColorCommand):
             return False
         self.words = color_highlighter.get_colors_sel_var(self.view)
         return len(self.words) != 0 and self.words[0][1].startswith("@var")
-
 
 # startup, cleanup
 
