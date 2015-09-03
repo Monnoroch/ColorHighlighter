@@ -2,7 +2,7 @@
     "enabled": true,
     "style": "default",
     "icons": true,
-    "ha_style": "underlined_solid",
+    "ha_style": "default",
     "ha_icons": false,
     "default_keybindings": true,
     "convert_util_path" : "convert",

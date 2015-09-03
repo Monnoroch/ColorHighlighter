@@ -208,13 +208,13 @@ class HtmlGen:
         self.to_add.append(col)
 
     def add_colors(self, cols):
-        print("add_colors:", cols)
+        # print("add_colors:", cols)
         for col in cols:
             self.add_color(col)
         return self.flush()
 
     def flush(self):
-        print("flush", self.colors, self.to_add)
+        # print("flush", self.colors, self.to_add)
         any = False
         for col in self.to_add:
             if col in self.colors.keys():
@@ -368,7 +368,7 @@ class SettingsCH:
                 ("enabled", True),
                 ("style", "default"),
                 ("ha_style", "default"),
-                ("icons", False),
+                ("icons", is_st3()),
                 ("ha_icons", False),
                 ("file_exts", "all"),
                 ("formats", {}),
@@ -417,9 +417,11 @@ class SettingsCH:
             self.ha_style = new
             self.callbacks.set_ha_style(new)
         elif key == "icons":
+            new = new and is_st3()
             self.icons = new
             self.callbacks.set_icons(new)
         elif key == "ha_icons":
+            new = new and is_st3()
             self.ha_icons = new
             self.callbacks.set_ha_icons(new)
         elif key == "file_exts":
@@ -1382,7 +1384,7 @@ class ColorHighlighter:
 
     def set_ha_style(self, val):
         self.ha_style = val
-        self.ha_flags = self._get_regions_flags(self.ha_style)
+        self.ha_flags = self._get_regions_flags(self.ha_style, True)
         self._ha_redraw()
 
     def set_icons(self, val):
@@ -1447,9 +1449,15 @@ class ColorHighlighter:
         v = self.views.get(view.id(), None)
         return v is None or v.disabled
 
-    def _get_regions_flags(self, style):
+    def _get_regions_flags(self, style, ha=False):
+        print("CH._get_regions_flags:", style, ha)
         if is_st3():
-            if style == "default" or style == "filled" or style == "text":
+            if style == "default":
+                if ha:
+                    style = "underlined"
+                else:
+                    style = "filled"
+            if style == "filled" or style == "text":
                 return sublime.DRAW_NO_OUTLINE
             if style == "outlined":
                 return sublime.DRAW_NO_FILL
@@ -1460,7 +1468,12 @@ class ColorHighlighter:
             elif style == "underlined_squiggly":
                 return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_SQUIGGLY_UNDERLINE
         else:
-            if style == "default" or style == "filled" or style == "text":
+            if style == "default":
+                if ha:
+                    style = "outlined"
+                else:
+                    style = "filled"
+            if style == "filled" or style == "text":
                 return 0
             if style == "outlined":
                 return sublime.DRAW_OUTLINED
@@ -2036,4 +2049,7 @@ def plugin_unloaded():
 
 # ST2 support.
 if not is_st3():
+    def unload_handler():
+        plugin_unloaded()
+
     run_when_cs_loaded(plugin_loaded)
