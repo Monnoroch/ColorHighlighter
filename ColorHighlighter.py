@@ -208,13 +208,11 @@ class HtmlGen:
         self.to_add.append(col)
 
     def add_colors(self, cols):
-        # print("add_colors:", cols)
         for col in cols:
             self.add_color(col)
         return self.flush()
 
     def flush(self):
-        # print("flush", self.colors, self.to_add)
         any = False
         for col in self.to_add:
             if col in self.colors.keys():
@@ -223,9 +221,7 @@ class HtmlGen:
             self.colors[col] = self._get_cont_col(col)
             any = True
 
-        print("flush:", any)
         if any:
-            print("~~~~~ HtmlGen.flush")
             data = None
             if is_st3():
                 data = sublime.load_resource(self.color_scheme)
@@ -330,7 +326,6 @@ class Settings:
     def on_change(self):
         if self.fname is not None:
             self.obj = sublime.load_settings(self.fname)
-        # print("Settings.on_change start", self.fname, self.obj.get("color_scheme", None), self.vals.get("color_scheme", None))
         for k in self.fields:
             key = k[0]
             cur = self.vals.get(key, None)
@@ -338,7 +333,6 @@ class Settings:
             if val != cur:
                 self.vals[key] = val
                 self.cb(key, cur, val)
-        # print("Settings.on_change end", self.fname, self.vals.get("color_scheme", None))
 
 
 pref_fname = "Preferences.sublime-settings"
@@ -406,7 +400,6 @@ class SettingsCH:
         self.ch.save()
 
     def on_ch_settings_change(self, key, old, new):
-        print("on_ch_settings_change", key, old, new)
         if key == "enabled":
             self.enabled = new
             self.callbacks.enable(new)
@@ -431,7 +424,6 @@ class SettingsCH:
             self.callbacks.set_formats(self.ch.get("formats", {}), self.ch.get("channels", {}))
 
     def on_prefs_settings_change(self, key, old, new):
-        print("on_prefs_settings_change", key, old, new)
         if key == "color_scheme":
             self.color_scheme = new
             self.callbacks.set_scheme(new)
@@ -602,7 +594,6 @@ class ColorConverter:
                     types.append(t)
 
         chans = [[col[1:3], types[0]], [col[3:5], types[1]], [col[5:7], types[2]]]
-        print("_col_to_chans_match: chans 1", chans, col, col[1:3])
         if types[3] != "empty":
             chans.append([col[7:9], types[3]])
         else:
@@ -616,7 +607,6 @@ class ColorConverter:
             (nh, nv, ns) = colorsys.rgb_to_hls(int(chans[0][0], 16)/255.0, int(chans[1][0], 16)/255.0, int(chans[2][0], 16)/255.0)
             return [[str(int(nh * 360)), chans[0][1]], [str(int(ns * 100)) + '%', chans[1][1]], [str(int(nv * 100)) + '%', chans[2][1]], [self._conv_val_chan_back(chans[3][0], chans[3][1]), chans[3][1]]]
 
-        print("_col_to_chans_match: chans 2", chans)
         for c in chans:
             c[0] = self._conv_val_chan_back(c[0], c[1])
         return chans
@@ -657,12 +647,10 @@ class ColorConverter:
             return fmt, self._get_color_col(color, fmt)
 
     def get_col_color(self, col, fmt, example): # -> color
-        print("get_col_color", col, fmt, example)
         if fmt == "sharp8":
             return col
         m = self._get_regex(self.conf[fmt]["regex"]).search(example)
         if m:
-            print("get_col_color 1", col, fmt, m.groupdict())
             chans = self._col_to_chans_match(col, fmt, m.groupdict())
             chs = ["R", "G", "B", "A"]
             offset = 0
@@ -946,12 +934,9 @@ class ColorHighlighterView:
     # settings
 
     def _on_settings_change(self, key, old, new):
-        print("View.on_settings_change(%d, %s) 1" % self.creds())
         if key == "color_scheme" and new is not None and self.color_scheme != new and new.find(plugin_name) == -1:
             self.color_scheme = new
             self._on_update_cs(new)
-            print("View.on_settings_change(%d, %s) 2" % self.creds(), new)
-        print("View.on_settings_change(%d, %s) 3" % self.creds())
 
     # color API
 
@@ -979,16 +964,13 @@ class ColorHighlighterView:
         self.gen.add_colors(self._on_selection_modified_impl([]))
 
     def on_activated(self):
-        print("View.on_activated(%d, %s)" % self.creds())
         self.gen.add_colors(self._on_activated_impl([]))
 
     def on_close(self):
-        print("View.on_close(%d, %s)" % self.creds())
         self.settings.clear_callbacks()
         self.gen.rem_cb(self.view.id())
         self.disabled = True
         self._restore_scheme()
-        print("View.on_close(%d, %s) done" % self.creds())
 
     def _on_selection_modified_impl(self, cols):
         self._clear()
@@ -1015,7 +997,6 @@ class ColorHighlighterView:
         return cols
 
     def _on_activated_impl(self, cols):
-        print("View._on_activated_impl(%d, %s)" % self.creds())
         self._on_selection_modified_impl(cols)
 
         self._ha_clear()
@@ -1049,11 +1030,9 @@ class ColorHighlighterView:
     def _set_scheme(self, val):
         v = conv_path(val)
         if v != self.settings.get("color_scheme", None):
-            print("View._set_scheme(%d, %s)" % self.creds(), val)
             self.settings.set("color_scheme", v)
 
     def _restore_scheme(self):
-        print("View._restore_scheme(%d, %s)" % self.creds())
         self._set_scheme(self.color_scheme)
 
     def _on_update_cs(self, new_cs):
@@ -1077,10 +1056,8 @@ class ColorHighlighterView:
 
         self.disabled = not val
         if self.disabled:
-            print("View.disable(%d, %s)" % self.creds())
             self.clear_all()
         else:
-            print("View.enable(%d, %s)" % self.creds())
             if redraw:
                 self.redraw()
             self._set_scheme(self.gen.scheme_name())
@@ -1400,7 +1377,6 @@ class ColorHighlighter:
         self._ha_redraw()
 
     def set_scheme(self, val):
-        print("set_scheme", val)
         old_cs = self.color_scheme
         self.color_scheme = val
         if val not in self.color_schemes.keys():
@@ -1409,7 +1385,6 @@ class ColorHighlighter:
         for k in self.views:
             v = self.views[k]
             cs = v.settings.get("color_scheme", None)
-            print(v.view.id(), v.view.file_name(), cs, v.color_scheme, self.color_scheme)
             if cs is None or cs == "" or v.color_scheme == old_cs: # view has global scheme
                 v.update_cs(val)
 
@@ -1440,7 +1415,6 @@ class ColorHighlighter:
 
     def _add_view(self, view):
         v = ColorHighlighterView(self, view)
-        print("CH._add_view(%d, %s)" % v.creds(), view.settings().get("color_scheme", "!!!!!!"))
         self.views[view.id()] = v
         # on_activated not always gets called after opening file
         # TODO: make it False
@@ -1459,7 +1433,6 @@ class ColorHighlighter:
         return v.disabled
 
     def _get_regions_flags(self, style, ha=False):
-        print("CH._get_regions_flags:", style, ha)
         if is_st3():
             if style == "default":
                 if ha:
@@ -1489,33 +1462,25 @@ class ColorHighlighter:
 
         return 0
 
-    @st_time
     def on_new(self, view):
-        print("on_new(%d, %s)" % (view.id(), view.file_name()))
         v = self._add_view(view)
         # Need on_activate for ST2, it has an odd events order (activate, then load)
         if not is_st3():
             v.on_activated()
 
-    @st_time
     def on_clone(self, view):
-        print("on_clone(%d, %s)" % (view.id(), view.file_name()))
         v = self._add_view(view)
         # Need on_activate for ST2, it has an odd events order (activate, then load)
         if not is_st3():
             v.on_activated()
 
-    @st_time
     def on_load(self, view):
-        print("on_load(%d, %s)" % (view.id(), view.file_name()))
         v = self._add_view(view)
         # Need on_activate for ST2, it has an odd events order (activate, then load)
         if not is_st3():
             v.on_activated()
 
-    @st_time
     def on_close(self, view):
-        print("on_close(%d, %s)" % (view.id(), view.file_name()))
         if self._disabled(view):
             return
         self.views[view.id()].on_close()
@@ -1533,7 +1498,6 @@ class ColorHighlighter:
         self.var_extractor.on_save(view)
         self.on_activated(view)
 
-    @st_time
     def on_activated(self, view):
         if self._disabled(view, not is_st3()):
             return
@@ -1875,7 +1839,6 @@ class ChReplaceColor(sublime_plugin.TextCommand):
             example = args.get("example", None)
             if example is None:
                 example = self.view.substr(reg)
-            print("convert_back_color", col, fmt, example)
             new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt, example)
             if new_col is None:
                 continue
@@ -2007,7 +1970,6 @@ class ColorConvertPrevCommand(BaseColorConvertCommand):
 def center_view_async(view, row, col):
     if not view.is_loading():
         view.show_at_center(view.text_point(row, col))
-        print("CENTERED", row, col)
     else:
         sublime.set_timeout(lambda view=view, row=row, col=col: center_view_async(view, row, col), 100)
 
@@ -2034,10 +1996,8 @@ class GoToVarDefinitionCommand(ColorCommand):
 # startup, cleanup
 
 def ch_start():
-    print("ch_start")
     global color_highlighter
     color_highlighter = ColorHighlighter()
-    print("ch_start done")
 
 def run_when_cs_loaded(cb):
     if (sublime.load_settings(pref_fname).get("color_scheme", None) is not None) and (sublime.load_settings(ch_fname).get("formats", None) is not None):
@@ -2047,7 +2007,6 @@ def run_when_cs_loaded(cb):
 
 # initialize all the stuff
 def plugin_loaded():
-    print("plugin_loaded")
     # Create folders
     create_if_not_exists(data_path(PAbsolute))
     create_if_not_exists(os.path.join(data_path(PAbsolute), os.path.dirname(color_picker_file())))
@@ -2066,16 +2025,13 @@ def plugin_loaded():
         os.chmod(cpupath, chflags)
 
     run_when_cs_loaded(ch_start)
-    print("plugin_loaded done")
 
 # unload all the stuff
 def plugin_unloaded():
-    print("plugin_unloaded")
     global color_highlighter
     if color_highlighter is not None:
         color_highlighter.unload()
         color_highlighter = None
-    print("plugin_unloaded done")
 
 # ST2 support.
 if not is_st3():
