@@ -19,7 +19,21 @@ except ImportError:
     colors = __import__(plugin_name, fromlist=["colors"]).colors
 
 
-version = "7.0"
+def st_time(func):
+    """
+        st decorator to calculate the total time of a func
+    """
+
+    def st_func(*args, **keyArgs):
+        t1 = time.time()
+        r = func(*args, **keyArgs)
+        t2 = time.time()
+        print("Function=%s, Time=%s" % (func.__name__, t2 - t1))
+        return r
+
+    return st_func
+
+version = "7.2"
 
 ### ST version helpers
 
@@ -128,12 +142,13 @@ def read_file(fl):
 # html generator for color scheme
 class HtmlGen:
     ch = None
-    colors = {}
-    to_add = []
+    colors = None
+    to_add = None
     color_scheme = None
     color_scheme_abs = None
     fake_scheme = None
     fake_scheme_abs = None
+    callbacks = None
     gen_string = """
 <dict>
 <key>name</key>
@@ -169,6 +184,9 @@ class HtmlGen:
 """
 
     def __init__(self, cs):
+        self.colors = {}
+        self.to_add = []
+        self.callbacks = {}
         self.color_scheme = cs
         self.color_scheme_abs = os.path.join(os.path.dirname(packages_path(PAbsolute)), self.color_scheme)
 
@@ -176,16 +194,38 @@ class HtmlGen:
         self.fake_scheme = os.path.join(themes_path(), base)
         self.fake_scheme_abs = os.path.join(themes_path(PAbsolute), base)
 
+    # callbacks
+
+    def add_cb(self, key, cb):
+        self.callbacks[key] = cb
+
+    def rem_cb(self, key):
+        del(self.callbacks[key])
+
+    # html gen api
+
+    def add_color(self, col):
+        self.to_add.append(col)
+
+    def add_colors(self, cols):
+        # print("add_colors:", cols)
+        for col in cols:
+            self.add_color(col)
+        return self.flush()
+
     def flush(self):
+        # print("flush", self.colors, self.to_add)
         any = False
         for col in self.to_add:
             if col in self.colors.keys():
                 continue
 
-            self.colors[col] = self.get_cont_col(col)
+            self.colors[col] = self._get_cont_col(col)
             any = True
 
+        print("flush:", any)
         if any:
+            print("~~~~~ HtmlGen.flush")
             data = None
             if is_st3():
                 data = sublime.load_resource(self.color_scheme)
@@ -219,10 +259,14 @@ class HtmlGen:
                     f.write(s)
                 f.write(data[n:])
         self.to_add = []
+        if any:
+            self.call()
         return any
 
-    def add_color(self, col):
-        self.to_add.append(col)
+    def call(self):
+        name = self.scheme_name()
+        for k in self.callbacks.keys():
+            self.callbacks[k](name)
 
     def scheme_name(self):
         if len(self.colors) == 0:
@@ -230,25 +274,78 @@ class HtmlGen:
         else:
             return self.fake_scheme
 
-    def get_cont_col(self, col):
+    def _get_cont_col(self, col):
         (h, l, s) = colorsys.rgb_to_hls(int(col[1:3],16)/255.0, int(col[3:5],16)/255.0, int(col[5:7],16)/255.0)
         l1 = 1 - l
         if abs(l1 - l) < .15:
             l1 = .15
         (r, g, b) = colorsys.hls_to_rgb(h, l1, s)
-        return self.tohex(int(r * 255), int(g * 255), int(b * 255)) # true complementary
+        return self._tohex(int(r * 255), int(g * 255), int(b * 255)) # true complementary
 
-    def tohex(self, r, g, b, a=None):
-        if a is None:
-            a = 255
-        return "#%02X%02X%02X%02X" % (r, g, b, a)
+    def _tohex(self, r, g, b):
+        return "#%02X%02X%02XFF" % (r, g, b)
 
 ### Setting helper
+class Settings:
+    fname = None
+    fields = None
+    cb = None
+
+    obj = None
+    vals = None
+
+    def __init__(self, fname, fields, cb):
+        self.fields = fields
+        self.cb = cb
+        if is_str(fname):
+            self.fname = fname
+            self.obj = sublime.load_settings(fname)
+        else:
+            self.obj = fname
+        self.vals = {}
+
+    def set_callbacks(self):
+        self.clear_callbacks()
+        self.obj.add_on_change("ColorHighlighter", lambda: self.on_change())
+
+    def clear_callbacks(self):
+        self.obj.clear_on_change("ColorHighlighter")
+
+    def has(self, name):
+        return self.obj.has(name)
+
+    def get(self, name, default=None):
+        return self.obj.get(name, default)
+
+    def set(self, name, val):
+        self.obj.set(name, val)
+
+    def erase(self, name):
+        self.obj.erase(name)
+
+    def save(self):
+        if self.fname is not None:
+            sublime.save_settings(self.fname)
+
+    def on_change(self):
+        if self.fname is not None:
+            self.obj = sublime.load_settings(self.fname)
+        # print("Settings.on_change start", self.fname, self.obj.get("color_scheme", None), self.vals.get("color_scheme", None))
+        for k in self.fields:
+            key = k[0]
+            cur = self.vals.get(key, None)
+            val = self.obj.get(key, k[1])
+            if val != cur:
+                self.vals[key] = val
+                self.cb(key, cur, val)
+        # print("Settings.on_change end", self.fname, self.vals.get("color_scheme", None))
+
 
 pref_fname = "Preferences.sublime-settings"
+ch_fname = "ColorHighlighter.sublime-settings"
 
-class Settings:
-    fname = "ColorHighlighter.sublime-settings"
+### CH settings helper
+class SettingsCH:
     callbacks = None
     obj = None
     prefs = None
@@ -265,90 +362,90 @@ class Settings:
 
     def __init__(self, callbacks):
         self.callbacks = callbacks
-        self.obj = sublime.load_settings(self.fname)
-        self.prefs = sublime.load_settings(pref_fname)
-        self.clear_callbacks()
-        self.obj.add_on_change("ColorHighlighter", lambda: self.on_ch_settings_change())
-        self.prefs.add_on_change("ColorHighlighter", lambda: self.on_prefs_settings_change())
+        self.ch = Settings(
+            ch_fname,
+            [
+                ("enabled", True),
+                ("style", "default"),
+                ("ha_style", "default"),
+                ("icons", is_st3()),
+                ("ha_icons", False),
+                ("file_exts", "all"),
+                ("formats", {}),
+                ("channels", {})
+            ],
+            lambda key, old, new: self.on_ch_settings_change(key, old, new)
+        )
+        self.prefs = Settings(
+            pref_fname,
+            [("color_scheme", None)],
+            lambda key, old, new: self.on_prefs_settings_change(key, old, new)
+        )
+
+    def set_callbacks(self):
+        self.ch.set_callbacks()
+        self.prefs.set_callbacks()
 
     def clear_callbacks(self):
-        self.obj.clear_on_change("ColorHighlighter")
-        self.prefs.clear_on_change("ColorHighlighter")
+        self.ch.clear_callbacks()
+        self.prefs.clear_callbacks()
 
     def has(self, name):
-        return self.obj.has(name)
+        return self.ch.has(name)
 
     def get(self, name, default=None):
-        return self.obj.get(name, default)
+        return self.ch.get(name, default)
 
     def set(self, name, val):
-        self.obj.set(name, val)
+        self.ch.set(name, val)
 
     def erase(self, name):
-        self.obj.erase(name)
+        self.ch.erase(name)
 
     def save(self):
-        sublime.save_settings(self.fname)
+        self.ch.save()
 
-    def on_ch_settings_change(self, force=False):
-        self.obj = sublime.load_settings(self.fname)
+    def on_ch_settings_change(self, key, old, new):
+        print("on_ch_settings_change", key, old, new)
+        if key == "enabled":
+            self.enabled = new
+            self.callbacks.enable(new)
+        elif key == "style":
+            self.style = new
+            self.callbacks.set_style(new)
+        elif key == "ha_style":
+            self.ha_style = new
+            self.callbacks.set_ha_style(new)
+        elif key == "icons":
+            new = new and is_st3()
+            self.icons = new
+            self.callbacks.set_icons(new)
+        elif key == "ha_icons":
+            new = new and is_st3()
+            self.ha_icons = new
+            self.callbacks.set_ha_icons(new)
+        elif key == "file_exts":
+            self.file_exts = new
+            self.callbacks.set_exts(new)
+        elif key == "formats" or key == "channels":
+            self.callbacks.set_formats(self.ch.get("formats", {}), self.ch.get("channels", {}))
 
-        enabled = self.obj.get("enabled", True)
-        if force or self.enabled != enabled:
-            self.enabled = enabled
-            self.callbacks.enable(enabled)
-
-        style = self.obj.get("style", "default")
-        if force or self.style != style:
-            self.style = style
-            self.callbacks.set_style(style)
-
-        ha_style = self.obj.get("ha_style", "default")
-        if force or self.ha_style != ha_style:
-            self.ha_style = ha_style
-            self.callbacks.set_ha_style(ha_style)
-
-        icons = self.obj.get("icons", False)
-        if force or self.icons != icons:
-            self.icons = icons
-            self.callbacks.set_icons(icons)
-
-        ha_icons = self.obj.get("ha_icons", False)
-        if force or self.ha_icons != ha_icons:
-            self.ha_icons = ha_icons
-            self.callbacks.set_ha_icons(ha_icons)
-
-        file_exts = self.obj.get("file_exts", "all")
-        if force or self.file_exts != file_exts:
-            self.file_exts = file_exts
-            self.callbacks.set_exts(file_exts)
-
-        formats = self.obj.get("formats", {})
-        channels = self.obj.get("channels", {})
-        if force or self.formats != formats or self.channels != channels:
-            self.formats = formats
-            self.channels = channels
-            self.callbacks.set_formats(formats, channels)
-
-    def on_prefs_settings_change(self, force=False):
-        self.prefs = sublime.load_settings(pref_fname)
-
-        color_scheme = self.prefs.get("color_scheme")
-        if force or self.color_scheme != color_scheme:
-            self.color_scheme = color_scheme
-            self.callbacks.set_scheme(color_scheme)
-
+    def on_prefs_settings_change(self, key, old, new):
+        print("on_prefs_settings_change", key, old, new)
+        if key == "color_scheme":
+            self.color_scheme = new
+            self.callbacks.set_scheme(new)
 
 ### Color finder
-
 class ColorConverter:
     conf = None
     regex_str = None
     regex = None
-    regex_cache = {}
+    regex_cache = None
 
     def set_conf(self, conf, channels):
         self.conf = conf
+        self.regex_cache = {}
         self.regex = self._build_regex(conf, channels)
 
     def _build_regex(self, conf, channels): # -> regex object
@@ -505,6 +602,7 @@ class ColorConverter:
                     types.append(t)
 
         chans = [[col[1:3], types[0]], [col[3:5], types[1]], [col[5:7], types[2]]]
+        print("_col_to_chans_match: chans 1", chans, col, col[1:3])
         if types[3] != "empty":
             chans.append([col[7:9], types[3]])
         else:
@@ -518,6 +616,7 @@ class ColorConverter:
             (nh, nv, ns) = colorsys.rgb_to_hls(int(chans[0][0], 16)/255.0, int(chans[1][0], 16)/255.0, int(chans[2][0], 16)/255.0)
             return [[str(int(nh * 360)), chans[0][1]], [str(int(ns * 100)) + '%', chans[1][1]], [str(int(nv * 100)) + '%', chans[2][1]], [self._conv_val_chan_back(chans[3][0], chans[3][1]), chans[3][1]]]
 
+        print("_col_to_chans_match: chans 2", chans)
         for c in chans:
             c[0] = self._conv_val_chan_back(c[0], c[1])
         return chans
@@ -558,10 +657,12 @@ class ColorConverter:
             return fmt, self._get_color_col(color, fmt)
 
     def get_col_color(self, col, fmt, example): # -> color
+        print("get_col_color", col, fmt, example)
         if fmt == "sharp8":
             return col
         m = self._get_regex(self.conf[fmt]["regex"]).search(example)
         if m:
+            print("get_col_color 1", col, fmt, m.groupdict())
             chans = self._col_to_chans_match(col, fmt, m.groupdict())
             chs = ["R", "G", "B", "A"]
             offset = 0
@@ -618,7 +719,7 @@ class ColorConverter:
         return self.find_text_reg_fmt_col(view.substr(region), region.begin(), reg_in)
 
 
-# the class for searching for colors in a region
+### Color finder
 class ColorFinder:
     conv = ColorConverter()
 
@@ -822,30 +923,37 @@ def print_error(err):
 class ColorHighlighterView:
     ch = None
     view = None
+    gen = None
+    settings = None
+
     disabled = True
-    regions = []
-    ha_regions = []
+    color_scheme = None
+    regions = None
+    ha_regions = None
+
 
     def __init__(self, ch, view):
         self.ch = ch
         self.view = view
-        self.set_callbacks()
+        self.regions = []
+        self.ha_regions = []
+        self.settings = Settings(self.view.settings(), [("color_scheme", None)], lambda key, old, new: self._on_settings_change(key, old, new))
+        self.settings.set_callbacks()
+        self.color_scheme = self._get_cs()
+        self.gen = self.ch.get_gen(self.color_scheme)
+        self.gen.add_cb(self.view.id(), lambda cs: self._set_scheme(cs))
 
-    def clear_callbacks(self):
-        self.view.settings().clear_on_change("ColorHighlighter")
+    # settings
 
-    def set_callbacks(self):
-        self.view.settings().add_on_change("ColorHighlighter", lambda: self.on_settings_change())
+    def _on_settings_change(self, key, old, new):
+        print("View.on_settings_change(%d, %s) 1" % self.creds())
+        if key == "color_scheme" and new is not None and self.color_scheme != new and new.find(plugin_name) == -1:
+            self.color_scheme = new
+            self._on_update_cs(new)
+            print("View.on_settings_change(%d, %s) 2" % self.creds(), new)
+        print("View.on_settings_change(%d, %s) 3" % self.creds())
 
-    def on_settings_change(self):
-        color_scheme = self.view.settings().get("color_scheme", None)
-
-    def enable(self, val=True):
-        self.disabled = not val
-        if self.disabled:
-            self.clear_all()
-        else:
-            self.set_callbacks()
+    # color API
 
     def get_colors_sel(self):
         vs = self.ch.get_vars(self.view)
@@ -865,22 +973,36 @@ class ColorHighlighterView:
                 res.append((region, fmt, col))
         return res
 
+    # events
+
     def on_selection_modified(self):
-        self.clear()
+        self.gen.add_colors(self._on_selection_modified_impl([]))
+
+    def on_activated(self):
+        print("View.on_activated(%d, %s)" % self.creds())
+        self.gen.add_colors(self._on_activated_impl([]))
+
+    def on_close(self):
+        print("View.on_close(%d, %s)" % self.creds())
+        self.settings.clear_callbacks()
+        self.gen.rem_cb(self.view.id())
+        self.disabled = True
+        self._restore_scheme()
+        print("View.on_close(%d, %s) done" % self.creds())
+
+    def _on_selection_modified_impl(self, cols):
+        self._clear()
         if self.ch.style == "disabled":
-            return
+            return cols
 
         vs = self.ch.get_vars(self.view)
-
         flags = self.ch.flags
         is_text = self.ch.style == "text"
         i = 0
-        cols = []
         for s in self.view.sel():
             region, col = self.ch.color_finder.get_color(self.view, s, vs)
             if region is None:
                 continue
-
             cols.append(col)
             i += 1
             st = "mon_CH_" + str(i)
@@ -890,21 +1012,19 @@ class ColorHighlighterView:
             if self.ch.icons:
                 self.regions.append(st + "-ico")
                 self.view.add_regions(st + "-ico", [region], region_name(col, is_text) + "-ico", conv_path(self.ch.create_icon(col)), sublime.HIDDEN)
+        return cols
 
-        scheme, f = self.ch.add_colors(cols)
-        self.set_scheme(scheme, f)
+    def _on_activated_impl(self, cols):
+        print("View._on_activated_impl(%d, %s)" % self.creds())
+        self._on_selection_modified_impl(cols)
 
-    def on_activated(self):
-        self.on_selection_modified()
-
-        self.ha_clear()
+        self._ha_clear()
         if self.ch.ha_style == "disabled":
-            return
+            return cols
 
         is_text = self.ch.ha_style == "text"
         vs = self.ch.get_vars(self.view)
         flags = self.ch.ha_flags
-        cols = []
         i = 0
         for (reg, col) in self.ch.color_finder.get_colors(self.view, vs):
             cols.append(col)
@@ -916,39 +1036,82 @@ class ColorHighlighterView:
             if self.ch.ha_icons:
                 self.ha_regions.append(st + "-ico")
                 self.view.add_regions(st + "-ico", [reg], region_name(col, is_text) + "-ico", conv_path(self.ch.create_icon(col)), sublime.HIDDEN)
+        return cols
 
-        scheme, f = self.ch.add_colors(cols)
-        self.set_scheme(scheme, f)
+    # scheme
 
-    def on_close(self):
-        self.restore_scheme()
+    def _get_cs(self):
+        cs = self.settings.get("color_scheme", None)
+        if cs is None or cs == "":
+            cs = self.ch.color_scheme
+        return cs
 
-    def on_settings_change(self):
-        cs = self.view.settings().get("color_scheme")
+    def _set_scheme(self, val):
+        v = conv_path(val)
+        if v != self.settings.get("color_scheme", None):
+            print("View._set_scheme(%d, %s)" % self.creds(), val)
+            self.settings.set("color_scheme", v)
 
-    def set_scheme(self, val, force=False):
-        if force or self.view.settings().get("color_scheme") != val:
-            self.view.settings().set("color_scheme", conv_path(val))
+    def _restore_scheme(self):
+        print("View._restore_scheme(%d, %s)" % self.creds())
+        self._set_scheme(self.color_scheme)
 
-    def restore_scheme(self):
-        if self.ch.color_scheme is not None:
-            self.set_scheme(self.ch.color_scheme)
+    def _on_update_cs(self, new_cs):
+        self.gen.rem_cb(self.view.id())
+        self.gen = self.ch.get_gen(new_cs)
+        self.gen.add_cb(self.view.id(), lambda cs: self._set_scheme(cs))
+        self.redraw()
+        self._set_scheme(self.gen.scheme_name())
+
+    def update_cs(self, new_cs):
+        self._set_scheme(new_cs)
+
+    # impl
+
+    def creds(self):
+        return (self.view.id(), self.view.file_name())
+
+    def enable(self, val=True, redraw=True):
+        if self.disabled == (not val):
+            return
+
+        self.disabled = not val
+        if self.disabled:
+            print("View.disable(%d, %s)" % self.creds())
+            self.clear_all()
+        else:
+            print("View.enable(%d, %s)" % self.creds())
+            if redraw:
+                self.redraw()
+            self._set_scheme(self.gen.scheme_name())
+
+    def redraw(self):
+        if (not self.disabled) and self._is_visible():
+            self.on_activated()
+
+    def _is_visible(self):
+        # Multiple views can be visible, but only one active.
+        # TODO: Need to filter invisible views.
+        return True
+        # return self.view.window().active_view().id() == self.view.id()
 
     def clear_all(self):
-        self.restore_scheme()
-        self.clear()
-        self.ha_clear()
-        self.clear_callbacks()
+        self._restore_scheme()
+        self._clear()
+        self._ha_clear()
 
-    def clear(self):
+    def _clear(self):
         for reg in self.regions:
             self.view.erase_regions(reg)
         self.regions = []
 
-    def ha_clear(self):
+    def _ha_clear(self):
         for reg in self.ha_regions:
             self.view.erase_regions(reg)
         self.ha_regions = []
+
+
+# var extractor
 
 def on_line_less(fname, line, i, res):
     if line[0] != "@":
@@ -1015,248 +1178,70 @@ def extract_styl_name_val(line):
     col = line[pos+1:].strip()
     return var, col, line.find(col)
 
-# main program
-class ColorHighlighter:
-    settings = None
-    is_disabled = True
-    style = None
-    ha_style = None
-    flags = None
-    ha_flags = None
-    color_scheme = None
-    icons = None
-    ha_icons = None
-
-    views = {}
+class VarExtractor:
     color_finder = None
+    vars_file_cache = None
+    vars_view_cache = None
+    dirty_files = None
+    dirty_views = None
 
-    color_schemes = {}
+    def __init__(self, finder):
+        self.color_finder = finder
+        self.vars_file_cache = {}
+        self.vars_view_cache = {}
+        self.dirty_files = {}
+        self.dirty_views = {}
 
-    started = False
-
-    def __init__(self):
-        self.settings = Settings(self)
-        for wnd in sublime.windows():
-            for v in wnd.views():
-                self.add_view(v)
-
-        self.color_finder = ColorFinder()
-        self.settings.on_ch_settings_change(True)
-        self.settings.on_prefs_settings_change(True)
-        self.started = True
-
-    def enable(self, val=True):
-        self.is_disabled = not val
-        if self.is_disabled:
-            self.clear_views()
-        else:
-            if self.started:
-                self.reset_scheme()
-            self.redraw()
-            self.ha_redraw()
-
-    def set_style(self, val):
-        self.style = val
-        self.flags = self.get_regions_flags(self.style)
-        self.redraw()
-
-    def set_ha_style(self, val):
-        self.ha_style = val
-        self.ha_flags = self.get_regions_flags(self.ha_style)
-        self.ha_redraw()
-
-    def valid_fname(self, fname):
-        fe = self.settings.get("file_exts")
-        if fe is None:
-            fe = "all"
-
-        if fe == "all":
-            return True
-        if fname is None or fname == "":
-            return True
-        return os.path.splitext(fname)[1] in fe
-
-    def set_exts(self, val):
-        for k in self.views:
-            v = self.views[k]
-            v.enable(self.valid_fname(v.view.file_name()))
-
-    def redraw(self):
-        if not self.started:
-            return
-        for k in self.views:
-            v = self.views[k]
-            v.on_selection_modified()
-
-    def ha_redraw(self):
-        if not self.started:
-            return
-        for k in self.views:
-            v = self.views[k]
-            v.on_activated()
-
-    def set_icons(self, val):
-        self.icons = val
-        self.redraw()
-
-    def set_ha_icons(self, val):
-        self.ha_icons = val
-        self.ha_redraw()
-
-    def set_scheme(self, val):
-        self.color_scheme = val
-        if val not in self.color_schemes.keys():
-            self.color_schemes[val] = HtmlGen(val)
-        self.reset_scheme()
-
-    def reset_scheme(self):
-        scheme = self.scheme_name()
-        for k in self.views:
-            v = self.views[k]
-            v.set_scheme(scheme)
-
-    def add_colors(self, cols):
-        gen = self.color_schemes[self.color_scheme]
-        for col in cols:
-            gen.add_color(col)
-        res = gen.flush()
-        return gen.scheme_name(), res
-
-    def add_view(self, view):
-        v = ColorHighlighterView(self, view)
-        v.enable(self.valid_fname(view.file_name()))
-        if self.started:
-            v.set_scheme(self.scheme_name())
-        self.views[view.id()] = v
-        return v
-
-    def scheme_name(self):
-        if self.color_scheme in self.color_schemes.keys():
-            return self.color_schemes[self.color_scheme].scheme_name()
-        return self.color_scheme
-
-    def disabled(self, view):
-        if self.is_disabled:
-            return True
-        if view.id() not in self.views:
-            return True
-        return self.views[view.id()].disabled
-
-    def get_regions_flags(self, style):
+    def get_vars(self, view):
+        color_vars_file = None
         if is_st3():
-            if style == "default" or style == "filled" or style == "text":
-                return sublime.DRAW_NO_OUTLINE
-            if style == "outlined":
-                return sublime.DRAW_NO_FILL
-            if style == "underlined" or style == "underlined_solid":
-                return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_SOLID_UNDERLINE
-            elif style == "underlined_strippled":
-                return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_STIPPLED_UNDERLINE
-            elif style == "underlined_squiggly":
-                return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_SQUIGGLY_UNDERLINE
-        else:
-            if style == "default" or style == "filled" or style == "text":
-                return 0
-            if style == "outlined":
-                return sublime.DRAW_OUTLINED
-
-        return 0
-
-    def on_new(self, view):
-        v = self.add_view(view)
-        # Need on_activate for ST2, it has an odd events order (activate, then load)
-        if not is_st3():
-            v.on_activated()
-
-    def on_clone(self, view):
-        v = self.add_view(view)
-        # Need on_activate for ST2, it has an odd events order (activate, then load)
-        if not is_st3():
-            v.on_activated()
-
-    def on_load(self, view):
-        v = self.add_view(view)
-        # Need on_activate for ST2, it has an odd events order (activate, then load)
-        if not is_st3():
-            v.on_activated()
-
-    def on_close(self, view):
-        if self.disabled(view):
-            return
-
-        self.views[view.id()].on_close()
-        del(self.views[view.id()])
-
-    def on_selection_modified(self, view):
-        if self.disabled(view):
-            return
-
-        self.views[view.id()].on_selection_modified()
-
-    def on_modified(self, view):
-        if view.id() in self.vars_view_cache.keys():
-            del(self.vars_view_cache[view.id()])
+            wnd = view.window()
+            if wnd is not None:
+                pdata = wnd.project_data()
+                if pdata is not None:
+                    color_vars_file = pdata.get("color_variables_file", None)
+                    if color_vars_file is not None:
+                        self.parse_vars_file(color_vars_file)
 
         fn = view.file_name()
-        if fn is not None and fn in self.vars_file_cache.keys():
-            del(self.vars_file_cache[fn])
-
-    def on_post_save(self, view):
-        self.on_activated(view)
-
-    def on_activated(self, view):
-        if self.disabled(view):
-            return
-        self.views[view.id()].on_activated()
-
-    def unload(self):
-        self.settings.clear_callbacks()
-        self.clear_views()
-
-    def clear_views(self):
-        for k in self.views:
-            v = self.views[k]
-            v.clear_all()
-
-    def get_colors_sel(self, view):
-        if self.disabled(view):
-            return []
-        return self.views[view.id()].get_colors_sel()
-
-    def get_colors_sel_var(self, view):
-        if self.disabled(view):
-            return []
-        return self.views[view.id()].get_colors_sel_var()
-
-    def create_icon(self, col):
-        if sublime.platform() == "windows":
-            fname = col[1:]
+        res = {}
+        if fn is not None:
+            self.parse_vars_file(fn)
+            self.get_file_vars(fn, res)
         else:
-            fname = "%s.png" % col[1:]
-        fpath = os.path.join(icons_path(), fname)
-        fpath_full = os.path.join(icons_path(PAbsolute), fname)
+            self.parse_vars_view(view)
+            self.get_view_vars(view, res)
 
-        if os.path.exists(fpath_full):
-            return fpath
+        if is_st3():
+            if color_vars_file is not None:
+                self.get_file_vars(color_vars_file, res)
 
-        cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
-        popen = subprocess.Popen(cmd % (col, fpath_full), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        _, err = popen.communicate()
-        try:
-            err = err.decode("utf-8")
-        except UnicodeDecodeError as ex:
-            err = str(ex)
-        if err is not None and len(err) != 0:
-            print_error("convert error:\n" + err)
+        # map text to colors
+        for k in res.keys():
+            self.get_col(k, res)
 
-        if os.path.exists(fpath_full): # might not...
-            return fpath
-        return ""
+        to_del = []
+        for k in res.keys():
+            if res[k]["col"] is None:
+                to_del.append(k)
+        for k in to_del:
+            del(res[k])
+        return res
 
-    # vars extract
+    def mark_dirty(self, view):
+        self.dirty_files[view.file_name()] = True
+        self.dirty_views[view.id()] = True
 
-    vars_file_cache = {}
-    vars_view_cache = {}
+    def on_save(self, view):
+        id = view.id()
+        if id in self.dirty_views.keys() and id in self.vars_view_cache.keys():
+            del(self.dirty_views[id])
+            del(self.vars_view_cache[id])
+
+        fn = view.file_name()
+        if fn in self.dirty_files.keys() and fn in self.vars_file_cache.keys():
+            del(self.dirty_files[fn])
+            del(self.vars_file_cache[fn])
 
     def parse_vars_text(self, text, in_fname, dirname, ext, cache):
         vs = {}
@@ -1337,42 +1322,6 @@ class ColorHighlighter:
         if view.id() in self.vars_view_cache.keys():
             self._get_vars(self.vars_view_cache[view.id()], res)
 
-    def get_vars(self, view):
-        color_vars_file = None
-        if is_st3():
-            wnd = view.window()
-            if wnd is not None:
-                pdata = wnd.project_data()
-                if pdata is not None:
-                    color_vars_file = pdata.get("color_variables_file", None)
-                    if color_vars_file is not None:
-                        self.parse_vars_file(color_vars_file)
-
-        fn = view.file_name()
-        res = {}
-        if fn is not None:
-            self.parse_vars_file(fn)
-            self.get_file_vars(fn, res)
-        else:
-            self.parse_vars_view(view)
-            self.get_view_vars(view, res)
-
-        if is_st3():
-            if color_vars_file is not None:
-                self.get_file_vars(color_vars_file, res)
-
-        # map text to colors
-        for k in res.keys():
-            self.get_col(k, res)
-
-        to_del = []
-        for k in res.keys():
-            if res[k]["col"] is None:
-                to_del.append(k)
-        for k in to_del:
-            del(res[k])
-        return res
-
     def get_col(self, key, variables):
         v = variables[key]
         if "col" in v.keys():
@@ -1384,6 +1333,257 @@ class ColorHighlighter:
         else:
             v["col"] = self.color_finder.convert_color_novars(color)
         return v["col"]
+
+
+# main program
+class ColorHighlighter:
+    settings = None
+    is_disabled = True
+    style = None
+    ha_style = None
+    flags = None
+    ha_flags = None
+    color_scheme = None
+    icons = None
+    ha_icons = None
+
+    views = None
+    color_finder = None
+
+    color_schemes = None
+
+    var_extractor = None
+
+    def __init__(self):
+        self.views = {}
+        self.color_schemes = {}
+
+        self.settings = SettingsCH(self)
+        self.color_finder = ColorFinder()
+        self.var_extractor = VarExtractor(self.color_finder)
+        self.settings.set_callbacks()
+
+        self.settings.ch.on_change()
+        self.settings.prefs.on_change()
+
+        for wnd in sublime.windows():
+            for v in wnd.views():
+                self._add_view(v)
+
+    def enable(self, val=True):
+        self.is_disabled = not val
+        for k in self.views:
+            v = self.views[k]
+            v.enable(self._get_enable(v.view))
+
+    def set_exts(self, val):
+        for k in self.views:
+            v = self.views[k]
+            v.enable(self._valid_fname(val, v.view.file_name()))
+
+    def set_style(self, val):
+        self.style = val
+        self.flags = self._get_regions_flags(self.style)
+        self._redraw()
+
+    def set_ha_style(self, val):
+        self.ha_style = val
+        self.ha_flags = self._get_regions_flags(self.ha_style, True)
+        self._ha_redraw()
+
+    def set_icons(self, val):
+        self.icons = val
+        self._redraw()
+
+    def set_ha_icons(self, val):
+        self.ha_icons = val
+        self._ha_redraw()
+
+    def set_scheme(self, val):
+        print("set_scheme", val)
+        old_cs = self.color_scheme
+        self.color_scheme = val
+        if val not in self.color_schemes.keys():
+            self.color_schemes[val] = HtmlGen(val)
+
+        for k in self.views:
+            v = self.views[k]
+            cs = v.settings.get("color_scheme", None)
+            print(v.view.id(), v.view.file_name(), cs, v.color_scheme, self.color_scheme)
+            if cs is None or cs == "" or v.color_scheme == old_cs: # view has global scheme
+                v.update_cs(val)
+
+    def _valid_fname(self, fe, fname):
+        if fe == "all":
+            return True
+        if fname is None or fname == "":
+            return True
+        return os.path.splitext(fname)[1] in fe
+
+    def _redraw(self):
+        for k in self.views:
+            self.views[k].on_selection_modified()
+
+    def _ha_redraw(self):
+        for k in self.views:
+            self.views[k].on_activated()
+
+    def get_gen(self, cs):
+        if cs in self.color_schemes.keys():
+            return self.color_schemes[cs]
+        gen = HtmlGen(cs)
+        self.color_schemes[cs] = gen
+        return gen
+
+    def _get_enable(self, view):
+        return not self.is_disabled and self._valid_fname(self.settings.get("file_exts", "all"), view.file_name())
+
+    def _add_view(self, view):
+        v = ColorHighlighterView(self, view)
+        print("CH._add_view(%d, %s)" % v.creds(), view.settings().get("color_scheme", "!!!!!!"))
+        self.views[view.id()] = v
+        # on_activated not always gets called after opening file
+        # TODO: make it False
+        v.enable(self._get_enable(view), True)
+        return v
+
+    def _disabled(self, view, add=False):
+        if self.is_disabled:
+            return True
+        v = self.views.get(view.id(), None)
+        if v is None:
+            if not add:
+                return True
+            # because of ST2 bugs I need that for Disabling/Enabling CH via PC
+            v = self._add_view(view)
+        return v.disabled
+
+    def _get_regions_flags(self, style, ha=False):
+        print("CH._get_regions_flags:", style, ha)
+        if is_st3():
+            if style == "default":
+                if ha:
+                    style = "underlined"
+                else:
+                    style = "filled"
+            if style == "filled" or style == "text":
+                return sublime.DRAW_NO_OUTLINE
+            if style == "outlined":
+                return sublime.DRAW_NO_FILL
+            if style == "underlined" or style == "underlined_solid":
+                return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_SOLID_UNDERLINE
+            elif style == "underlined_strippled":
+                return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_STIPPLED_UNDERLINE
+            elif style == "underlined_squiggly":
+                return sublime.DRAW_NO_FILL|sublime.DRAW_NO_OUTLINE|sublime.DRAW_SQUIGGLY_UNDERLINE
+        else:
+            if style == "default":
+                if ha:
+                    style = "outlined"
+                else:
+                    style = "filled"
+            if style == "filled" or style == "text":
+                return 0
+            if style == "outlined":
+                return sublime.DRAW_OUTLINED
+
+        return 0
+
+    @st_time
+    def on_new(self, view):
+        print("on_new(%d, %s)" % (view.id(), view.file_name()))
+        v = self._add_view(view)
+        # Need on_activate for ST2, it has an odd events order (activate, then load)
+        if not is_st3():
+            v.on_activated()
+
+    @st_time
+    def on_clone(self, view):
+        print("on_clone(%d, %s)" % (view.id(), view.file_name()))
+        v = self._add_view(view)
+        # Need on_activate for ST2, it has an odd events order (activate, then load)
+        if not is_st3():
+            v.on_activated()
+
+    @st_time
+    def on_load(self, view):
+        print("on_load(%d, %s)" % (view.id(), view.file_name()))
+        v = self._add_view(view)
+        # Need on_activate for ST2, it has an odd events order (activate, then load)
+        if not is_st3():
+            v.on_activated()
+
+    @st_time
+    def on_close(self, view):
+        print("on_close(%d, %s)" % (view.id(), view.file_name()))
+        if self._disabled(view):
+            return
+        self.views[view.id()].on_close()
+        del(self.views[view.id()])
+
+    def on_selection_modified(self, view):
+        if self._disabled(view, not is_st3()):
+            return
+        self.views[view.id()].on_selection_modified()
+
+    def on_modified(self, view):
+        self.var_extractor.mark_dirty(view)
+
+    def on_post_save(self, view):
+        self.var_extractor.on_save(view)
+        self.on_activated(view)
+
+    @st_time
+    def on_activated(self, view):
+        if self._disabled(view, not is_st3()):
+            return
+        self.views[view.id()].on_activated()
+
+    def unload(self):
+        self.settings.clear_callbacks()
+        self.clear_views()
+
+    def clear_views(self):
+        for k in self.views:
+            self.views[k].clear_all()
+
+    def get_colors_sel(self, view):
+        if self._disabled(view):
+            return []
+        return self.views[view.id()].get_colors_sel()
+
+    def get_colors_sel_var(self, view):
+        if self._disabled(view):
+            return []
+        return self.views[view.id()].get_colors_sel_var()
+
+    def create_icon(self, col):
+        if sublime.platform() == "windows":
+            fname = col[1:]
+        else:
+            fname = "%s.png" % col[1:]
+        fpath = os.path.join(icons_path(), fname)
+        fpath_full = os.path.join(icons_path(PAbsolute), fname)
+
+        if os.path.exists(fpath_full):
+            return fpath
+
+        cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
+        popen = subprocess.Popen(cmd % (col, fpath_full), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        _, err = popen.communicate()
+        try:
+            err = err.decode("utf-8")
+        except UnicodeDecodeError as ex:
+            err = str(ex)
+        if err is not None and len(err) != 0:
+            print_error("convert error:\n" + err)
+
+        if os.path.exists(fpath_full): # might not...
+            return fpath
+        return ""
+
+    def get_vars(self, view):
+        return self.var_extractor.get_vars(view)
 
     def build_chan_regex(self, chstr, fmt, chan, channels): # -> str, list
         lst = chstr.split("|")
@@ -1675,17 +1875,28 @@ class ChReplaceColor(sublime_plugin.TextCommand):
             example = args.get("example", None)
             if example is None:
                 example = self.view.substr(reg)
+            print("convert_back_color", col, fmt, example)
             new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt, example)
             if new_col is None:
                 continue
             self.view.replace(edit, sublime.Region(offset + reg.a, offset + reg.b), new_col)
             offset += len(new_col) - (reg.b - reg.a)
 
-    def parse_word(self, s):
-        pos = s.find(")")
-        reg = s[2:pos].split(",")
-        rest = s[pos+1:-1].split(",")
-        return (sublime.Region(int(reg[0]), int(reg[1])), rest[1].strip()[1:-1], rest[2].strip()[1:-1])
+    if is_st3():
+        def parse_word(self, s):
+            pos = s.find(")")
+            reg = s[2:pos].split(",")
+            rest = s[pos+1:-1].split(",")
+            return (sublime.Region(int(reg[0]), int(reg[1])), rest[1].strip()[1:-1], rest[2].strip()[1:-1])
+    else:
+        def parse_word(self, s):
+            pos = s.find(")")
+            reg = s[2:pos].split(",")
+            rest = s[pos+1:-1].split(",")
+            col = rest[2].strip()[1:-1]
+            if col[0] == '\'' or col[0] == '\"':
+                col = col[1:]
+            return (sublime.Region(int(reg[0]), int(reg[1])), rest[1].strip()[1:-1], col)
 
 class ColorCommand(sublime_plugin.TextCommand):
     words = []
@@ -1793,6 +2004,13 @@ class ColorConvertPrevCommand(BaseColorConvertCommand):
         self.view.run_command("ch_replace_color", {"words": "\t".join(map(lambda x: str((x[0], new_fmt, x[2])), self.words))})
         self.clear()
 
+def center_view_async(view, row, col):
+    if not view.is_loading():
+        view.show_at_center(view.text_point(row, col))
+        print("CENTERED", row, col)
+    else:
+        sublime.set_timeout(lambda view=view, row=row, col=col: center_view_async(view, row, col), 100)
+
 class GoToVarDefinitionCommand(ColorCommand):
     def run(self, edit):
         if color_highlighter is None:
@@ -1800,7 +2018,11 @@ class GoToVarDefinitionCommand(ColorCommand):
         reg, _, _ = self.words[0]
         self.vs = color_highlighter.get_vars(self.view)
         obj = self.vs[self.view.substr(reg)]
-        view = self.view.window().open_file(obj["file"] + ":%d:%d" % (obj["line"], obj["pos"] + 1), sublime.ENCODED_POSITION|sublime.TRANSIENT)
+        row, col = obj["line"], obj["pos"] + 1
+        view = self.view.window().open_file(obj["file"] + ":%d:%d" % (row, col), sublime.ENCODED_POSITION|sublime.TRANSIENT)
+        if not is_st3():
+            # ENCODED_POSITION does not work in ST2
+            center_view_async(view, row, col)
         self.clear()
 
     def is_enabled(self):
@@ -1809,8 +2031,23 @@ class GoToVarDefinitionCommand(ColorCommand):
         self.words = color_highlighter.get_colors_sel_var(self.view)
         return len(self.words) != 0 and self.words[0][1].startswith("@var")
 
+# startup, cleanup
+
+def ch_start():
+    print("ch_start")
+    global color_highlighter
+    color_highlighter = ColorHighlighter()
+    print("ch_start done")
+
+def run_when_cs_loaded(cb):
+    if (sublime.load_settings(pref_fname).get("color_scheme", None) is not None) and (sublime.load_settings(ch_fname).get("formats", None) is not None):
+        cb()
+    else:
+        sublime.set_timeout(lambda cb=cb: run_when_cs_loaded(cb), 100)
+
 # initialize all the stuff
 def plugin_loaded():
+    print("plugin_loaded")
     # Create folders
     create_if_not_exists(data_path(PAbsolute))
     create_if_not_exists(os.path.join(data_path(PAbsolute), os.path.dirname(color_picker_file())))
@@ -1828,22 +2065,21 @@ def plugin_loaded():
             shutil.copy(color_picker_path(PAbsolute), cpupath)
         os.chmod(cpupath, chflags)
 
-    global color_highlighter
-    color_highlighter = ColorHighlighter()
+    run_when_cs_loaded(ch_start)
+    print("plugin_loaded done")
 
 # unload all the stuff
 def plugin_unloaded():
+    print("plugin_unloaded")
     global color_highlighter
     if color_highlighter is not None:
         color_highlighter.unload()
         color_highlighter = None
+    print("plugin_unloaded done")
 
-# ST2 support. Maby need set_timeout?
+# ST2 support.
 if not is_st3():
-    def plugin_loaded_wait():
-        if sublime.load_settings(pref_fname).get("color_scheme", None) is not None:
-            plugin_loaded()
-        else:
-            sublime.set_timeout(plugin_loaded_wait, 100)
+    def unload_handler():
+        plugin_unloaded()
 
-    plugin_loaded_wait()
+    run_when_cs_loaded(plugin_loaded)
