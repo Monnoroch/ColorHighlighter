@@ -55,6 +55,23 @@ You may define a `color_variables_file` in your `.sublime-project` to include al
 }
 ```
 
+### Color Picker usage
+Place cursor(s) on a color-value(s). Press <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>C</kbd></kbd> or select "Choose color" in the context menu.
+
+The Color Picker will pop up and the color you pick will replace the color(s) under the cursor(s). The replacement will preserve exact code format, so if `#FFF`, `rgb(255,255,255)` and `white` are selected and `#FF0000` is picked, the colours will be replaced as `#F00`, `rgb(255,0,0)` and `red`. As expected, this works with variables as well.
+
+![color picker preview][image-color-picker]
+
+### Color Format Converter usage
+Place cursor(s) on a color-value(s). Press <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>A</kbd></kbd> or select "Convert color" in the context menu.
+
+Select/Input a color format to use. The full list of all color formats is in the settings file. Format can be any format supported by this plugin, for example if you convert "rgb(255,255,255)" into format "hsv", you'll get "hsv(0, 0%, 100%)". As expected, this works with named colors and variables as well.
+
+Additionally, there are "Next Color" and "Previous Color" commands, triggered by <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>,</kbd></kbd> and <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>.</kbd></kbd> respectively to choose previous or next color format.
+
+### Less/SASS/SCSS/Stylus variables navigation
+Place cursor on a variable. Press <kbd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>D</kbd></kbd> or select "Go to variable definition" in the context menu. The cursor will then be moved to the line of declaration of that variable. If the variable is declared in another, that file will be opened in a new view (tab).
+
 ## Settings
 ColorHighlighter is configurable via `ColorHighlighter.sublime-settings` like any other well-behaved Package.
 
@@ -70,23 +87,6 @@ You can also turn on highlighting all colors at once. This mode has own highligh
 You can also enable icons, which will be shown in the gutter of a file (might not work in ST2).
 
 You can always turn off default key-bindings via main menu or settings.
-
-### Color Picker usage
-Place cursor(s) on a color-value(s). Press <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>C</kbd></kbd> or select "Choose color" in the context menu.
-
-The Color Picker will pop up and the color you pick will replace the color(s) under the cursor(s). The replacement will preserve exact code format, so if `#FFF`, `rgb(255,255,255)` and `white` are selected and `#FF0000` is picked, the colours will be replaced as `#F00`, `rgb(255,0,0)` and `red`. As expected, this works with variables as well.
-
-![color picker preview][image-color-picker]
-
-### Color Format Converter usage
-Place cursor(s) on a color-value(s). Press <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>A</kbd></kbd> or select "Convert color" in the context menu.
-
-Select/Input a color format to use. The full list of all color formats is in the settings file. Format can be any format supported by this plugin, for example if you convert "rgb(255,255,255)" into format "hsv", you'll get "hsv(0, 0%, 100%)". As expected, this works with named colors and variables as well.
-
-Additionally, there are "Next Color" and "Previous Color" commands, triggered by <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>,</kbd></kbd> and <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>.</kbd></kbd> respectively to choose previous or next color format.
-
-## Less/SASS/SCSS/Stylus variables navigation
-Place cursor on a variable. Press <kbd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>D</kbd></kbd> or select "Go to variable definition" in the context menu. The cursor will then be moved to the line of declaration of that variable. If the variable is declared in another, that file will be opened in a new view (tab).
 
  [project-url]: https://github.com/Monnoroch/ColorHighlighter
  [package-control]: https://packagecontrol.io/installation
