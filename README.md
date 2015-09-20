@@ -88,6 +88,15 @@ You can also enable icons, which will be shown in the gutter of a file (might no
 
 You can always turn off default key-bindings via main menu or settings.
 
+## Contributing
+To contribute to the project, just head on over to the [Github Project][project-url].
+
+Found something doesn't work, let us know by opening an issue.
+Have an idea, open up an issue and let's make it happen!
+Found a typo, send in a PR.
+
+Don't hesitate. :smile:
+
  [project-url]: https://github.com/Monnoroch/ColorHighlighter
  [package-control]: https://packagecontrol.io/installation
  [imagemagick-url]: http://www.imagemagick.org/
