@@ -1,6 +1,8 @@
 # ColorHighlighter
 A plugin for the Sublime Text (2 and 3) for highlighting color values in an unobtrusive manner.
 
+![underline highlighting preview][image-underline-preview]
+
 ## Features
  - [x] Customizable Highlighting of Colors
  - [x] Color Picker
