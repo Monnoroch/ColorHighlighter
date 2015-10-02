@@ -799,15 +799,29 @@ class ColorFinder:
             word = sublime.Region(word.a - 1, word.b)
         return word
 
+    def get_word(self, view, region):
+        word = view.word(region)
+        chars = "-"
+        if view.substr(word.b) in chars and view.substr(word.b + 1).isalnum():
+            return sublime.Region(0, 0)
+        if view.substr(word.a - 1) in chars and view.substr(word.a - 2).isalnum():
+            return sublime.Region(0, 0)
+        if view.substr(word.a - 1) in "@$":
+            return sublime.Region(0, 0)
+        return word
+
     # if the @region is in some text, that represents color, return new region, containing that color text and format type
     def find_color(self, view, region, variables): # -> (reg, fmt, col)
-        word = self.get_word_css(view, region)
-        word_str = view.substr(word)
+        css_word = self.get_word_css(view, region)
+        css_word_str = view.substr(css_word)
 
         # TODO: nice regexes?
-        if word_str in variables.keys():
-            v = variables[word_str]
-            return word, v["fmt"], v["col"]
+        if css_word_str in variables.keys():
+            v = variables[css_word_str]
+            return css_word, v["fmt"], v["col"]
+
+        word = self.get_word(view, region)
+        word_str = view.substr(word)
         if word_str in colors.names_to_hex.keys():
             return word, "@named", colors.names_to_hex[word_str]
 
@@ -845,11 +859,12 @@ class ColorFinder:
                 start = m.start()
                 end = m.end()
 
-                name = text[start:end]
                 col = None
                 if fmt == "@named":
+                    name = text[start+1:end-1]
                     col = colors.names_to_hex[name]
                 else:
+                    name = text[start:end]
                     col = variables[name]["col"]
 
                 if col is not None:
@@ -880,7 +895,8 @@ class ColorFinder:
                     prep = "[" + prep + "]"
                 regex_str += "(?P<" + fmt[1:] + ">" + prep + "\\b(" + "|".join(arr) + ")\\b)|"
             else: # @named is already sorted and joined
-                regex_str += "(?P<" + fmt[1:] + ">" + prep + "\\b(" + self.names_str + ")\\b)|"
+                regex_str += "(?P<" + fmt[1:] + ">" + prep + "[^-]\\b(" + self.names_str + ")\\b[^-])|"
+
         return self.conv._get_regex(regex_str[:-1])
 
     def get_ext(self, view):
