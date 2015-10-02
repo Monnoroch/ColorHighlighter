@@ -1197,9 +1197,13 @@ class VarExtractor:
             if wnd is not None:
                 pdata = wnd.project_data()
                 if pdata is not None:
-                    color_vars_file = pdata.get("color_variables_file", None)
-                    if color_vars_file is not None:
-                        self.parse_vars_file(color_vars_file)
+                    color_vars_files = pdata.get("color_variables_files", None)
+                    if color_vars_files is not None:
+                        if type(color_vars_files) is list:
+                            for f in color_vars_files:
+                                self.parse_vars_file(f)
+                        else:
+                            self.parse_vars_file(color_vars_files)
 
         fn = view.file_name()
         res = {}
