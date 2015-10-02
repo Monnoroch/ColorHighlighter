@@ -1129,7 +1129,10 @@ def on_line_styl(fname, line, i, res):
 
 def extract_import(line):
     l = len(line)
-    i = len("@import")
+    if line.startswith("@require"):
+        i = len("@require")
+    else:
+        i = len("@import")
     while i < l and line[i] not in "'\"":
         i += 1
     i += 1
@@ -1253,12 +1256,13 @@ class VarExtractor:
             cache["files"] = []
             return
 
+        is_styl = ext == ".styl"
         for line in map(lambda s: s.strip(), text.split("\n")):
             i += 1
             if len(line) < 2:
                 continue
 
-            if line.startswith("@import"):
+            if line.startswith("@import") or (is_styl and line.startswith("@require")):
                 fname = extract_import(line)
                 if fname is not None:
                     fext = os.path.splitext(fname)[1]
