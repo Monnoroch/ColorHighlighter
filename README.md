@@ -33,7 +33,8 @@ These color formats are currently supported:
   - A percentage from 0% to 100%.
 
 **Variables file :**
-You can define field `color_variables_file` in your .sublime-project file to automatically include all less/sass/scss/stylus color variables from it for every file you edit (for now, only absolute path is supported).
+You can define a list or string field `color_variables_files` in your .sublime-project file to automatically include all less/sass/scss/stylus color variables from these files for every file you edit (for now, only absolute path is supported).
+There is a deprecated but left for compatibility setting `color_variables_file`, which can only contain a string for a single file, not a list.
 
 **Settings :**
 
