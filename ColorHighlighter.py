@@ -861,7 +861,9 @@ class ColorFinder:
 
                 col = None
                 if fmt == "@named":
-                    name = text[start+1:end-1]
+                    start += 1
+                    end -= 1
+                    name = text[start:end]
                     col = colors.names_to_hex[name]
                 else:
                     name = text[start:end]
