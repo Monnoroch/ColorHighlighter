@@ -1191,18 +1191,21 @@ class VarExtractor:
         self.dirty_views = {}
 
     def get_vars(self, view):
-        color_vars_files = None
+        color_vars_files = []
         if is_st3():
             wnd = view.window()
             if wnd is not None:
                 pdata = wnd.project_data()
                 if pdata is not None:
-                    color_vars_files = pdata.get("color_variables_files", None)
-                    if color_vars_files is not None:
-                        if type(color_vars_files) is not list:
-                            color_vars_files = [color_vars_files]
-                        for f in color_vars_files:
-                            self.parse_vars_file(f)
+                    color_vars_files = pdata.get("color_variables_files", [])
+                    if type(color_vars_files) is not list:
+                        color_vars_files = [color_vars_files]
+                    color_vars_file = pdata.get("color_variables_file", None)
+                    if color_vars_file is not None:
+                        color_vars_files.append(color_vars_file)
+
+                    for f in color_vars_files:
+                        self.parse_vars_file(f)
 
         fn = view.file_name()
         res = {}
@@ -1214,9 +1217,8 @@ class VarExtractor:
             self.get_view_vars(view, res)
 
         if is_st3():
-            if color_vars_files is not None:
-                for f in color_vars_files:
-                    self.get_file_vars(f, res)
+            for f in color_vars_files:
+                self.get_file_vars(f, res)
 
         # map text to colors
         for k in res.keys():
