@@ -3,13 +3,23 @@
 
 Command line wrapper around OS X built in color picker.
 
-## usage
+## usages
 
 `colorpick`
 
-`colorpick -startColor ffff00 -mode 3`
+`colorpick -startColor ffff00ff -mode 3`
 
-Writes color in hex format to stdout
+`colorpick ffff00ff`
+
+`colorpick #ffff00ff`
+
+
+Writes color in hex format to stdout:
+
+`#ffff00ff`
+
+On cancel / exit, nothing is written to stdout
+
 
 Avalible modes:
 
