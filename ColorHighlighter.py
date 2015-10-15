@@ -108,19 +108,19 @@ def color_picker_file():
     suff = None
     platf = sublime.platform()
     if platf == "windows":
-        return [os.path.join("ColorPicker", "ColorPicker_win.exe"),
-                os.path.join("ColorPicker", "Cyotek.Windows.Forms.ColorPicker.dll")]
+        suff = "win.exe"
     else:
         suff = platf + "_" + sublime.arch()
-        return [os.path.join("ColorPicker", "ColorPicker_" + suff)]
+
+    return os.path.join("ColorPicker", "ColorPicker_" + suff)
 
 # get relative or absolute color picker binary path
 def color_picker_path(rel=PRelative):
-    return [os.path.join(packages_path(rel), plugin_name, file) for file in color_picker_file()]
+    return os.path.join(packages_path(rel), plugin_name, color_picker_file())
 
 # get relative or absolute themes path
 def color_picker_user_path(rel=PRelative):
-    return [os.path.join(data_path(rel), file) for file in color_picker_file()]
+    return os.path.join(data_path(rel), color_picker_file())
 
 # create directory if not exists
 def create_if_not_exists(path):
@@ -1908,7 +1908,7 @@ class ColorPickerCommand(ColorCommand):
 
     def _do_run(self):
         col = self.words[0][2][1:]
-        popen = subprocess.Popen([color_picker_user_path(PAbsolute)[0], col], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        popen = subprocess.Popen([color_picker_user_path(PAbsolute), col], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
         out, err = popen.communicate()
         self.output = out.decode("utf-8")
         err = err.decode("utf-8")
@@ -2037,25 +2037,20 @@ def run_when_cs_loaded(cb):
 def plugin_loaded():
     # Create folders
     create_if_not_exists(data_path(PAbsolute))
-    for file in color_picker_file():
-        create_if_not_exists(os.path.join(data_path(PAbsolute), os.path.dirname(file)))
+    create_if_not_exists(os.path.join(data_path(PAbsolute), os.path.dirname(color_picker_file())))
     create_if_not_exists(icons_path(PAbsolute))
     create_if_not_exists(themes_path(PAbsolute))
 
     # Setup CP binary
     chflags = stat.S_IXUSR|stat.S_IXGRP|stat.S_IRUSR|stat.S_IRUSR|stat.S_IWUSR|stat.S_IWGRP
     cpupath = color_picker_user_path(PAbsolute)
-    cppath = color_picker_path()
-    cpapath = color_picker_path(PAbsolute)
-    for i, upath in enumerate(cpupath):
-        if not os.path.exists(upath):
-            print('{} -- copying {} to {}'.format(i, cppath[i], upath))
-            if is_st3():
-                with open(upath, "wb") as f:
-                    f.write(sublime.load_binary_resource(conv_path(cppath[i])))
-            else:
-                shutil.copy(cpapath[i], upath)
-            os.chmod(upath, chflags)
+    if not os.path.exists(cpupath):
+        if is_st3():
+            with open(cpupath, "wb") as f:
+                f.write(sublime.load_binary_resource(conv_path(color_picker_path())))
+        else:
+            shutil.copy(color_picker_path(PAbsolute), cpupath)
+        os.chmod(cpupath, chflags)
 
     run_when_cs_loaded(ch_start)
 
