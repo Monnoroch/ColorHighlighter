@@ -13,7 +13,7 @@ _ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively 
 **Installation :**
 
 - **_Recommended_** - Using [Sublime Package Control](http://wbond.net/sublime_packages/package_control "Sublime Package Control")
-    - `ctrl+shft+p` then select `Package Control: Install Package`
+    - <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> then select `Package Control: Install Package`
     - install `Color Highlighter`
 - Alternatively, download the package from [GitHub](https://github.com/Monnoroch/ColorHighlighter "ColorHighlighter") into your `Packages` folder and then rename plugins directory from "ColorHighlighter" to "Color Highlighter"
 - For gutter icons install [ImageMagick](http://www.imagemagick.org/)
@@ -50,15 +50,15 @@ You can always turn off default keybindings via main menu or settings.
 
 **Color picker usage:**
 
-Just put the cursor (or multiple cursors) on the color code and select "Choose color" in context menu (or press `ctrl+shift+c`). Select the color in a popup color picker and all color codes under your cursors will change. The change will preserve exact code format, so if you select codes "#FFF" and "rgb(255,255,255)" and "white" and choose color "#FF0000", you get codes: "#F00" and "rgb(255,0,0)" and "red". Also, works with variables.
+Just put the cursor (or multiple cursors) on the color code and select "Choose color" in context menu (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd>). Select the color in a popup color picker and all color codes under your cursors will change. The change will preserve exact code format, so if you select codes "#FFF" and "rgb(255,255,255)" and "white" and choose color "#FF0000", you get codes: "#F00" and "rgb(255,0,0)" and "red". Also, works with variables.
 
 **Color converter usage:**
 
-Just put the cursor (or multiple cursors) on the color code and select "Convert color" in context menu (or press `ctrl+shift+a`). Input a color format to use and press enter. The full list of all color formats is in the plugins settings file.
+Just put the cursor (or multiple cursors) on the color code and select "Convert color" in context menu (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd>). Input a color format to use and press enter. The full list of all color formats is in the plugins settings file.
 Format can be any format supported by this plugin, for example if you convert "rgb(255,255,255)" into format "hsv", you'll get "hsv(0, 0%, 100%)". Also works with named colors and variables.
 
-Also, there is a Prev/Next color commands, triggered by `ctrl+shift+,` and `ctrl+shift+.` respectively to choose previous or next color format.
+Also, there is a Prev/Next color commands, triggered by <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>,</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>.</kbd> respectively to choose previous or next color format.
 
 **Less/sass/scss/stylus variables navigation:**
 
-Just put cursor on a variable, right click on it and press "Go to variable definition" and the plugin will open it. There is also a shortcut `ctrl+alt+d`.
+Just put cursor on a variable, right click on it and press "Go to variable definition" and the plugin will open it. There is also a shortcut <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd>.
