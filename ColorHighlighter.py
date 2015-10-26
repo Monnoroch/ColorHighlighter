@@ -2044,12 +2044,21 @@ def plugin_loaded():
     # Setup CP binary
     chflags = stat.S_IXUSR|stat.S_IXGRP|stat.S_IRUSR|stat.S_IRUSR|stat.S_IWUSR|stat.S_IWGRP
     cpupath = color_picker_user_path(PAbsolute)
-    if not os.path.exists(cpupath):
-        if is_st3():
+    need_copy = not os.path.exists(cpupath)
+    if is_st3():
+        data = sublime.load_binary_resource(conv_path(color_picker_path(PRelative)))
+        if not need_copy:
+            need_copy = os.path.getsize(cpupath) != len(data)
+        if need_copy:
             with open(cpupath, "wb") as f:
-                f.write(sublime.load_binary_resource(conv_path(color_picker_path())))
-        else:
+                f.write(data)
+    else:
+        if not need_copy:
+            need_copy = os.path.getsize(cpupath) != os.path.getsize(color_picker_path(PAbsolute))
+        if need_copy:
             shutil.copy(color_picker_path(PAbsolute), cpupath)
+
+    if need_copy:
         os.chmod(cpupath, chflags)
 
     run_when_cs_loaded(ch_start)
