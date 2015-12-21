@@ -1420,7 +1420,7 @@ class ColorHighlighter:
         if fe == "all":
             return True
         if fname is None or fname == "":
-            return True
+            return False
         return os.path.splitext(fname)[1] in fe
 
     def _redraw(self):
