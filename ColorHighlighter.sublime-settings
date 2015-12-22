@@ -62,24 +62,24 @@
         },
         "hex8": {
             "description": "Hex 0xRRGGBBAA color format",
-            "regex": "0x(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?P<A>hex2)",
+            "regex": "0x(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?P<A>hex2)\\b",
             "white": "0xFFFFFFFF"
         },
         "hex6": {
             "description": "Hex 0xRRGGBB color format",
-            "regex": "0x(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)",
+            "regex": "0x(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)\\b",
             "white": "0xFFFFFF",
             "after": "hex8"
         },
         "hex4": {
             "description": "Hex 0xRGBA color format",
-            "regex": "0x(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)(?P<A>hex1)",
+            "regex": "0x(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)(?P<A>hex1)\\b",
             "white": "0xFFFF",
             "after": "hex6"
         },
         "hex3": {
             "description": "Hex 0xRGB color format",
-            "regex": "0x(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)",
+            "regex": "0x(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)\\b",
             "white": "0xFFF",
             "after": "hex4"
         },
