@@ -136,39 +136,42 @@ def region_name(s, is_text):
     return res + s[1:]
 
 def read_file(fl):
-    # Codecs supported by Python's codec module, in order of use according
-    # to http://w3techs.com/technologies/overview/character_encoding/all
-    encodings = [
-        "utf_8",
-        "latin_1",
-        "cp1251",
-        "shift_jis",
-        "cp1252",
-        "gb2312",
-        "euc_kr",
-        "euc_jp",
-        "gbk",
-        "iso8859_2",
-        "iso8859_15",
-        "cp1250",
-        "cp1256",
-        "iso8859_9",
-        "big5",
-        "cp1254",
-        "cp874",
-        # Remaining codecs not on the list from w3techs.com
-        'utf_8_sig', 'utf_16', 'utf_16_be', 'utf_16_le', 'utf_32', 'utf_32_be', 'utf_32_le', 'utf_7', 'ascii', 'big5hkscs', 'cp037', 'cp424', 'cp437', 'cp500', 'cp720', 'cp737', 'cp775', 'cp850', 'cp852', 'cp855', 'cp856', 'cp857', 'cp858', 'cp860', 'cp861', 'cp862', 'cp863', 'cp864', 'cp865', 'cp866', 'cp869', 'cp875', 'cp932', 'cp949', 'cp950', 'cp1006', 'cp1026', 'cp1140', 'cp1253', 'cp1255', 'cp1257', 'cp1258', 'euc_jis_2004', 'euc_jisx0213', 'gb18030', 'hz', 'iso2022_jp', 'iso2022_jp_1', 'iso2022_jp_2', 'iso2022_jp_2004', 'iso2022_jp_3', 'iso2022_jp_ext', 'iso2022_kr', 'iso8859_3', 'iso8859_4', 'iso8859_5', 'iso8859_6', 'iso8859_7', 'iso8859_8', 'iso8859_10', 'iso8859_13', 'iso8859_14', 'iso8859_16', 'johab', 'koi8_r', 'koi8_u', 'mac_cyrillic', 'mac_greek', 'mac_iceland', 'mac_latin2', 'mac_roman', 'mac_turkish', 'ptcp154', 'shift_jis_2004', 'shift_jisx0213'
-    ]
-    for index, encoding in enumerate(encodings):
-        try:
-            with codecs.open(fl, "r", encoding) as f:
-                return f.read()
-        except UnicodeDecodeError as err:
-            if index == len(encodings)-1:
-                print_error("unicode error in opening file '%s': %s" % (fl, err))
-            else:
-                print_error("unicode error in opening file '%s'. trying '%s' codec" % (fl, encodings[index+1]))
-    return ""
+    try:
+        with codecs.open(fl, "r", "utf_8") as f:
+            return f.read()
+    except UnicodeDecodeError:
+        # Codecs supported by Python's codec module, in order of use according
+        # to http://w3techs.com/technologies/overview/character_encoding/all
+        encodings = [
+            "latin_1",
+            "cp1251",
+            "shift_jis",
+            "cp1252",
+            "gb2312",
+            "euc_kr",
+            "euc_jp",
+            "gbk",
+            "iso8859_2",
+            "iso8859_15",
+            "cp1250",
+            "cp1256",
+            "iso8859_9",
+            "big5",
+            "cp1254",
+            "cp874",
+            # Remaining codecs not on the list from w3techs.com
+            "utf_8_sig", "utf_16", "utf_16_be", "utf_16_le", "utf_32", "utf_32_be", "utf_32_le", "utf_7", "ascii", "big5hkscs", "cp037", "cp424", "cp437", "cp500", "cp720", "cp737", "cp775", "cp850", "cp852", "cp855", "cp856", "cp857", "cp858", "cp860", "cp861", "cp862", "cp863", "cp864", "cp865", "cp866", "cp869", "cp875", "cp932", "cp949", "cp950", "cp1006", "cp1026", "cp1140", "cp1253", "cp1255", "cp1257", "cp1258", "euc_jis_2004", "euc_jisx0213", "gb18030", "hz", "iso2022_jp", "iso2022_jp_1", "iso2022_jp_2", "iso2022_jp_2004", "iso2022_jp_3", "iso2022_jp_ext", "iso2022_kr", "iso8859_3", "iso8859_4", "iso8859_5", "iso8859_6", "iso8859_7", "iso8859_8", "iso8859_10", "iso8859_13", "iso8859_14", "iso8859_16", "johab", "koi8_r", "koi8_u", "mac_cyrillic", "mac_greek", "mac_iceland", "mac_latin2", "mac_roman", "mac_turkish", "ptcp154", "shift_jis_2004", "shift_jisx0213"
+        ]
+
+        for encoding in encodings:
+            print_error("unicode error in opening file '%s'. trying '%s' codec" % (fl, encoding))
+            try:
+                with codecs.open(fl, "r", encoding) as f:
+                    return f.read()
+            except UnicodeDecodeError as err:
+                pass
+        print_error("unicode error in opening file '%s': %s" % (fl, err))
+        return ""
 
 # html generator for color scheme
 class HtmlGen:
