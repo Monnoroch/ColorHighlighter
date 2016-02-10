@@ -136,8 +136,12 @@ def region_name(s, is_text):
     return res + s[1:]
 
 def read_file(fl):
-    with codecs.open(fl, "r", "utf-8") as f:
-        return f.read()
+    try:
+        with codecs.open(fl, "r", "utf-8") as f:
+            return f.read()
+    except UnicodeDecodeError as err:
+        print_error("read file error in file '"+fl+"':\n" + str(err))
+        return ""
 
 # html generator for color scheme
 class HtmlGen:
