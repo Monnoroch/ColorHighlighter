@@ -171,9 +171,9 @@ def read_file_encoding_fallback(fl):
         try:
             with codecs.open(fl, "r", encoding) as f:
                 return f.read()
-        except UnicodeDecodeError as err:
+        except UnicodeDecodeError:
             pass
-    print_error("unicode error in opening file '%s': %s" % (fl, err))
+    print_error("unicode error in opening file '%s': no suitable codec found" % fl)
     return ""
 
 # html generator for color scheme
