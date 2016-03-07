@@ -1598,7 +1598,9 @@ class ColorHighlighter:
             return fpath
 
         cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
-        popen = subprocess.Popen(cmd % (col, fpath_full), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        cmd = cmd % (col, fpath_full)
+        print_error("CONVERT CALL:\n" + str(cmd))
+        popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         _, err = popen.communicate()
         try:
             err = err.decode("utf-8")
