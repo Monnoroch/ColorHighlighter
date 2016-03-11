@@ -37,26 +37,26 @@
         },
         "sharp8": {
             "description": "Hex #RRGGBBAA color format",
-            "regex": "#(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?P<A>hex2)(?!\\w)",
+            "regex": "(?<!&)#(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?P<A>hex2)(?!\\w)",
             "white": "#FFFFFFFF",
             "disable_exts": [".py"]
         },
         "sharp6": {
             "description": "Hex #RRGGBB color format",
-            "regex": "#(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?!\\w)",
+            "regex": "(?<!&)#(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?!\\w)",
             "white": "#FFFFFF",
             "after": "sharp8",
             "disable_exts": ".py"
         },
         "sharp4": {
             "description": "Hex #RGBA color format",
-            "regex": "#(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)(?P<A>hex1)(?!\\w)",
+            "regex": "(?<!&)#(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)(?P<A>hex1)(?!\\w)",
             "white": "#FFFF",
             "after": "sharp6"
         },
         "sharp3": {
             "description": "Hex #RGB color format",
-            "regex": "#(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)(?!\\w)",
+            "regex": "(?<!&)#(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)(?!\\w)",
             "white": "#FFF",
             "after": "sharp4"
         },
