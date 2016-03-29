@@ -5,6 +5,7 @@ A plugin for the Sublime Text (2 and 3) for highlighting color values in an unob
 
 ## Features
  - [x] Customizable Highlighting of Colors
+ - [x] Gutter Icons
  - [x] Color Picker
  - [x] Color Format Converter
  - [x] Less/SASS/SCSS/Stylus variable navigation
@@ -47,7 +48,9 @@ A color-value or variable is highlighted with it's color whenever the cursor ent
     - A percentage from `0%` to `100%`
 
 ### Variables file
-You may define a `color_variables_file` in your `.sublime-project` to include all Less/SASS/SCSS/Stylus color variables from that file as context for every file you edit. (Currently, only absolute paths are supported).
+You may define a list or string `color_variables_files` in your `.sublime-project` to include all Less/SASS/SCSS/Stylus color variables from that file as context for every file you edit. (Currently, only absolute paths are supported).
+
+> NOTE: The older `color_variables_file` is still supported but now deprecated. It can only contain a string for a single file, not a list.
 
 ```js
 {
