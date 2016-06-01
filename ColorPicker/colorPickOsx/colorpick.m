@@ -37,7 +37,7 @@
 -(NSString *)toHexString {
     NSColor *color = [self colorUsingColorSpaceName: NSCalibratedRGBColorSpace];
 
-    return [NSString stringWithFormat: @"#%02x%02x%02x%02x",
+    return [NSString stringWithFormat: @"#%02X%02X%02X%02X",
                         (unsigned int)(255 * [color redComponent]),
                         (unsigned int)(255 * [color greenComponent]),
                         (unsigned int)(255 * [color blueComponent]),
