@@ -12,7 +12,7 @@ _ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively 
 
 **Installation :**
 
-- **_Recommended_** - Using [Sublime Package Control](http://wbond.net/sublime_packages/package_control "Sublime Package Control")
+- **_Recommended_** - Using [Sublime Package Control](https://packagecontrol.io "Sublime Package Control")
     - <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> then select `Package Control: Install Package`
     - install `Color Highlighter`
 - Alternatively, download the package from [GitHub](https://github.com/Monnoroch/ColorHighlighter "ColorHighlighter") into your `Packages` folder and then rename plugins directory from "ColorHighlighter" to "Color Highlighter"
