@@ -130,7 +130,7 @@ def create_if_not_exists(path):
 ### Theme builder
 
 def region_name(s, is_text):
-    res = "mcol_"
+    res = "mcol mcol_"
     if is_text:
         res += "text_"
     return res + s[1:]
