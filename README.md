@@ -10,6 +10,8 @@ A plugin for the Sublime Text (2 and 3) for highlighting color values in an unob
  - [x] Color Format Converter
  - [x] Less/SASS/SCSS/Stylus variable navigation
 
+![gutter icons preview][image-gutter-dots-preview]
+
 ## Installation
 With [Package Control][package-control] (Recommended):
 
@@ -72,10 +74,14 @@ Place cursor(s) on a color-value(s). Press <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><
 
 Select/Input a color format to use. The full list of all color formats is in the settings file. Format can be any format supported by this plugin, for example if you convert "rgb(255,255,255)" into format "hsv", you'll get "hsv(0, 0%, 100%)". As expected, this works with named colors and variables as well.
 
+![color converter preview][image-color-converter]
+
 Additionally, there are "Next Color" and "Previous Color" commands, triggered by <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>,</kbd></kbd> and <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>.</kbd></kbd> respectively to choose previous or next color format.
 
 ### Less/SASS/SCSS/Stylus variables navigation
 Place cursor on a variable. Press <kbd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>D</kbd></kbd> or select "Go to variable definition" in the context menu. The cursor will then be moved to the line of declaration of that variable. If the variable is declared in another, that file will be opened in a new view (tab).
+
+![jump to variable definition preview][image-go-to-definition]
 
 ## Settings
 ColorHighlighter is configurable via `ColorHighlighter.sublime-settings` like any other well-behaved Package.
@@ -88,6 +94,8 @@ You can choose the highlighting style from:
 **NOTE**: Underlined styles are Sublime Text 3 only.
 
 You can also turn on highlighting all colors at once. This mode has own highlighting style, so you can highlight all colors with underline and selected colors with filled rectangle.
+
+![highlight all preview][image-highlight-all]
 
 You can also enable icons, which will be shown in the gutter of a file (might not work in ST2).
 
@@ -107,5 +115,9 @@ Don't hesitate. :smile:
  [imagemagick-url]: http://www.imagemagick.org/
 
  [image-color-picker]: images/color-picker.gif
+ [image-color-converter]: images/convert.gif
  [image-underline-preview]: images/underline-preview.gif
  [image-colored-text-preview]: images/colored-text-preview.gif
+ [image-gutter-dots-preview]: images/dots.gif
+ [image-go-to-definition]: images/go-to-definition.gif
+ [image-highlight-all]: images/highlight-all.gif
