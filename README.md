@@ -84,14 +84,14 @@ Place cursor on a variable. Press <kbd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>D</kbd>
 ![jump to variable definition preview][image-go-to-definition]
 
 ## Settings
-ColorHighlighter is configurable via `ColorHighlighter.sublime-settings` like any other well-behaved Package.
+ColorHighlighter is configurable via `ColorHighlighter.sublime-settings` like any other well-behaved package.
 
-You can choose the highlighting style from:  
-`none` `text` `filled` `outlined` `underlined_solid` `underlined_strippled` `underlined_squiggly` 
+You can choose the highlighting style from:
+`none` `text` `filled` `outlined` `underlined_solid` `underlined_strippled` `underlined_squiggly`
 
 ![colored text highlighting preview][image-colored-text-preview]
 
-**NOTE**: Underlined styles are Sublime Text 3 only.
+**NOTE**: Underlined styles are available in Sublime Text 3 only.
 
 You can also turn on highlighting all colors at once. This mode has own highlighting style, so you can highlight all colors with underline and selected colors with filled rectangle.
 
@@ -104,9 +104,9 @@ You can always turn off default key-bindings via main menu or settings.
 ## Contributing
 To contribute to the project, just head on over to the [Github Project][project-url].
 
-Found something doesn't work, let us know by opening an issue.
-Have an idea, open up an issue and let's make it happen!
-Found a typo, send in a PR.
+Found something that doesn't work? Let us know by opening an issue.
+Have an idea? Open up an issue and let's make it happen!
+Found a typo? Send in a pull request.
 
 Don't hesitate. :smile:
 
