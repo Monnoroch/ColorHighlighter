@@ -1458,7 +1458,7 @@ class ColorHighlighter:
             return True
         if fname is None or fname == "":
             return False
-        return os.path.splitext(fname)[1] in fe
+        return os.path.splitext(fname)[1].lower() in [x.lower() for x in fe]
 
     def _redraw(self):
         for k in self.views:
