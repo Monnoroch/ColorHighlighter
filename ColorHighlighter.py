@@ -1587,17 +1587,23 @@ class ColorHighlighter:
         return self.views[view.id()].get_colors_sel_var()
 
     def create_icon(self, col):
+        style = "square" if self.settings.get("icon_style") == "square" else "circle"
+
         if sublime.platform() == "windows":
-            fname = col[1:]
+            fname = style + col[1:]
         else:
-            fname = "%s.png" % col[1:]
+            fname = style + "%s.png" % col[1:]
+
         fpath = os.path.join(icons_path(), fname)
         fpath_full = os.path.join(icons_path(PAbsolute), fname)
 
         if os.path.exists(fpath_full):
             return fpath
 
-        cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
+        if style == "square":
+            cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "rectangle 4,4 24,24" png32:"%s"'
+        else:
+            cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
         cmd = cmd % (col, fpath_full)
         print_error("CONVERT CALL:\n" + str(cmd))
         popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
