@@ -1269,9 +1269,9 @@ class VarExtractor:
                                     # If list
                                     elif type(sublime_project_data_var) is list:
                                         # For each in list
-                                        for i in sublime_project_data_var:
+                                        for f in sublime_project_data_var:
                                             # Append to color_vars_files
-                                            color_vars_files.append(sublime_project_data_var[i])
+                                            color_vars_files.append(f)
 
                     for f in color_vars_files:
                         self.parse_vars_file(f)
