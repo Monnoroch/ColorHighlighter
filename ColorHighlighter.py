@@ -1244,11 +1244,11 @@ class VarExtractor:
 
                     # If not opened as a project
                     if wnd.project_file_name() is None:
-                        # Path of .sublime-project based on folders path
-                        sublime_project = pdata.get("folders", {})[0]["path"] + "/.sublime-project"
+                        # Path of .colorhighlighter file based on folders path
+                        sublime_project = pdata.get("folders", {})[0]["path"] + "/.colorhighlighter"
                         sublime_project_data = None
 
-                        # If .sublime-project file in path exists
+                        # If .colorhighlighter file file in path exists
                         if os.path.isfile(sublime_project):
                             # Read file
                             with open(sublime_project) as contents:
