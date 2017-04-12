@@ -10,6 +10,7 @@ import threading
 import shutil
 import codecs
 import time
+import json
 
 plugin_name = "Color Highlighter"
 
@@ -1240,6 +1241,35 @@ class VarExtractor:
                     color_vars_file = pdata.get("color_variables_file", None)
                     if color_vars_file is not None:
                         color_vars_files.append(color_vars_file)
+
+                    # Path of .sublime-project based on folders path
+                    sublime_project = pdata.get("folders", {})[0]["path"] + "/.sublime-project"
+                    sublime_project_data = None
+
+                    # If .sublime-project file in path exists
+                    if os.path.isfile(sublime_project):
+                        # Read file
+                        with open(sublime_project) as contents:
+                            # Try to parse JSON
+                            try:
+                                sublime_project_data = json.load(contents)
+                            except Exception:
+                                pass
+
+                        # If valid JSON
+                        if sublime_project_data is not None:
+                            # If "color_variables_files" key exists
+                            if "color_variables_files" in sublime_project_data:
+                                sublime_project_data_var = sublime_project_data["color_variables_files"]
+                                # If string
+                                if type(sublime_project_data_var) is str:
+                                    color_vars_files.append(sublime_project_data_var)
+                                # If list
+                                elif type(sublime_project_data_var) is list:
+                                    # For each in list
+                                    for i in sublime_project_data_var:
+                                        # Append to color_vars_files
+                                        color_vars_files.append(sublime_project_data_var[i])
 
                     for f in color_vars_files:
                         self.parse_vars_file(f)
