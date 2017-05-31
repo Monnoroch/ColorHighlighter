@@ -2,6 +2,7 @@
     "enabled": true,
     "style": "default",
     "icons": true,
+    "icon_style": "circle",
     "ha_style": "default",
     "ha_icons": false,
     "default_keybindings": true,

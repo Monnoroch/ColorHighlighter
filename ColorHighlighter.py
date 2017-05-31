@@ -385,6 +385,7 @@ class SettingsCH:
     style = None
     ha_style = None
     icons = None
+    icon_style = None
     ha_icons = None
     file_exts = None
     formats = None
@@ -400,6 +401,7 @@ class SettingsCH:
                 ("style", "default"),
                 ("ha_style", "default"),
                 ("icons", is_st3()),
+                ("icon_style", "circle"),
                 ("ha_icons", False),
                 ("file_exts", "all"),
                 ("formats", {}),
@@ -450,6 +452,10 @@ class SettingsCH:
             new = new and is_st3()
             self.icons = new
             self.callbacks.set_icons(new)
+        elif key == "icon_style":
+            new = new and is_st3()
+            self.icon_style = new
+            self.callbacks.set_icon_style(new)
         elif key == "ha_icons":
             new = new and is_st3()
             self.ha_icons = new
@@ -1387,6 +1393,7 @@ class ColorHighlighter:
     ha_flags = None
     color_scheme = None
     icons = None
+    icon_style = None
     ha_icons = None
 
     views = None
@@ -1435,6 +1442,10 @@ class ColorHighlighter:
 
     def set_icons(self, val):
         self.icons = val
+        self._redraw()
+
+    def set_icon_style(self, val):
+        self.icon_style = val
         self._redraw()
 
     def set_ha_icons(self, val):
@@ -1587,17 +1598,23 @@ class ColorHighlighter:
         return self.views[view.id()].get_colors_sel_var()
 
     def create_icon(self, col):
+        style = "square" if self.settings.get("icon_style") == "square" else "circle"
+
         if sublime.platform() == "windows":
-            fname = col[1:]
+            fname = style + col[1:]
         else:
-            fname = "%s.png" % col[1:]
+            fname = style + "%s.png" % col[1:]
+
         fpath = os.path.join(icons_path(), fname)
         fpath_full = os.path.join(icons_path(PAbsolute), fname)
 
         if os.path.exists(fpath_full):
             return fpath
 
-        cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
+        if style == "square":
+            cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "rectangle 4,4 24,24" png32:"%s"'
+        else:
+            cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
         cmd = cmd % (col, fpath_full)
         print_error("CONVERT CALL:\n" + str(cmd))
         popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -1878,12 +1895,14 @@ class ChSetSetting(sublime_plugin.TextCommand):
                 return True
             if setting == "icons":
                 return args["value"] != color_highlighter.icons
+            if setting == "icon_style":
+                return args["value"] in ["default", "circle", "square"]
             if setting == "ha_icons":
                 return args["value"] != color_highlighter.ha_icons
         else:
             if setting in ["style", "ha_style"]:
                 return args["value"] in ["disabled", "none", "default", "filled", "outlined", "text"]
-            if setting in ["ha_icons", "icons"]:
+            if setting in ["ha_icons", "icons", "icon_style"]:
                 return False
         return False
 
