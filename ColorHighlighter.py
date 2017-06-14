@@ -136,8 +136,45 @@ def region_name(s, is_text):
     return res + s[1:]
 
 def read_file(fl):
-    with codecs.open(fl, "r", "utf-8") as f:
-        return f.read()
+    try:
+        with codecs.open(fl, "r", "utf-8") as f:
+            return f.read()
+    except UnicodeDecodeError:
+        return read_file_encoding_fallback(fl)
+
+def read_file_encoding_fallback(fl):
+    # Codecs supported by Python's codec module, in order of use according
+    # to http://w3techs.com/technologies/overview/character_encoding/all
+    encodings = [
+        "latin-1",
+        "cp1251",
+        "shift-jis",
+        "cp1252",
+        "gb2312",
+        "euc-kr",
+        "euc-jp",
+        "gbk",
+        "iso8859-2",
+        "iso8859-15",
+        "cp1250",
+        "cp1256",
+        "iso8859-9",
+        "big5",
+        "cp1254",
+        "cp874",
+        # Remaining codecs not on the list from w3techs.com
+        "utf-8-sig", "utf-16", "utf-16-be", "utf-16-le", "utf-32", "utf-32-be", "utf-32-le", "utf-7", "ascii", "big5hkscs", "cp037", "cp424", "cp437", "cp500", "cp720", "cp737", "cp775", "cp850", "cp852", "cp855", "cp856", "cp857", "cp858", "cp860", "cp861", "cp862", "cp863", "cp864", "cp865", "cp866", "cp869", "cp875", "cp932", "cp949", "cp950", "cp1006", "cp1026", "cp1140", "cp1253", "cp1255", "cp1257", "cp1258", "euc-jis-2004", "euc-jisx0213", "gb18030", "hz", "iso2022-jp", "iso2022-jp-1", "iso2022-jp-2", "iso2022-jp-2004", "iso2022-jp-3", "iso2022-jp-ext", "iso2022-kr", "iso8859-3", "iso8859-4", "iso8859-5", "iso8859-6", "iso8859-7", "iso8859-8", "iso8859-10", "iso8859-13", "iso8859-14", "iso8859-16", "johab", "koi8-r", "koi8-u", "mac-cyrillic", "mac-greek", "mac-iceland", "mac-latin2", "mac-roman", "mac-turkish", "ptcp154", "shift-jis-2004", "shift-jisx0213"
+    ]
+
+    for encoding in encodings:
+        print_error("unicode error in opening file '%s'. trying '%s' codec" % (fl, encoding))
+        try:
+            with codecs.open(fl, "r", encoding) as f:
+                return f.read()
+        except UnicodeDecodeError:
+            pass
+    print_error("unicode error in opening file '%s': no suitable codec found" % fl)
+    return ""
 
 # html generator for color scheme
 class HtmlGen:
@@ -208,13 +245,11 @@ class HtmlGen:
         self.to_add.append(col)
 
     def add_colors(self, cols):
-        # print("add_colors:", cols)
         for col in cols:
             self.add_color(col)
         return self.flush()
 
     def flush(self):
-        # print("flush", self.colors, self.to_add)
         any = False
         for col in self.to_add:
             if col in self.colors.keys():
@@ -223,9 +258,7 @@ class HtmlGen:
             self.colors[col] = self._get_cont_col(col)
             any = True
 
-        print("flush:", any)
         if any:
-            print("~~~~~ HtmlGen.flush")
             data = None
             if is_st3():
                 data = sublime.load_resource(self.color_scheme)
@@ -330,7 +363,6 @@ class Settings:
     def on_change(self):
         if self.fname is not None:
             self.obj = sublime.load_settings(self.fname)
-        # print("Settings.on_change start", self.fname, self.obj.get("color_scheme", None), self.vals.get("color_scheme", None))
         for k in self.fields:
             key = k[0]
             cur = self.vals.get(key, None)
@@ -338,7 +370,6 @@ class Settings:
             if val != cur:
                 self.vals[key] = val
                 self.cb(key, cur, val)
-        # print("Settings.on_change end", self.fname, self.vals.get("color_scheme", None))
 
 
 pref_fname = "Preferences.sublime-settings"
@@ -354,6 +385,7 @@ class SettingsCH:
     style = None
     ha_style = None
     icons = None
+    icon_style = None
     ha_icons = None
     file_exts = None
     formats = None
@@ -369,6 +401,7 @@ class SettingsCH:
                 ("style", "default"),
                 ("ha_style", "default"),
                 ("icons", is_st3()),
+                ("icon_style", "circle"),
                 ("ha_icons", False),
                 ("file_exts", "all"),
                 ("formats", {}),
@@ -406,7 +439,6 @@ class SettingsCH:
         self.ch.save()
 
     def on_ch_settings_change(self, key, old, new):
-        print("on_ch_settings_change", key, old, new)
         if key == "enabled":
             self.enabled = new
             self.callbacks.enable(new)
@@ -420,6 +452,10 @@ class SettingsCH:
             new = new and is_st3()
             self.icons = new
             self.callbacks.set_icons(new)
+        elif key == "icon_style":
+            new = new and is_st3()
+            self.icon_style = new
+            self.callbacks.set_icon_style(new)
         elif key == "ha_icons":
             new = new and is_st3()
             self.ha_icons = new
@@ -431,7 +467,6 @@ class SettingsCH:
             self.callbacks.set_formats(self.ch.get("formats", {}), self.ch.get("channels", {}))
 
     def on_prefs_settings_change(self, key, old, new):
-        print("on_prefs_settings_change", key, old, new)
         if key == "color_scheme":
             self.color_scheme = new
             self.callbacks.set_scheme(new)
@@ -602,7 +637,6 @@ class ColorConverter:
                     types.append(t)
 
         chans = [[col[1:3], types[0]], [col[3:5], types[1]], [col[5:7], types[2]]]
-        print("_col_to_chans_match: chans 1", chans, col, col[1:3])
         if types[3] != "empty":
             chans.append([col[7:9], types[3]])
         else:
@@ -616,7 +650,6 @@ class ColorConverter:
             (nh, nv, ns) = colorsys.rgb_to_hls(int(chans[0][0], 16)/255.0, int(chans[1][0], 16)/255.0, int(chans[2][0], 16)/255.0)
             return [[str(int(nh * 360)), chans[0][1]], [str(int(ns * 100)) + '%', chans[1][1]], [str(int(nv * 100)) + '%', chans[2][1]], [self._conv_val_chan_back(chans[3][0], chans[3][1]), chans[3][1]]]
 
-        print("_col_to_chans_match: chans 2", chans)
         for c in chans:
             c[0] = self._conv_val_chan_back(c[0], c[1])
         return chans
@@ -657,12 +690,10 @@ class ColorConverter:
             return fmt, self._get_color_col(color, fmt)
 
     def get_col_color(self, col, fmt, example): # -> color
-        print("get_col_color", col, fmt, example)
         if fmt == "sharp8":
             return col
         m = self._get_regex(self.conf[fmt]["regex"]).search(example)
         if m:
-            print("get_col_color 1", col, fmt, m.groupdict())
             chans = self._col_to_chans_match(col, fmt, m.groupdict())
             chs = ["R", "G", "B", "A"]
             offset = 0
@@ -811,15 +842,29 @@ class ColorFinder:
             word = sublime.Region(word.a - 1, word.b)
         return word
 
+    def get_word(self, view, region):
+        word = view.word(region)
+        chars = "-"
+        if view.substr(word.b) in chars and view.substr(word.b + 1).isalnum():
+            return sublime.Region(0, 0)
+        if view.substr(word.a - 1) in chars and view.substr(word.a - 2).isalnum():
+            return sublime.Region(0, 0)
+        if view.substr(word.a - 1) in "@$":
+            return sublime.Region(0, 0)
+        return word
+
     # if the @region is in some text, that represents color, return new region, containing that color text and format type
     def find_color(self, view, region, variables): # -> (reg, fmt, col)
-        word = self.get_word_css(view, region)
-        word_str = view.substr(word)
+        css_word = self.get_word_css(view, region)
+        css_word_str = view.substr(css_word)
 
         # TODO: nice regexes?
-        if word_str in variables.keys():
-            v = variables[word_str]
-            return word, v["fmt"], v["col"]
+        if css_word_str in variables.keys():
+            v = variables[css_word_str]
+            return css_word, v["fmt"], v["col"]
+
+        word = self.get_word(view, region)
+        word_str = view.substr(word)
         if word_str in colors.names_to_hex.keys():
             return word, "@named", colors.names_to_hex[word_str]
 
@@ -857,11 +902,14 @@ class ColorFinder:
                 start = m.start()
                 end = m.end()
 
-                name = text[start:end]
                 col = None
                 if fmt == "@named":
+                    start += 1
+                    end -= 1
+                    name = text[start:end]
                     col = colors.names_to_hex[name]
                 else:
+                    name = text[start:end]
                     col = variables[name]["col"]
 
                 if col is not None:
@@ -892,7 +940,8 @@ class ColorFinder:
                     prep = "[" + prep + "]"
                 regex_str += "(?P<" + fmt[1:] + ">" + prep + "\\b(" + "|".join(arr) + ")\\b)|"
             else: # @named is already sorted and joined
-                regex_str += "(?P<" + fmt[1:] + ">" + prep + "\\b(" + self.names_str + ")\\b)|"
+                regex_str += "(?P<" + fmt[1:] + ">" + prep + "[^-]\\b(" + self.names_str + ")\\b[^-])|"
+
         return self.conv._get_regex(regex_str[:-1])
 
     def get_ext(self, view):
@@ -946,12 +995,9 @@ class ColorHighlighterView:
     # settings
 
     def _on_settings_change(self, key, old, new):
-        print("View.on_settings_change(%d, %s) 1" % self.creds())
         if key == "color_scheme" and new is not None and self.color_scheme != new and new.find(plugin_name) == -1:
             self.color_scheme = new
             self._on_update_cs(new)
-            print("View.on_settings_change(%d, %s) 2" % self.creds(), new)
-        print("View.on_settings_change(%d, %s) 3" % self.creds())
 
     # color API
 
@@ -979,16 +1025,13 @@ class ColorHighlighterView:
         self.gen.add_colors(self._on_selection_modified_impl([]))
 
     def on_activated(self):
-        print("View.on_activated(%d, %s)" % self.creds())
         self.gen.add_colors(self._on_activated_impl([]))
 
     def on_close(self):
-        print("View.on_close(%d, %s)" % self.creds())
         self.settings.clear_callbacks()
         self.gen.rem_cb(self.view.id())
         self.disabled = True
         self._restore_scheme()
-        print("View.on_close(%d, %s) done" % self.creds())
 
     def _on_selection_modified_impl(self, cols):
         self._clear()
@@ -1015,7 +1058,6 @@ class ColorHighlighterView:
         return cols
 
     def _on_activated_impl(self, cols):
-        print("View._on_activated_impl(%d, %s)" % self.creds())
         self._on_selection_modified_impl(cols)
 
         self._ha_clear()
@@ -1049,11 +1091,9 @@ class ColorHighlighterView:
     def _set_scheme(self, val):
         v = conv_path(val)
         if v != self.settings.get("color_scheme", None):
-            print("View._set_scheme(%d, %s)" % self.creds(), val)
             self.settings.set("color_scheme", v)
 
     def _restore_scheme(self):
-        print("View._restore_scheme(%d, %s)" % self.creds())
         self._set_scheme(self.color_scheme)
 
     def _on_update_cs(self, new_cs):
@@ -1077,10 +1117,8 @@ class ColorHighlighterView:
 
         self.disabled = not val
         if self.disabled:
-            print("View.disable(%d, %s)" % self.creds())
             self.clear_all()
         else:
-            print("View.enable(%d, %s)" % self.creds())
             if redraw:
                 self.redraw()
             self._set_scheme(self.gen.scheme_name())
@@ -1136,7 +1174,10 @@ def on_line_styl(fname, line, i, res):
 
 def extract_import(line):
     l = len(line)
-    i = len("@import")
+    if line.startswith("@require"):
+        i = len("@require")
+    else:
+        i = len("@import")
     while i < l and line[i] not in "'\"":
         i += 1
     i += 1
@@ -1193,15 +1234,21 @@ class VarExtractor:
         self.dirty_views = {}
 
     def get_vars(self, view):
-        color_vars_file = None
+        color_vars_files = []
         if is_st3():
             wnd = view.window()
             if wnd is not None:
                 pdata = wnd.project_data()
                 if pdata is not None:
+                    color_vars_files = pdata.get("color_variables_files", [])
+                    if type(color_vars_files) is not list:
+                        color_vars_files = [color_vars_files]
                     color_vars_file = pdata.get("color_variables_file", None)
                     if color_vars_file is not None:
-                        self.parse_vars_file(color_vars_file)
+                        color_vars_files.append(color_vars_file)
+
+                    for f in color_vars_files:
+                        self.parse_vars_file(f)
 
         fn = view.file_name()
         res = {}
@@ -1213,8 +1260,8 @@ class VarExtractor:
             self.get_view_vars(view, res)
 
         if is_st3():
-            if color_vars_file is not None:
-                self.get_file_vars(color_vars_file, res)
+            for f in color_vars_files:
+                self.get_file_vars(f, res)
 
         # map text to colors
         for k in res.keys():
@@ -1260,12 +1307,13 @@ class VarExtractor:
             cache["files"] = []
             return
 
+        is_styl = ext == ".styl"
         for line in map(lambda s: s.strip(), text.split("\n")):
             i += 1
             if len(line) < 2:
                 continue
 
-            if line.startswith("@import"):
+            if line.startswith("@import") or (is_styl and line.startswith("@require")):
                 fname = extract_import(line)
                 if fname is not None:
                     fext = os.path.splitext(fname)[1]
@@ -1345,6 +1393,7 @@ class ColorHighlighter:
     ha_flags = None
     color_scheme = None
     icons = None
+    icon_style = None
     ha_icons = None
 
     views = None
@@ -1395,12 +1444,15 @@ class ColorHighlighter:
         self.icons = val
         self._redraw()
 
+    def set_icon_style(self, val):
+        self.icon_style = val
+        self._redraw()
+
     def set_ha_icons(self, val):
         self.ha_icons = val
         self._ha_redraw()
 
     def set_scheme(self, val):
-        print("set_scheme", val)
         old_cs = self.color_scheme
         self.color_scheme = val
         if val not in self.color_schemes.keys():
@@ -1409,7 +1461,6 @@ class ColorHighlighter:
         for k in self.views:
             v = self.views[k]
             cs = v.settings.get("color_scheme", None)
-            print(v.view.id(), v.view.file_name(), cs, v.color_scheme, self.color_scheme)
             if cs is None or cs == "" or v.color_scheme == old_cs: # view has global scheme
                 v.update_cs(val)
 
@@ -1417,8 +1468,8 @@ class ColorHighlighter:
         if fe == "all":
             return True
         if fname is None or fname == "":
-            return True
-        return os.path.splitext(fname)[1] in fe
+            return False
+        return os.path.splitext(fname)[1].lower() in [x.lower() for x in fe]
 
     def _redraw(self):
         for k in self.views:
@@ -1440,7 +1491,6 @@ class ColorHighlighter:
 
     def _add_view(self, view):
         v = ColorHighlighterView(self, view)
-        print("CH._add_view(%d, %s)" % v.creds(), view.settings().get("color_scheme", "!!!!!!"))
         self.views[view.id()] = v
         # on_activated not always gets called after opening file
         # TODO: make it False
@@ -1459,7 +1509,6 @@ class ColorHighlighter:
         return v.disabled
 
     def _get_regions_flags(self, style, ha=False):
-        print("CH._get_regions_flags:", style, ha)
         if is_st3():
             if style == "default":
                 if ha:
@@ -1489,33 +1538,25 @@ class ColorHighlighter:
 
         return 0
 
-    @st_time
     def on_new(self, view):
-        print("on_new(%d, %s)" % (view.id(), view.file_name()))
         v = self._add_view(view)
         # Need on_activate for ST2, it has an odd events order (activate, then load)
         if not is_st3():
             v.on_activated()
 
-    @st_time
     def on_clone(self, view):
-        print("on_clone(%d, %s)" % (view.id(), view.file_name()))
         v = self._add_view(view)
         # Need on_activate for ST2, it has an odd events order (activate, then load)
         if not is_st3():
             v.on_activated()
 
-    @st_time
     def on_load(self, view):
-        print("on_load(%d, %s)" % (view.id(), view.file_name()))
         v = self._add_view(view)
         # Need on_activate for ST2, it has an odd events order (activate, then load)
         if not is_st3():
             v.on_activated()
 
-    @st_time
     def on_close(self, view):
-        print("on_close(%d, %s)" % (view.id(), view.file_name()))
         if self._disabled(view):
             return
         self.views[view.id()].on_close()
@@ -1533,7 +1574,6 @@ class ColorHighlighter:
         self.var_extractor.on_save(view)
         self.on_activated(view)
 
-    @st_time
     def on_activated(self, view):
         if self._disabled(view, not is_st3()):
             return
@@ -1558,18 +1598,26 @@ class ColorHighlighter:
         return self.views[view.id()].get_colors_sel_var()
 
     def create_icon(self, col):
+        style = "square" if self.settings.get("icon_style") == "square" else "circle"
+
         if sublime.platform() == "windows":
-            fname = col[1:]
+            fname = style + col[1:]
         else:
-            fname = "%s.png" % col[1:]
+            fname = style + "%s.png" % col[1:]
+
         fpath = os.path.join(icons_path(), fname)
         fpath_full = os.path.join(icons_path(PAbsolute), fname)
 
         if os.path.exists(fpath_full):
             return fpath
 
-        cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
-        popen = subprocess.Popen(cmd % (col, fpath_full), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        if style == "square":
+            cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "rectangle 4,4 24,24" png32:"%s"'
+        else:
+            cmd =  self.settings.get("convert_util_path") + ' -type TrueColorMatte -channel RGBA -size 32x32 -alpha transparent xc:none -fill "%s" -draw "circle 15,16 8,10" png32:"%s"'
+        cmd = cmd % (col, fpath_full)
+        print_error("CONVERT CALL:\n" + str(cmd))
+        popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         _, err = popen.communicate()
         try:
             err = err.decode("utf-8")
@@ -1847,12 +1895,14 @@ class ChSetSetting(sublime_plugin.TextCommand):
                 return True
             if setting == "icons":
                 return args["value"] != color_highlighter.icons
+            if setting == "icon_style":
+                return args["value"] in ["default", "circle", "square"]
             if setting == "ha_icons":
                 return args["value"] != color_highlighter.ha_icons
         else:
             if setting in ["style", "ha_style"]:
                 return args["value"] in ["disabled", "none", "default", "filled", "outlined", "text"]
-            if setting in ["ha_icons", "icons"]:
+            if setting in ["ha_icons", "icons", "icon_style"]:
                 return False
         return False
 
@@ -1875,7 +1925,6 @@ class ChReplaceColor(sublime_plugin.TextCommand):
             example = args.get("example", None)
             if example is None:
                 example = self.view.substr(reg)
-            print("convert_back_color", col, fmt, example)
             new_col = color_highlighter.color_finder.convert_back_color(col, vs, fmt, example)
             if new_col is None:
                 continue
@@ -2007,7 +2056,6 @@ class ColorConvertPrevCommand(BaseColorConvertCommand):
 def center_view_async(view, row, col):
     if not view.is_loading():
         view.show_at_center(view.text_point(row, col))
-        print("CENTERED", row, col)
     else:
         sublime.set_timeout(lambda view=view, row=row, col=col: center_view_async(view, row, col), 100)
 
@@ -2034,10 +2082,8 @@ class GoToVarDefinitionCommand(ColorCommand):
 # startup, cleanup
 
 def ch_start():
-    print("ch_start")
     global color_highlighter
     color_highlighter = ColorHighlighter()
-    print("ch_start done")
 
 def run_when_cs_loaded(cb):
     if (sublime.load_settings(pref_fname).get("color_scheme", None) is not None) and (sublime.load_settings(ch_fname).get("formats", None) is not None):
@@ -2047,7 +2093,6 @@ def run_when_cs_loaded(cb):
 
 # initialize all the stuff
 def plugin_loaded():
-    print("plugin_loaded")
     # Create folders
     create_if_not_exists(data_path(PAbsolute))
     create_if_not_exists(os.path.join(data_path(PAbsolute), os.path.dirname(color_picker_file())))
@@ -2057,25 +2102,31 @@ def plugin_loaded():
     # Setup CP binary
     chflags = stat.S_IXUSR|stat.S_IXGRP|stat.S_IRUSR|stat.S_IRUSR|stat.S_IWUSR|stat.S_IWGRP
     cpupath = color_picker_user_path(PAbsolute)
-    if not os.path.exists(cpupath):
-        if is_st3():
+    need_copy = not os.path.exists(cpupath)
+    if is_st3():
+        data = sublime.load_binary_resource(conv_path(color_picker_path(PRelative)))
+        if not need_copy:
+            need_copy = os.path.getsize(cpupath) != len(data)
+        if need_copy:
             with open(cpupath, "wb") as f:
-                f.write(sublime.load_binary_resource(conv_path(color_picker_path())))
-        else:
+                f.write(data)
+    else:
+        if not need_copy:
+            need_copy = os.path.getsize(cpupath) != os.path.getsize(color_picker_path(PAbsolute))
+        if need_copy:
             shutil.copy(color_picker_path(PAbsolute), cpupath)
+
+    if need_copy:
         os.chmod(cpupath, chflags)
 
     run_when_cs_loaded(ch_start)
-    print("plugin_loaded done")
 
 # unload all the stuff
 def plugin_unloaded():
-    print("plugin_unloaded")
     global color_highlighter
     if color_highlighter is not None:
         color_highlighter.unload()
         color_highlighter = None
-    print("plugin_unloaded done")
 
 # ST2 support.
 if not is_st3():

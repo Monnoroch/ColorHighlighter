@@ -2,11 +2,12 @@
     "enabled": true,
     "style": "default",
     "icons": true,
+    "icon_style": "circle",
     "ha_style": "default",
     "ha_icons": false,
     "default_keybindings": true,
     "convert_util_path" : "convert",
-    "file_exts": [".css", ".sass", ".scss", ".less", ".styl", ".html", ".js", ".sublime-settings", ".tmTheme", ".erb", ".haml", ".back", ".py", ".md"],
+    "file_exts": [".css", ".sass", ".scss", ".less", ".styl", ".html", ".js", ".sublime-settings", ".tmTheme", ".stTheme", ".erb", ".haml", ".back", ".py", ".md", ".svg"],
     "channels": {
         "empty": "",
         "hex2": "[0-9a-fA-F]{2}",
@@ -37,49 +38,49 @@
         },
         "sharp8": {
             "description": "Hex #RRGGBBAA color format",
-            "regex": "#(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?P<A>hex2)",
+            "regex": "(?<!&)#(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?P<A>hex2)\\b(?!\\w)",
             "white": "#FFFFFFFF",
             "disable_exts": [".py"]
         },
         "sharp6": {
             "description": "Hex #RRGGBB color format",
-            "regex": "#(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)",
+            "regex": "(?<!&)#(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)\\b(?!\\w)",
             "white": "#FFFFFF",
             "after": "sharp8",
             "disable_exts": ".py"
         },
         "sharp4": {
             "description": "Hex #RGBA color format",
-            "regex": "#(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)(?P<A>hex1)",
+            "regex": "(?<!&)#(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)(?P<A>hex1)\\b(?!\\w)",
             "white": "#FFFF",
             "after": "sharp6"
         },
         "sharp3": {
             "description": "Hex #RGB color format",
-            "regex": "#(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)",
+            "regex": "(?<!&)#(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)\\b(?!\\w)",
             "white": "#FFF",
             "after": "sharp4"
         },
         "hex8": {
             "description": "Hex 0xRRGGBBAA color format",
-            "regex": "0x(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?P<A>hex2)",
+            "regex": "0x(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)(?P<A>hex2)\\b",
             "white": "0xFFFFFFFF"
         },
         "hex6": {
             "description": "Hex 0xRRGGBB color format",
-            "regex": "0x(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)",
+            "regex": "0x(?P<R>hex2)(?P<G>hex2)(?P<B>hex2)\\b",
             "white": "0xFFFFFF",
             "after": "hex8"
         },
         "hex4": {
             "description": "Hex 0xRGBA color format",
-            "regex": "0x(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)(?P<A>hex1)",
+            "regex": "0x(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)(?P<A>hex1)\\b",
             "white": "0xFFFF",
             "after": "hex6"
         },
         "hex3": {
             "description": "Hex 0xRGB color format",
-            "regex": "0x(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)",
+            "regex": "0x(?P<R>hex1)(?P<G>hex1)(?P<B>hex1)\\b",
             "white": "0xFFF",
             "after": "hex4"
         },
