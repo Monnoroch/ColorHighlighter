@@ -7,7 +7,7 @@
     "ha_icons": false,
     "default_keybindings": true,
     "convert_util_path" : "convert",
-    "file_exts": [".css", ".sass", ".scss", ".less", ".styl", ".html", ".js", ".sublime-settings", ".tmTheme", ".stTheme", ".erb", ".haml", ".back", ".py", ".md", ".svg"],
+    "file_exts": [".css", ".sass", ".scss", ".less", ".styl", ".html", ".js", ".sublime-settings", ".tmTheme", ".stTheme", ".erb", ".haml", ".back", ".py", ".md", ".svg", ".vue"],
     "channels": {
         "empty": "",
         "hex2": "[0-9a-fA-F]{2}",
