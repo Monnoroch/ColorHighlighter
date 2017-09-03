@@ -1,6 +1,0 @@
-[
-    { "caption": "-", "id": "Color Highlighter" },
-    { "command": "color_picker", "caption": "Choose color"},
-    { "command": "color_convert", "caption": "Convert color"},
-    { "command": "go_to_var_definition", "caption": "Go to variable definition"}
-]

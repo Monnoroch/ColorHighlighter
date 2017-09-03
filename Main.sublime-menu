@@ -8,144 +8,264 @@
                 "children":
                 [
                     {
-                        "caption": "Enable",
-                        "command": "ch_set_setting",
-                        "args": {"setting": "enabled", "value": true},
-                        "mnemonic": "E"
-                    },
-                    {
-                        "caption": "Disable",
-                        "command": "ch_set_setting",
-                        "args": {"setting": "enabled", "value": false},
-                        "mnemonic": "e"
-                    },
-                    {
-                        "caption": "Highlight style",
-                        "mnemonic": "s",
+                        "caption": "Autoreload",
                         "children":
                         [
                             {
-                                "caption": "Disable",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "style", "value": "disabled"}
+                                "caption": "Reload plugin when settings change",
+                                "command": "color_highlighter_set_setting",
+                                "checkbox": true,
+                                "args": {
+                                    "setting": "autoreload.when_settings_change"
+                                }
                             },
                             {
-                                "caption": "None",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "style", "value": "none"}
-                            },
-                            {
-                                "caption": "Colored text",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "style", "value": "text"}
-                            },
-                            {
-                                "caption": "Filled",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "style", "value": "filled"}
-                            },
-                            {
-                                "caption": "Outlined",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "style", "value": "outlined"}
-                            },
-                            {
-                                "caption": "Underlined (solid)",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "style", "value": "underlined_solid"}
-                            },
-                            {
-                                "caption": "Underlined (strippled)",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "style", "value": "underlined_strippled"}
-                            },
-                            {
-                                "caption": "Underlined (squiggly)",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "style", "value": "underlined_squiggly"}
-                            },
-                            {
-                                "caption": "Show icons",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "icons", "value": true}
-                            },
-                            {
-                                "caption": "Hide icons",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "icons", "value": false}
+                                "caption": "Reload plugin when color scheme changes",
+                                "command": "color_highlighter_set_setting",
+                                "checkbox": true,
+                                "args": {
+                                    "setting": "autoreload.when_color_scheme_change"
+                                }
                             }
                         ]
                     },
                     {
-                        "caption": "Highlight all style",
+                        "caption": "Color highlighters",
                         "children":
                         [
                             {
-                                "caption": "Disabled",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "ha_style", "value": "disabled"}
+                                "caption": "Highlight colors in selected text",
+                                "children":
+                                [
+                                    {
+                                        "caption": "Inline highlighting style",
+                                        "children":
+                                        [
+                                            {
+                                                "caption": "None",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "none"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Filled",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "filled"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Text",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "text"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Outlined",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "outlined"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Underlined solid",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "underlined_solid"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Underlined strippled",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "underlined_strippled"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Underlined squiggly",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "underlined_squiggly"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "caption": "Gutter icon style",
+                                        "children":
+                                        [
+                                            {
+                                                "caption": "None",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.gutter_icons.icon_style",
+                                                    "value": "none"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Circle",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.gutter_icons.icon_style",
+                                                    "value": "circle"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Square",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.gutter_icons.icon_style",
+                                                    "value": "square"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "caption": "Highlight colors with blocks",
+                                        "command": "color_highlighter_set_setting",
+                                        "checkbox": true,
+                                        "args": {
+                                            "setting": "search_colors_in.selection.color_highlighters.phantoms.enabled"
+                                        }
+                                    }
+                                ]
                             },
                             {
-                                "caption": "None",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "ha_style", "value": "none"}
-                            },
-                            {
-                                "caption": "Colored text",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "ha_style", "value": "text"}
-                            },
-                            {
-                                "caption": "Filled",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "ha_style", "value": "filled"}
-                            },
-                            {
-                                "caption": "Outlined",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "ha_style", "value": "outlined"}
-                            },
-                            {
-                                "caption": "Underlined (solid)",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "ha_style", "value": "underlined_solid"}
-                            },
-                            {
-                                "caption": "Underlined (strippled)",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "ha_style", "value": "underlined_strippled"}
-                            },
-                            {
-                                "caption": "Underlined (squiggly)",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "ha_style", "value": "underlined_squiggly"}
-                            },
-                            {
-                                "caption": "Show icons",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "ha_icons", "value": true}
-                            },
-                            {
-                                "caption": "Hide icons",
-                                "command": "ch_set_setting",
-                                "args": {"setting": "ha_icons", "value": false}
+                                "caption": "Highlight colors in all text",
+                                "children":
+                                [
+                                    {
+                                        "caption": "Inline highlighting style",
+                                        "children":
+                                        [
+                                            {
+                                                "caption": "None",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "none"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Filled",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "filled"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Text",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "text"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Outlined",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "outlined"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Underlined solid",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "underlined_solid"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Underlined strippled",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "underlined_strippled"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Underlined squiggly",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "underlined_squiggly"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "caption": "Gutter icon style",
+                                        "children":
+                                        [
+                                            {
+                                                "caption": "None",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.gutter_icons.icon_style",
+                                                    "value": "none"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Circle",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.gutter_icons.icon_style",
+                                                    "value": "circle"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Square",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.gutter_icons.icon_style",
+                                                    "value": "square"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "caption": "Highlight colors with blocks",
+                                        "command": "color_highlighter_set_setting",
+                                        "checkbox": true,
+                                        "args": {
+                                            "setting": "search_colors_in.all_content.color_highlighters.phantoms.enabled"
+                                        }
+                                    }
+                                ]
                             }
                         ]
-                    },
-                    {
-                        "caption": "Restore color scheme",
-                        "command": "restore_color_scheme",
-                        "mnemonic": "R"
-                    },
-                    {
-                        "caption": "Enable default keybindings",
-                        "command": "ch_set_setting",
-                        "args": {"setting": "default_keybindings", "value": true}
-                    },
-                    {
-                        "caption": "Disable default keybindings",
-                        "command": "ch_set_setting",
-                        "args": {"setting": "default_keybindings", "value": false}
                     }
                 ]
             }
@@ -170,7 +290,7 @@
                             {
                                 "command": "open_file", "args":
                                 {
-                                    "file": "${packages}/Color Highlighter/ColorHighlighter.sublime-settings"
+                                    "file": "${packages}/color_highlighter/ColorHighlighter.sublime-settings"
                                 },
                                 "caption": "Settings – Default"
                             },
@@ -180,39 +300,6 @@
                                     "file": "${packages}/User/ColorHighlighter.sublime-settings"
                                 },
                                 "caption": "Settings – User"
-                            },
-                             { "caption": "-" },
-                            {
-                                "command": "open_file",
-                                "args": {
-                                "file": "${packages}/Color Highlighter/Default (OSX).sublime-keymap",
-                                "platform": "OSX"
-                                },
-                                "caption": "Key Bindings – Default"
-                            },
-                            {
-                                "command": "open_file",
-                                "args": {
-                                "file": "${packages}/Color Highlighter/Default.sublime-keymap",
-                                "platform": "Windows"
-                                },
-                                "caption": "Key Bindings – Default"
-                            },
-                            {
-                                "command": "open_file",
-                                "args": {
-                                "file": "${packages}/User/Default (OSX).sublime-keymap",
-                                "platform": "OSX"
-                                },
-                                "caption": "Key Bindings – User"
-                            },
-                            {
-                                "command": "open_file",
-                                "args": {
-                                "file": "${packages}/User/Default (Windows).sublime-keymap",
-                                "platform": "Windows"
-                                },
-                                "caption": "Key Bindings – User"
                             }
                         ]
                     }
