@@ -1,4 +1,6 @@
-#ColorHighlighter
+# ColorHighlighter
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C2L27SE4YDFAC)
 
 _ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively previews color values by underlaying the selected hex codes in different styles, coloring text or gutter icons. Also, plugin adds color picker, color format converter and less/sass/styl variables navigation to easily modify colors._
 
@@ -62,3 +64,9 @@ Also, there are Prev and Next color commands, triggered by <kbd>Ctrl</kbd>+<kbd>
 **Less/sass/scss/stylus variables navigation:**
 
 Just put cursor on a variable, right click on it and press "Go to variable definition" and the plugin will open it. There is also a shortcut <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd>.
+
+**Donate**
+
+Thank you guys for all your support, I couldn't have done it wihout your contributions. Every little bit helps!
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C2L27SE4YDFAC)
