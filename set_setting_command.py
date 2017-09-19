@@ -41,6 +41,12 @@ class ColorHighlighterSetSetting(sublime_plugin.ApplicationCommand):
         "search_colors_in.all_content.color_highlighters.color_scheme.enabled",
         "search_colors_in.all_content.color_highlighters.gutter_icons.enabled",
         "search_colors_in.all_content.color_highlighters.phantoms.enabled",
+        "search_colors_in.hover.enabled",
+        "search_colors_in.hover.color_highlighters.color_scheme.enabled",
+        "search_colors_in.hover.color_highlighters.gutter_icons.enabled",
+        "search_colors_in.hover.color_highlighters.phantoms.enabled",
+        "default_keybindings",
+        "experimental.asynchronosly_update_color_scheme",
     ]
 
     # A key is an enum setting and a value is the boolean setting that gets disabled when the value setting is set to
@@ -54,6 +60,10 @@ class ColorHighlighterSetSetting(sublime_plugin.ApplicationCommand):
             "search_colors_in.all_content.color_highlighters.color_scheme.enabled",
         "search_colors_in.all_content.color_highlighters.gutter_icons.icon_style":
             "search_colors_in.all_content.color_highlighters.gutter_icons.enabled",
+        "search_colors_in.hover.color_highlighters.color_scheme.highlight_style":
+            "search_colors_in.hover.color_highlighters.color_scheme.enabled",
+        "search_colors_in.hover.color_highlighters.gutter_icons.icon_style":
+            "search_colors_in.hover.color_highlighters.gutter_icons.enabled",
     }
 
     # A key is a boolean setting, a value is a list of boolean settings that need to be OR-ed to compute the key
@@ -68,6 +78,11 @@ class ColorHighlighterSetSetting(sublime_plugin.ApplicationCommand):
             "search_colors_in.all_content.color_highlighters.color_scheme.enabled",
             "search_colors_in.all_content.color_highlighters.gutter_icons.enabled",
             "search_colors_in.all_content.color_highlighters.phantoms.enabled",
+        ],
+        "search_colors_in.hover.enabled": [
+            "search_colors_in.hover.color_highlighters.color_scheme.enabled",
+            "search_colors_in.hover.color_highlighters.gutter_icons.enabled",
+            "search_colors_in.hover.color_highlighters.phantoms.enabled",
         ]
     }
 
@@ -84,6 +99,8 @@ class ColorHighlighterSetSetting(sublime_plugin.ApplicationCommand):
         "search_colors_in.selection.color_highlighters.phantoms": True,
         "search_colors_in.all_content.color_highlighters.gutter_icons": True,
         "search_colors_in.all_content.color_highlighters.phantoms": True,
+        "search_colors_in.hover": True,
+        "experimental.asynchronosly_update_color_scheme": True,
     }
 
     def run(self, setting, **args):
@@ -179,6 +196,8 @@ def _get_setting(setting):
     setting_path = setting.split(".")
     settings = sublime.load_settings(COLOR_HIGHLIGHTER_SETTINGS_NAME)
     setting_value = settings.get(setting_path[0])
+    if len(setting_path) == 1:
+        return setting_value
     for name in setting_path[1:-1]:
         setting_value = setting_value[name]
     return setting_value[setting_path[-1]]
@@ -190,6 +209,9 @@ def _set_setting(setting, value):
               % (setting, value))
     settings = sublime.load_settings(COLOR_HIGHLIGHTER_SETTINGS_NAME)
     setting_path = setting.split(".")
+    if len(setting_path) == 1:
+        settings.set(setting_path[0], value)
+        return
     top_level_setting = settings.get(setting_path[0])
     setting_value = top_level_setting
     for name in setting_path[1:-1]:

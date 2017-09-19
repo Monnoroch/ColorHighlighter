@@ -12,7 +12,7 @@ except ValueError:
 COLOR_HIGHLIGHTER_SETTINGS_NAME = "ColorHighlighter.sublime-settings"
 
 
-class Settings(object):  # pylint: disable=too-few-public-methods
+class Settings(object):  # pylint: disable=too-few-public-methods,too-many-instance-attributes
     """The data structure for holding plugin's settings."""
 
     def __init__(self, settings):
@@ -31,6 +31,25 @@ class Settings(object):  # pylint: disable=too-few-public-methods
         self.icon_factory = _IconFactorySettings(copy.deepcopy(settings.get("icon_factory", {})))
         self.search_colors_in = _SearchColorsSettings(copy.deepcopy(settings.get("search_colors_in", {})))
         self.regex_compiler = _RegexCompilerSettings(copy.deepcopy(settings.get("regex_compiler", {})))
+        self.default_keybindings = settings.get("default_keybindings", True)
+        self.experimental = _ExperimentalSettings(copy.deepcopy(settings.get("experimental", {})))
+
+
+class _ExperimentalSettings(object):  # pylint: disable=too-few-public-methods
+    """Experimental settings that are not ready to be shipped for everyone yet."""
+
+    def __init__(self, settings):
+        """
+        Init plugin's settings.
+
+        Arguments:
+        - settings - experimental settings dict.
+        """
+        self.asynchronosly_update_color_scheme = settings.get(  # pylint: disable=invalid-name
+            "asynchronosly_update_color_scheme", False)
+        if not st_helper.is_st3():
+            print("Updating the color scheme asynchronously is not supported in ST2.")
+            self.asynchronosly_update_color_scheme = False
 
 
 class _AutoreloadSettings(object):  # pylint: disable=too-few-public-methods
@@ -71,9 +90,13 @@ class _SearchColorsSettings(object):  # pylint: disable=too-few-public-methods
         Arguments:
         - settings - the color searching settings dict.
         """
-        self.color_searcher_names = {"selection": True, "all_content": True}
+        self.color_searcher_names = {"selection": True, "all_content": True, "hover": True}
         self.selection = _ColorSearcherSettings(settings.get("selection", {}), "selection")
         self.all_content = _ColorSearcherSettings(settings.get("all_content", {}), "all_content")
+        self.hover = _ColorSearcherSettings(settings.get("hover", {}), "hover")
+        if not st_helper.is_st3():
+            print("Highlighting colors while hovering over them is not supported on ST2.")
+            self.hover.enabled = False
 
 
 class _ColorSearcherSettings(object):  # pylint: disable=too-few-public-methods

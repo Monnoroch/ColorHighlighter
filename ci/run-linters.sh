@@ -19,4 +19,13 @@ if [[ ! ${container_name} ]]; then
     exit 1
 fi
 
-docker exec -i "${container_name}" /opt/linters-system/generated/run-linux.sh
+ENDLINECHECK_EXCLUDE="ColorPicker/ColorPicker_linux_x32"
+ENDLINECHECK_EXCLUDE="$ENDLINECHECK_EXCLUDE:ColorPicker/ColorPicker_linux_x64"
+ENDLINECHECK_EXCLUDE="$ENDLINECHECK_EXCLUDE:ColorPicker/ColorPicker_osx_x64"
+ENDLINECHECK_EXCLUDE="$ENDLINECHECK_EXCLUDE:ColorPicker/ColorPicker_win.exe"
+ENDLINECHECK_EXCLUDE="$ENDLINECHECK_EXCLUDE:ColorPicker/winapi/Cyotek.Windows.Forms.ColorPicker/Resources/eyedropper.cur"
+ENDLINECHECK_EXCLUDE="$ENDLINECHECK_EXCLUDE:ColorPicker/winapi/Cyotek.Windows.Forms.ColorPicker/cyopublic.snk"
+ENDLINECHECK_EXCLUDE="$ENDLINECHECK_EXCLUDE:ColorPicker/winapi/Sample-Palettes/background.lbm"
+
+docker exec -e ENDLINECHECK_EXCLUDE="${ENDLINECHECK_EXCLUDE}" -i "${container_name}" \
+    /opt/linters-system/generated/run-linux.sh

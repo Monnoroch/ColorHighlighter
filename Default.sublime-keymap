@@ -1,0 +1,29 @@
+[
+    {
+        "keys": ["ctrl+shift+,"],
+        "command": "color_highlighter_next_color",
+        "context": [
+            {
+                "key": "color_highlighter.color_highlighter_next_color"
+            }
+        ]
+    },
+    {
+        "keys": ["ctrl+shift+."],
+        "command": "color_highlighter_previous_color",
+        "context": [
+            {
+                "key": "color_highlighter.color_highlighter_previous_color"
+            }
+        ]
+    },
+    {
+        "keys": ["ctrl+shift+c"],
+        "command": "color_highlighter_pick_color",
+        "context": [
+            {
+                "key": "color_highlighter.color_highlighter_pick_color"
+            }
+        ]
+    }
+]

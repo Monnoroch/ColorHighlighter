@@ -1,0 +1,6 @@
+[
+    { "caption": "-", "id": "Color Highlighter" },
+    { "command": "color_highlighter_pick_color", "caption": "Insert color with color picker"},
+    { "command": "color_highlighter_next_color", "caption": "Convert color to the next format"},
+    { "command": "color_highlighter_previous_color", "caption": "Convert color to the previous format"}
+]

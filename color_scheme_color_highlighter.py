@@ -59,16 +59,18 @@ class ColorSchemeBuilder(object):
 </dict>
 """
 
-    def __init__(self, color_scheme_data, color_scheme_writer):
+    def __init__(self, color_scheme_data, color_scheme_writer, async_update):
         """
         Init the ColorSchemeBuilder.
 
         Arguments:
         - color_scheme_data - a ColorSchemeData instance for a color scheme.
         - color_scheme_writer - a ColorSchemeWriter instance for a color scheme.
+        - async_update - whether to update the color scheme asynchronously or not.
         """
         self._color_scheme_data = color_scheme_data
         self._color_scheme_writer = color_scheme_writer
+        self._async_update = async_update
         self._lock = threading.Lock()
 
     def get_scopes(self, for_colors, for_text_coloring):
@@ -86,8 +88,13 @@ class ColorSchemeBuilder(object):
             fixed_color = colors.background_color_for_text_workaround(color, background_color)
             color_name = fixed_color[1:]
             scope_names.append(self._get_color_name(for_text_coloring, color_name))
-        # TODO(#5): return scope_names immediately and update color scheme in background.  # pylint: disable=fixme
+        if self._async_update:
+            sublime.set_timeout_async(lambda: self._update_schema(for_colors), 0)
+        else:
+            self._update_schema(for_colors)
+        return scope_names
 
+    def _update_schema(self, for_colors):
         with self._lock:
             existing_colors = self._color_scheme_data.existing_colors
             scopes = []
@@ -110,8 +117,6 @@ class ColorSchemeBuilder(object):
                 existing_colors[color] = color_name
             if scopes:
                 self._color_scheme_writer.add_scopes(scopes)
-
-        return scope_names
 
     def _get_color_name(self, for_text_coloring, color_name):
         if for_text_coloring:

@@ -8,6 +8,14 @@
                 "children":
                 [
                     {
+                        "caption": "Default key bindings",
+                        "command": "color_highlighter_set_setting",
+                        "checkbox": true,
+                        "args": {
+                            "setting": "default_keybindings"
+                        }
+                    },
+                    {
                         "caption": "Autoreload",
                         "children":
                         [
@@ -150,6 +158,122 @@
                                 ]
                             },
                             {
+                                "caption": "Highlight colors when hovering the cursor above them",
+                                "children":
+                                [
+                                    {
+                                        "caption": "Inline highlighting style",
+                                        "children":
+                                        [
+                                            {
+                                                "caption": "None",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "none"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Filled",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "filled"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Text",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "text"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Outlined",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "outlined"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Underlined solid",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "underlined_solid"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Underlined strippled",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "underlined_strippled"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Underlined squiggly",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.color_scheme.highlight_style",
+                                                    "value": "underlined_squiggly"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "caption": "Gutter icon style",
+                                        "children":
+                                        [
+                                            {
+                                                "caption": "None",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.gutter_icons.icon_style",
+                                                    "value": "none"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Circle",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.gutter_icons.icon_style",
+                                                    "value": "circle"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Square",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.gutter_icons.icon_style",
+                                                    "value": "square"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "caption": "Highlight colors with blocks",
+                                        "command": "color_highlighter_set_setting",
+                                        "checkbox": true,
+                                        "args": {
+                                            "setting": "search_colors_in.hover.color_highlighters.phantoms.enabled"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
                                 "caption": "Highlight colors in all text",
                                 "children":
                                 [
@@ -264,6 +388,19 @@
                                         }
                                     }
                                 ]
+                            }
+                        ]
+                    },
+                    {
+                        "caption": "Experimental",
+                        "children": [
+                            {
+                                "caption": "Update color scheme asynchronously",
+                                "command": "color_highlighter_set_setting",
+                                "checkbox": true,
+                                "args": {
+                                    "setting": "experimental.asynchronosly_update_color_scheme"
+                                }
                             }
                         ]
                     }

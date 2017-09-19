@@ -16,6 +16,16 @@ class ColorFormatConverter(object):
         """
         raise NotImplementedError
 
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        raise NotImplementedError
+
 
 class _Sharp8ColorConverter(ColorFormatConverter):
     """A class for converting colors in sharp8 representation to a canonical one."""
@@ -30,6 +40,16 @@ class _Sharp8ColorConverter(ColorFormatConverter):
         """
         return match["sharp8"]
 
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        return color
+
 
 class _Sharp6ColorConverter(ColorFormatConverter):
     """A class for converting colors in sharp6 representation to a canonical one."""
@@ -43,6 +63,16 @@ class _Sharp6ColorConverter(ColorFormatConverter):
         Returns a canonical color representation for the match.
         """
         return match["sharp6"] + "FF"
+
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        return color[:-2]
 
 
 class _Sharp4ColorConverter(ColorFormatConverter):
@@ -59,6 +89,16 @@ class _Sharp4ColorConverter(ColorFormatConverter):
         return "#%s%s%s%s" % (
             match["sharp4_R"] * 2, match["sharp4_G"] * 2, match["sharp4_B"] * 2, match["sharp4_A"] * 2)
 
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        return "#%s%s%s%s" % (color[1], color[3], color[5], color[7])
+
 
 class _Sharp3ColorConverter(ColorFormatConverter):
     """A class for converting colors in sharp3 representation to a canonical one."""
@@ -72,6 +112,16 @@ class _Sharp3ColorConverter(ColorFormatConverter):
         Returns a canonical color representation for the match.
         """
         return "#%s%s%sFF" % (match["sharp3_R"] * 2, match["sharp3_G"] * 2, match["sharp3_B"] * 2)
+
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        return "#%s%s%s" % (color[1], color[3], color[5])
 
 
 class _RgbaColorConverter(ColorFormatConverter):
@@ -93,6 +143,20 @@ class _RgbaColorConverter(ColorFormatConverter):
             return None
         return "#%02X%02X%02X%02X" % (r, g, b, a)
 
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        r = _channel_to_decimal(color[1:3])  # pylint: disable=invalid-name
+        g = _channel_to_decimal(color[3:5])  # pylint: disable=invalid-name
+        b = _channel_to_decimal(color[5:7])  # pylint: disable=invalid-name
+        a = _channel_to_float(color[7:9])  # pylint: disable=invalid-name
+        return "rgba(%d, %d, %d, %f)" % (r, g, b, a)
+
 
 class _RgbColorConverter(ColorFormatConverter):
     """A class for converting colors in rgb representation to a canonical one."""
@@ -111,6 +175,19 @@ class _RgbColorConverter(ColorFormatConverter):
         if r is None or g is None or b is None:
             return None
         return "#%02X%02X%02XFF" % (r, g, b)
+
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        r = _channel_to_decimal(color[1:3])  # pylint: disable=invalid-name
+        g = _channel_to_decimal(color[3:5])  # pylint: disable=invalid-name
+        b = _channel_to_decimal(color[5:7])  # pylint: disable=invalid-name
+        return "rgb(%d, %d, %d)" % (r, g, b)
 
 
 class _HsvaColorConverter(ColorFormatConverter):
@@ -133,6 +210,21 @@ class _HsvaColorConverter(ColorFormatConverter):
         r, g, b = _hsv_to_rgb(h, s, v)  # pylint: disable=invalid-name
         return "#%02X%02X%02X%02X" % (r, g, b, a)
 
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        r = _channel_to_decimal(color[1:3])  # pylint: disable=invalid-name
+        g = _channel_to_decimal(color[3:5])  # pylint: disable=invalid-name
+        b = _channel_to_decimal(color[5:7])  # pylint: disable=invalid-name
+        a = _channel_to_float(color[7:9])  # pylint: disable=invalid-name
+        h, s, v = _rgb_to_hsv(r, g, b)  # pylint: disable=invalid-name
+        return "hsva(%d, %d%%, %d%%, %f)" % (h, s, v, a)
+
 
 class _HsvColorConverter(ColorFormatConverter):
     """A class for converting colors in hsv representation to a canonical one."""
@@ -152,6 +244,20 @@ class _HsvColorConverter(ColorFormatConverter):
             return None
         r, g, b = _hsv_to_rgb(h, s, v)  # pylint: disable=invalid-name
         return "#%02X%02X%02XFF" % (r, g, b)
+
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        r = _channel_to_decimal(color[1:3])  # pylint: disable=invalid-name
+        g = _channel_to_decimal(color[3:5])  # pylint: disable=invalid-name
+        b = _channel_to_decimal(color[5:7])  # pylint: disable=invalid-name
+        h, s, v = _rgb_to_hsv(r, g, b)  # pylint: disable=invalid-name
+        return "hsv(%d, %d%%, %d%%)" % (h, s, v)
 
 
 class _HslaColorConverter(ColorFormatConverter):
@@ -174,6 +280,21 @@ class _HslaColorConverter(ColorFormatConverter):
         r, g, b = _hsl_to_rgb(h, s, l)  # pylint: disable=invalid-name
         return "#%02X%02X%02X%02X" % (r, g, b, a)
 
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        r = _channel_to_decimal(color[1:3])  # pylint: disable=invalid-name
+        g = _channel_to_decimal(color[3:5])  # pylint: disable=invalid-name
+        b = _channel_to_decimal(color[5:7])  # pylint: disable=invalid-name
+        a = _channel_to_float(color[7:9])  # pylint: disable=invalid-name
+        h, s, l = _rgb_to_hsl(r, g, b)  # pylint: disable=invalid-name
+        return "hsla(%d, %d%%, %d%%, %f)" % (h, s, l, a)
+
 
 class _HslColorConverter(ColorFormatConverter):
     """A class for converting colors in hsl representation to a canonical one."""
@@ -193,6 +314,20 @@ class _HslColorConverter(ColorFormatConverter):
             return None
         r, g, b = _hsl_to_rgb(h, s, l)  # pylint: disable=invalid-name
         return "#%02X%02X%02XFF" % (r, g, b)
+
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a canonical color representation.
+        Returns a current color representation for the input color.
+        """
+        r = _channel_to_decimal(color[1:3])  # pylint: disable=invalid-name
+        g = _channel_to_decimal(color[3:5])  # pylint: disable=invalid-name
+        b = _channel_to_decimal(color[5:7])  # pylint: disable=invalid-name
+        h, s, l = _rgb_to_hsl(r, g, b)  # pylint: disable=invalid-name
+        return "hsl(%d, %d%%, %d%%)" % (h, s, l)
 
 
 class ColorConverter(ColorFormatConverter):
@@ -231,6 +366,37 @@ class ColorConverter(ColorFormatConverter):
         for name in self._formats:
             if match.get(name, None) is not None:
                 return ColorConverter._converters[name].to_color(match)
+        raise Exception("Match %s could not be canonicalized." % match)
+
+    def from_color(self, color):
+        """
+        Convert a canonical color representation into a current color representation..
+
+        Arguments:
+        - color - a pair of the canonical color representation and a color format.
+        Returns a current color representation for the input color.
+        """
+        color, color_format = color
+        converter = self._converters.get(color_format, None)
+        if converter is None:
+            raise Exception("Unknown color format %s." % color_format)
+        return converter.from_color(color)
+
+
+def _channel_to_decimal(channel):
+    return int(channel, 16)
+
+
+def _channel_to_float(channel):
+    return int(channel, 16) / 255.0
+
+
+def _channel_to_percent(channel):
+    return int(round((int(channel, 16) * 100) / 255.0))
+
+
+def _channel_to_hue(channel):
+    return int(round((int(channel, 16) * 360) / 255.0))
 
 
 def _parse_decimal_channel(text):
@@ -270,6 +436,16 @@ def _hsv_to_rgb(h, s, v):  # pylint: disable=invalid-name
     return int(round(r * 255)), int(round(g * 255)), int(round(b * 255))
 
 
+def _rgb_to_hsv(r, g, b):  # pylint: disable=invalid-name
+    h, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)  # pylint: disable=invalid-name
+    return int(round(h * 360)), int(round(s * 100)), int(round(v * 100))
+
+
 def _hsl_to_rgb(h, s, l):  # pylint: disable=invalid-name
     r, g, b = colorsys.hls_to_rgb(h, l, s)  # pylint: disable=invalid-name
     return int(round(r * 255)), int(round(g * 255)), int(round(b * 255))
+
+
+def _rgb_to_hsl(r, g, b):  # pylint: disable=invalid-name
+    h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)  # pylint: disable=invalid-name
+    return int(round(h * 360)), int(round(s * 100)), int(round(l * 100))

@@ -4,7 +4,7 @@
             "enabled": true,
             "color_highlighters": {
                 "color_scheme": {
-                    "enabled": true,
+                    "enabled": false,
                     "highlight_style": "text"
                 },
                 "gutter_icons": {
@@ -31,8 +31,25 @@
                     "enabled": false
                 }
             }
+        },
+        "hover": {
+            "enabled": true,
+            "color_highlighters": {
+                "color_scheme": {
+                    "enabled": true,
+                    "highlight_style": "filled"
+                },
+                "gutter_icons": {
+                    "enabled": false,
+                    "icon_style": "circle"
+                },
+                "phantoms": {
+                    "enabled": false
+                }
+            }
         }
     },
+    "default_keybindings": true,
     "file_extensions": [".py", ".css"],
     "icon_factory": {
         "convert_command": "convert",
@@ -104,5 +121,8 @@
                 "white": "hsl(0, 0%, 100%)"
             }
         }
+    },
+    "experimental": {
+        "asynchronosly_update_color_scheme": false
     }
 }

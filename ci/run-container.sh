@@ -25,12 +25,22 @@ docker run -d --rm --name "${CONTAINER_NAME}" "${IMAGE_NAME}" sleep "${TIMEOUT}"
 workdir=$(docker exec -i "${CONTAINER_NAME}" pwd)
 docker cp ./ "${CONTAINER_NAME}:${workdir}/"
 
+test_files=(
+    __init__.py
+    sublime.py
+    sublime_plugin.py
+)
+for file in "${test_files[@]}"; do
+    docker exec -i "${CONTAINER_NAME}" cp "./tests/${file}" "${workdir}/${file}"
+done
+
 packages_dirs=(
     "/root/.config/sublime-text-3/Packages"
     "/root/.config/sublime-text-2/Packages"
 )
+plugin_name="color_highlighter"
 for packages in "${packages_dirs[@]}"; do
-    docker exec -i "${CONTAINER_NAME}" mkdir ${packages}/ColorHighlighter
+    docker exec -i "${CONTAINER_NAME}" mkdir ${packages}/${plugin_name}
     docker exec -i "${CONTAINER_NAME}" mkdir ${packages}/0_test_plugin
 
     test_files=(
@@ -44,11 +54,21 @@ for packages in "${packages_dirs[@]}"; do
     done
 
     for file in *.py; do
-        docker cp "./${file}" "${CONTAINER_NAME}:${packages}/ColorHighlighter/${file}"
+        docker cp "./${file}" "${CONTAINER_NAME}:${packages}/${plugin_name}/${file}"
     done
-    docker cp "./elementtree" "${CONTAINER_NAME}:${packages}/ColorHighlighter/elementtree"
+    docker cp "./elementtree" "${CONTAINER_NAME}:${packages}/${plugin_name}/elementtree"
+    docker cp "./ColorPicker" "${CONTAINER_NAME}:${packages}/${plugin_name}/ColorPicker"
 
-    file="ColorHighlighter.sublime-settings"
-    docker cp "./${file}" "${CONTAINER_NAME}:${packages}/ColorHighlighter/${file}"
-    docker exec "${CONTAINER_NAME}" rm "${packages}/ColorHighlighter/sublime.py"
+    settings_files=(
+        "ColorHighlighter.sublime-settings"
+        "Context.sublime-menu"
+        "Main.sublime-menu"
+        "Default.sublime-keymap"
+        "Default (OSX).sublime-keymap"
+    )
+    for file in "${settings_files[@]}"; do
+        docker cp "./${file}" "${CONTAINER_NAME}:${packages}/${plugin_name}/${file}"
+    done
+    docker cp "./integration_tests/ColorHighlighter.sublime-settings" \
+        "${CONTAINER_NAME}:${packages}/${plugin_name}/ColorHighlighter.sublime-settings"
 done

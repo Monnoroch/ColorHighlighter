@@ -36,26 +36,43 @@ class ColorSelectionListener(object):
             self._on_selection_really_modified()
 
     def _on_selection_really_modified(self):
-        color_regions = self._generate_color_regions(self._selection)
+        color_regions = _drop_match(_generate_color_regions(self._view, self._color_searcher, self._selection))
         self._color_highlighter.highlight_regions(color_regions)
 
-    def _generate_color_regions(self, regions):
-        normalized_regions = [NormalizedRegion(region) for region in regions]
-        for line in deduplicate_regions(self._generate_lines(regions)):
-            for color_region in self._color_searcher.search(self._view, line):
-                if _intersects_any(color_region, normalized_regions):
-                    yield color_region
 
-    def _generate_lines(self, regions):
-        for region in regions:
-            for line in self._view.lines(region):
-                yield NormalizedRegion(line)
+def search_colors_in_selection(view, color_searcher):
+    """
+    Search colors in selection.
+
+    Arguments:
+    - view - the view to search colors in.
+    - color_searcher - the color searcher to search colors with.
+    """
+    return _generate_color_regions(view, color_searcher, view.sel())
 
 
-def _intersects_any(color_region, regions):
-    (value, _) = color_region
+def _drop_match(values):
+    for value in values:
+        yield (value[0], value[1])
+
+
+def _generate_color_regions(view, color_searcher, regions):
+    normalized_regions = [NormalizedRegion(region) for region in regions]
+    for line in deduplicate_regions(_generate_lines(view, regions)):
+        for color_data in color_searcher.search(view, line):
+            if _intersects_any(color_data[0], normalized_regions):
+                yield color_data
+
+
+def _generate_lines(view, regions):
     for region in regions:
-        if intersects(value, region):
+        for line in view.lines(region):
+            yield NormalizedRegion(line)
+
+
+def _intersects_any(input_region, regions):
+    for region in regions:
+        if intersects(input_region, region):
             return True
     return False
 

@@ -1,6 +1,7 @@
 """The main program."""
 
 import os
+import stat
 
 import sublime  # pylint: disable=import-error
 
@@ -21,7 +22,8 @@ try:
     from .color_scheme import parse_color_scheme
     from .color_scheme_color_highlighter import ColorSchemeBuilder, ColorSchemeColorHighlighter
     from .color_selection_listener import ColorSelectionListener
-    from .load_resource import load_resource
+    from .color_hover_listener import ColorHoverListener
+    from .load_resource import load_binary_resource, get_binary_resource_size
     from .regex_compiler import compile_regex
 except ValueError:
     from debug import DEBUG
@@ -38,7 +40,8 @@ except ValueError:
     from color_scheme import parse_color_scheme
     from color_scheme_color_highlighter import ColorSchemeBuilder, ColorSchemeColorHighlighter
     from color_selection_listener import ColorSelectionListener
-    from load_resource import load_resource
+    from color_hover_listener import ColorHoverListener
+    from load_resource import load_binary_resource, get_binary_resource_size
     from regex_compiler import compile_regex
 
 # ST2's python doesn't have XMLTreeBuilder, this code is supposed to fix this, see
@@ -50,6 +53,19 @@ if not st_helper.is_st3():
 
 
 PREFERENCES_SETTINGS_NAME = "Preferences.sublime-settings"
+COLOR_HIGHLIGHTER_KEY_PREFIX = "color_highlighter."
+
+
+def copy_resource(resource, destination_path):
+    """
+    Copy resource to a file.
+
+    Arguments:
+    - resource - the resource to copy.
+    - destination_path - the path where to copy the resource.
+    """
+    with open(destination_path, "wb") as file:
+        file.write(load_binary_resource(resource))
 
 
 def set_fake_color_scheme(color_scheme, fake_color_scheme):
@@ -67,8 +83,7 @@ def set_fake_color_scheme(color_scheme, fake_color_scheme):
         if DEBUG:
             print("ColorHighlighter: action=copy_color_scheme scheme=%s fake_scheme=%s"
                   % (color_scheme, fake_color_scheme))
-        with open(fake_color_scheme_path, "w") as file:
-            file.write(load_resource(color_scheme))
+        copy_resource(color_scheme, fake_color_scheme_path)
 
     settings = sublime.load_settings(PREFERENCES_SETTINGS_NAME)  # pylint: disable=assignment-from-none
     if settings.get("color_scheme", None) != fake_color_scheme:
@@ -92,6 +107,10 @@ class ColorHighlighterComponents(object):
         self._color_highlighters = {}
         for name in self._settings.search_colors_in.color_searcher_names:
             self._color_highlighters[name] = {}
+
+    def provide_settings(self):
+        """Provide the plugin settings."""
+        return self._settings
 
     def provide_formats(self):
         """Provide the formats config."""
@@ -124,6 +143,19 @@ class ColorHighlighterComponents(object):
             self.provide_color_searcher(), view,
             self.provide_color_highlighter(view, self._settings.search_colors_in.selection))
 
+    def provide_color_hover_listener(self, view):  # pylint: disable=invalid-name
+        """
+        Provide a color hover listener for a view.
+
+        Arguments:
+        - view -- the view.
+        """
+        if not self._settings.search_colors_in.hover.enabled:
+            return DummyEventListener()
+        return ColorHoverListener(
+            self.provide_color_searcher(), view,
+            self.provide_color_highlighter(view, self._settings.search_colors_in.hover))
+
     def provide_content_listener(self, view):
         """
         Provide a content listener for a view.
@@ -147,8 +179,10 @@ class ColorHighlighterComponents(object):
         return ColorSelection(
             self.provide_color_highlighter(view, self._settings.search_colors_in.selection),
             self.provide_color_highlighter(view, self._settings.search_colors_in.all_content),
+            self.provide_color_highlighter(view, self._settings.search_colors_in.hover),
             self.provide_color_selection_listener(view),
-            self.provide_content_listener(view))
+            self.provide_content_listener(view),
+            self.provide_color_hover_listener(view))
 
     def provide_fake_color_scheme_data(self):
         """Provide a fake color scheme data."""
@@ -174,7 +208,8 @@ class ColorHighlighterComponents(object):
             return self._color_scheme_builder
 
         _, color_scheme_data, color_scheme_writer = self.provide_fake_color_scheme_data()
-        self._color_scheme_builder = ColorSchemeBuilder(color_scheme_data, color_scheme_writer)
+        self._color_scheme_builder = ColorSchemeBuilder(
+            color_scheme_data, color_scheme_writer, self._settings.experimental.asynchronosly_update_color_scheme)
         return self._color_scheme_builder
 
     def provide_icon_factory(self):
@@ -308,8 +343,8 @@ class ColorHighlighterPlugin(object):
 class ColorSelection(object):
     """The main class for listening ST events."""
 
-    def __init__(self, selection_color_highlighter, content_color_highlighter, color_selection_listener,
-                 content_listener):
+    def __init__(self, selection_color_highlighter, content_color_highlighter,  # pylint: disable=too-many-arguments
+                 hover_color_highlighter, color_selection_listener, content_listener, color_hover_listener):
         """
         Initialize the event listener.
 
@@ -318,9 +353,12 @@ class ColorSelection(object):
         - content_color_highlighter - color highlighter for all content.
         - color_selection_listener - the color selection listener.
         - content_listener - the content listener.
+        - color_hover_listener - the color hover listener.
         """
         self._selection_color_highlighter = selection_color_highlighter
         self._content_color_highlighter = content_color_highlighter
+        self._hover_color_highlighter = hover_color_highlighter
+        self._color_hover_listener = color_hover_listener
         self._color_selection_listener = color_selection_listener
         self._content_listener = content_listener
 
@@ -344,10 +382,15 @@ class ColorSelection(object):
         """on_selection_modified event."""
         self._color_selection_listener.on_selection_modified()
 
+    def on_hover(self, point, hover_zone):
+        """on_hover event."""
+        self._color_hover_listener.on_hover(point, hover_zone)
+
     def clear_all(self):
         """Clean up all highlightings."""
         self._selection_color_highlighter.clear_all()
         self._content_color_highlighter.clear_all()
+        self._hover_color_highlighter.clear_all()
 
 
 class ColorSelectionEventListener(object):
@@ -403,6 +446,14 @@ class ColorSelectionEventListener(object):
         if not self._init_view(view):
             return
         self._view_listeners[view.id()].on_selection_modified()
+
+    def on_hover(self, view, point, hover_zone):
+        """on_hover event."""
+        if not self._listening:
+            return
+        if not self._init_view(view):
+            return
+        self._view_listeners[view.id()].on_hover(point, hover_zone)
 
     def _init_view(self, view):
         view_id = view.id()
@@ -464,7 +515,27 @@ class ColorSelectionEventSublimeListener(sublime_plugin.EventListener):
 
     def on_selection_modified(self, view):  # pylint: disable=no-self-use
         """on_selection_modified event."""
+        # ST2 calls these events before our simulated plugin_loaded.
+        if ColorHighlighterPlugin.components is None:
+            return
         ColorHighlighterPlugin.components.provide_color_selection_event_listener().on_selection_modified(view)
+
+    def on_hover(self, view, point, hover_zone):  # pylint: disable=no-self-use
+        """on_hover event."""
+        # ST2 calls these events before our simulated plugin_loaded.
+        if ColorHighlighterPlugin.components is None:
+            return
+        ColorHighlighterPlugin.components.provide_color_selection_event_listener().on_hover(view, point, hover_zone)
+
+    def on_query_context(self, view, key, operator,  # pylint: disable=no-self-use,too-many-arguments,unused-argument
+                         operand, match_all):  # pylint: disable=unused-argument
+        """on_query_context  event."""
+        # ST2 calls these events before our simulated plugin_loaded.
+        if ColorHighlighterPlugin.components is None:
+            return
+        if not key.startswith(COLOR_HIGHLIGHTER_KEY_PREFIX):
+            return None
+        return ColorHighlighterPlugin.components.provide_settings().default_keybindings
 
 
 def plugin_loaded():  # noqa: D401
@@ -476,9 +547,22 @@ def plugin_loaded():  # noqa: D401
         if not os.path.exists(path_to_create):
             os.mkdir(path_to_create)
 
+    def _init_color_picker():
+        color_picker_file = path.color_picker_file(path.ABSOLUTE)
+        color_picker_resource = path.color_picker_binary(path.RELATIVE)
+        if (os.path.exists(color_picker_file) and
+                os.path.getsize(color_picker_file) == get_binary_resource_size(color_picker_resource)):
+            return
+
+        copy_resource(color_picker_resource, color_picker_file)
+        chmod_flags = stat.S_IXUSR | stat.S_IXGRP | stat.S_IRUSR | stat.S_IRUSR | stat.S_IWUSR | stat.S_IWGRP
+        os.chmod(color_picker_file, chmod_flags)
+
     _create_if_not_exists(path.data_path(path.ABSOLUTE))
     _create_if_not_exists(path.icons_path(path.ABSOLUTE))
     _create_if_not_exists(path.themes_path(path.ABSOLUTE))
+    _create_if_not_exists(path.color_picker_path(path.ABSOLUTE))
+    _init_color_picker()
     ColorHighlighterPlugin.init()
 
 

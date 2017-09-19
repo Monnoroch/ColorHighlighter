@@ -29,8 +29,8 @@ class ContentListener(object):
 
     def _generate_color_regions(self):
         for line in self._generate_lines():
-            for color_region in self._color_searcher.search(self._view, line):
-                yield color_region
+            for (region, color, _) in self._color_searcher.search(self._view, line):
+                yield (region, color)
 
     def _generate_lines(self):
         for line in self._view.lines(NormalizedRegion(0, self._view.size()).region()):

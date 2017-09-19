@@ -4,7 +4,7 @@ echo "Running $0..."
 
 /opt/sublime_text_3/sublime_text integration_tests/white.css
 
-sleep 5
+sleep 7
 
 killall -9 sublime_text
 

@@ -113,37 +113,51 @@ class CachingColorHighlighter(CombinedColorHighlighter):  # pylint: disable=abst
         Arguments:
         - regions - an interable of tuples (region to highlight, it's color).
         """
-        context = self.make_context()
-        for value in self._existing_regions:
-            self._existing_regions[value].need_delete = True
+        for region in self._existing_regions:
+            self._existing_regions[region].need_delete = True
 
+        regions_to_highlight = []
+        changed_color = []
         for value in regions:
-            if value in self._existing_regions:
-                self._existing_regions[value].need_delete = False
-                continue
+            region = value[0]
+            color = value[1]
+            if region in self._existing_regions:
+                region_data = self._existing_regions[region]
+                if region_data.color == color:
+                    region_data.need_delete = False
+                    continue
+                else:
+                    changed_color.append((region, region_data.color))
 
-            self.highlight_region(context, value)
-            self._existing_regions[value] = _RegionData()
+            regions_to_highlight.append(value)
+            self._existing_regions[region] = _RegionData(color)
+
+        context = self.make_context()
 
         regions_to_delete = []
-        for value in self._existing_regions:
-            region_data = self._existing_regions[value]
+        for region in self._existing_regions:
+            region_data = self._existing_regions[region]
             if region_data.need_delete:
-                self.unhighlight_region(context, value)
-                regions_to_delete.append(value)
-        for value in regions_to_delete:
-            del self._existing_regions[value]
+                self.unhighlight_region(context, (region, region_data.color))
+                regions_to_delete.append(region)
+        for value in changed_color:
+            self.unhighlight_region(context, value)
+        for region in regions_to_delete:
+            del self._existing_regions[region]
+        for value in regions_to_highlight:
+            self.highlight_region(context, value)
         self.highlight_regions_done(context)
 
     def clear_all(self):
         """Unhighlight all regions."""
         context = self.make_context()
-        for value in self._existing_regions:
-            self.unhighlight_region(context, value)
+        for region in self._existing_regions:
+            self.unhighlight_region(context, (region, self._existing_regions[region].color))
         self._existing_regions = {}
         self.highlight_regions_done(context)
 
 
 class _RegionData(object):  # pylint: disable=too-few-public-methods
-    def __init__(self):
+    def __init__(self, color):
+        self.color = color
         self.need_delete = False

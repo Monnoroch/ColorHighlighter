@@ -75,6 +75,46 @@ def themes_path(relative):
     return os.path.join(data_path(relative), "themes")
 
 
+def color_picker_path(relative):
+    """
+    Get color picker directory path.
+
+    Arguments:
+    - relative - whether to get an absolute path or a relative to sublime packages directory.
+    """
+    return os.path.join(data_path(relative), "ColorPicker")
+
+
+def _color_picker_file():
+    executable_suffix = None
+    platform = sublime.platform()
+    if platform == "windows":
+        executable_suffix = "win.exe"
+    else:
+        executable_suffix = "%s_%s" % (platform, sublime.arch())
+    return "ColorPicker_" + executable_suffix
+
+
+def color_picker_file(relative):
+    """
+    Get color picker file.
+
+    Arguments:
+    - relative - whether to get an absolute path or a relative to sublime packages directory.
+    """
+    return os.path.join(color_picker_path(relative), _color_picker_file())
+
+
+def color_picker_binary(relative):
+    """
+    Get color picker file.
+
+    Arguments:
+    - relative - whether to get an absolute path or a relative to sublime packages directory.
+    """
+    return os.path.join(packages_path(relative), PLUGIN_NAME, "ColorPicker", _color_picker_file())
+
+
 def fake_color_scheme_path(color_scheme, relative):
     """
     Given a color scheme, get a fake color scheme path.

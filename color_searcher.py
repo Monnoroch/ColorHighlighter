@@ -24,12 +24,11 @@ class ColorSearcher(object):
         """
         Get a region with a color in the view.
 
-        Given a region, return another region with the color text that contains the initial region or None, if the
-        original region is not in the color text.
+        Given a region, yield regions inside of it that contain colors.
         Arguments:
         - view - the view to look in.
         - region - the initial region to look around.
-        Yields pairs of NormalizedRegion-s and a colors that are in this region.
+        Yields tuples of of NormalizedRegion-s, canonical colors that are in this regions and color matches for them.
         """
         region_text = view.substr(region.region())
         match = self._color_regex.search(region_text)
@@ -37,7 +36,8 @@ class ColorSearcher(object):
             start = match.start()
             end = match.end()
             color_region = regions.NormalizedRegion(region.a + start, region.a + end)
-            color = self._color_converter.to_color(match.groupdict())
+            groups = match.groupdict()
+            color = self._color_converter.to_color(groups)
             if color is not None:
-                yield color_region, color
+                yield color_region, color, groups
             match = self._color_regex.search(region_text, end)
