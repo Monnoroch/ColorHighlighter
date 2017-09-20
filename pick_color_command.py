@@ -1,6 +1,9 @@
 """A ST3 commands for converting colors between formats."""
 
 import subprocess
+import threading
+
+from ast import literal_eval
 
 try:
     from . import st_helper
@@ -33,13 +36,16 @@ else:
 class ColorHighlighterPickColor(sublime_plugin.TextCommand):
     """Convert currently selected colors to a next color format."""
 
-    def run(self, edit):
+    def run(self, edit):  # pylint: disable=unused-argument
         """
         Run the command.
 
         Arguments:
         - edit - an edit object.
         """
+        _run_async(self._open_color_picker)
+
+    def _open_color_picker(self):
         settings = Settings(sublime.load_settings(COLOR_HIGHLIGHTER_SETTINGS_NAME))
         formats = [value for value in sorted(settings.regex_compiler.formats.keys())]
         color_converter = ColorConverter(formats)
@@ -49,7 +55,6 @@ class ColorHighlighterPickColor(sublime_plugin.TextCommand):
             initial_color = colors[0][1][1:]
         else:
             initial_color = "FFFFFFFF"
-
         popen = subprocess.Popen(
             [path.color_picker_file(path.ABSOLUTE), initial_color],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
@@ -64,16 +69,21 @@ class ColorHighlighterPickColor(sublime_plugin.TextCommand):
                 print("ColorHighlighter: action=run_command name=color_highlighter_pick_color result=canceled")
             return
 
+        replace_data = []
         if replace_colors:
             for (region, _, format_name) in colors:
                 new_color = color_converter.from_color((output, format_name))
                 if DEBUG:
                     print(("ColorHighlighter: action=run_command name=color_highlighter_pick_color result=replace " +
-                           "region=%s format=%s color=%s") % (str(region.region()), format_name, new_color))
-                self.view.replace(edit, region.region(), new_color)
+                           "region=%s format=%s color=%s") % (region.region(), format_name, new_color))
+                replace_data.append((region.region(), new_color))
         else:
             for region in self.view.sel():
-                self.view.replace(edit, region, output)
+                if DEBUG:
+                    print(("ColorHighlighter: action=run_command name=color_highlighter_pick_color result=insert " +
+                           "region=%s color=%s") % (region, output))
+                replace_data.append((region, output))
+        self.view.run_command("color_highlighter_impl_replace_color", {"replace_data": str(replace_data)})
 
 
 def _get_colors(view, settings, formats, color_converter):
@@ -88,3 +98,38 @@ def _get_format_name(match, formats):
         if match.get(name, None) is not None:
             return name
     raise Exception("Unreachable code.")
+
+
+class ColorHighlighterImplReplaceColor(sublime_plugin.TextCommand):
+    """Replace texts in a list of regions."""
+
+    def run(self, edit, replace_data):
+        """
+        Run the command.
+
+        Arguments:
+        - edit - an edit object.
+        - replace_data - string representation of a list of (region, color) pairs.
+        """
+        regions_to_replace = literal_eval(replace_data)
+        offset = 0
+        for (region, color) in sorted(regions_to_replace):
+            self.view.replace(edit, sublime.Region(offset + region[0], offset + region[1]), color)
+            offset -= (region[1] - region[0])
+            offset += len(color)
+
+
+def _run_async(callback):
+    if st_helper.is_st3():
+        sublime.set_timeout_async(callback, 0)
+    else:
+        _RunAsync(callback).start()
+
+
+class _RunAsync(threading.Thread):
+    def __init__(self, callback):
+        self.callback = callback
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self.callback()

@@ -50,7 +50,7 @@
         }
     },
     "default_keybindings": true,
-    "file_extensions": [".py", ".css"],
+    "file_extensions": [".css", ".less", ".scss", ".sass", ".styl"],
     "icon_factory": {
         "convert_command": "convert",
         "convert_timeout": 5
