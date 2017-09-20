@@ -77,8 +77,7 @@ def set_fake_color_scheme(color_scheme, fake_color_scheme):
     - color_scheme -- current color scheme.
     - fake_color_scheme -- a fake color scheme for the current color scheme.
     """
-    packages_path = os.path.dirname(path.packages_path(path.ABSOLUTE))
-    fake_color_scheme_path = os.path.join(packages_path, fake_color_scheme)
+    fake_color_scheme_path = path.fake_color_scheme_path(color_scheme, path.ABSOLUTE)
     if not os.path.exists(fake_color_scheme_path):
         if DEBUG:
             print("ColorHighlighter: action=copy_color_scheme scheme=%s fake_scheme=%s"
@@ -381,6 +380,7 @@ class ColorSelection(object):
     def on_selection_modified(self):
         """on_selection_modified event."""
         self._color_selection_listener.on_selection_modified()
+        self._color_hover_listener.on_selection_modified()
 
     def on_hover(self, point, hover_zone):
         """on_hover event."""

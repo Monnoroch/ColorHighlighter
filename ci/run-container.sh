@@ -69,6 +69,6 @@ for packages in "${packages_dirs[@]}"; do
     for file in "${settings_files[@]}"; do
         docker cp "./${file}" "${CONTAINER_NAME}:${packages}/${plugin_name}/${file}"
     done
-    docker cp "./integration_tests/ColorHighlighter.sublime-settings" \
+    docker cp "./integration_tests/ColorHighlighter.ss" \
         "${CONTAINER_NAME}:${packages}/${plugin_name}/ColorHighlighter.sublime-settings"
 done

@@ -17,7 +17,7 @@ def normalize_path_for_st(path):
     """
     Normalize path for ST.
 
-    On Linux, does nothing. On wildows, maps windows directory separators to linux ones, as ST wants linux
+    On Linux, does nothing. On windows, maps windows directory separators to linux ones, as ST wants linux
     directory separators.
     Arguments:
     - path - the path to normalize.
@@ -112,7 +112,10 @@ def color_picker_binary(relative):
     Arguments:
     - relative - whether to get an absolute path or a relative to sublime packages directory.
     """
-    return os.path.join(packages_path(relative), PLUGIN_NAME, "ColorPicker", _color_picker_file())
+    path = os.path.join(packages_path(relative), PLUGIN_NAME, "ColorPicker", _color_picker_file())
+    if relative:
+        path = normalize_path_for_st(path)
+    return path
 
 
 def fake_color_scheme_path(color_scheme, relative):
@@ -125,4 +128,7 @@ def fake_color_scheme_path(color_scheme, relative):
     Returns a path to the fake color scheme for this color scheme.
     """
     file_name = os.path.basename(color_scheme)
-    return os.path.join(themes_path(relative), file_name)
+    path = os.path.join(themes_path(relative), file_name)
+    if relative:
+        path = normalize_path_for_st(path)
+    return path

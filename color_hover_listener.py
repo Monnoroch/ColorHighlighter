@@ -29,6 +29,8 @@ class ColorHoverListener(object):
         self._color_searcher = color_searcher
         self._view = view
         self._color_highlighter = color_highlighter
+        self._selection = None
+        self._regions = []
 
     def on_hover(self, point, hover_zone):
         """
@@ -41,18 +43,34 @@ class ColorHoverListener(object):
         if hover_zone != sublime.HOVER_TEXT:
             self._color_highlighter.highlight_regions([])
             return
-        color_regions = _drop_match(self._generate_color_regions(point))
+        color_regions = self._generate_color_regions(point)
         self._color_highlighter.highlight_regions(color_regions)
 
+    def on_selection_modified(self):
+        """on_selection_modified event."""
+        new_selection = [NormalizedRegion(region) for region in self._view.sel()]
+        if self._selection != new_selection:
+            self._selection = new_selection
+            self._on_selection_really_modified()
+
+    def _on_selection_really_modified(self):
+        if not _intersects(self._regions, self._selection):
+            self._color_highlighter.highlight_regions([])
+
     def _generate_color_regions(self, point):
+        self._regions = []
         region = sublime.Region(point, point)
         normalized_region = NormalizedRegion(region)
         for line in self._view.lines(region):
-            for color_data in self._color_searcher.search(self._view, NormalizedRegion(line)):
-                if intersects(color_data[0], normalized_region):
-                    yield color_data
+            for (region, color, _) in self._color_searcher.search(self._view, NormalizedRegion(line)):
+                if intersects(region, normalized_region):
+                    self._regions.append(region)
+                    yield (region, color)
 
 
-def _drop_match(values):
-    for value in values:
-        yield (value[0], value[1])
+def _intersects(regions1, regions2):
+    for region1 in regions1:
+        for region2 in regions2:
+            if intersects(region1, region2):
+                return True
+    return False

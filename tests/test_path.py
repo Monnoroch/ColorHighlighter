@@ -4,7 +4,7 @@ import unittest
 
 from color_highlighter import path, sublime  # pylint: disable=no-name-in-module
 
-from mockito import when
+from mockito import unstub, when
 
 
 class NormalizePathForStTest(unittest.TestCase):
@@ -19,6 +19,7 @@ class NormalizePathForStTest(unittest.TestCase):
         """Test normalize returns a linux style path in windows."""
         when(sublime).platform().thenReturn("windows")
         self.assertEqual("a/b/c.txt", path.normalize_path_for_st("a\\b\\c.txt"))
+        unstub(sublime)
 
 
 class PackagesPathTest(unittest.TestCase):
@@ -29,12 +30,14 @@ class PackagesPathTest(unittest.TestCase):
         test_path = "/a/b/Packages"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual("Packages", path.packages_path(path.RELATIVE))
+        unstub(sublime)
 
     def test_absolute_path(self):
         """Test get absolute packages path."""
         test_path = "/a/b/Packages"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual(test_path, path.packages_path(path.ABSOLUTE))
+        unstub(sublime)
 
 
 class DataPathTest(unittest.TestCase):
@@ -45,12 +48,14 @@ class DataPathTest(unittest.TestCase):
         test_path = "/a/b/Packages"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual("Packages/User/color_highlighter", path.data_path(path.RELATIVE))
+        unstub(sublime)
 
     def test_absolute_path(self):
         """Test get absolute data path."""
         test_path = "/a/b/Packages"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual(test_path + "/User/color_highlighter", path.data_path(path.ABSOLUTE))
+        unstub(sublime)
 
 
 class IconsPathTest(unittest.TestCase):
@@ -61,12 +66,14 @@ class IconsPathTest(unittest.TestCase):
         test_path = "/a/b/Packages"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual("Packages/User/color_highlighter/icons", path.icons_path(path.RELATIVE))
+        unstub(sublime)
 
     def test_absolute_path(self):
         """Test get absolute icons path."""
         test_path = "/a/b/Packages"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual(test_path + "/User/color_highlighter/icons", path.icons_path(path.ABSOLUTE))
+        unstub(sublime)
 
 
 class ThemesPathTest(unittest.TestCase):
@@ -77,12 +84,14 @@ class ThemesPathTest(unittest.TestCase):
         test_path = "/a/b/Packages"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual("Packages/User/color_highlighter/themes", path.themes_path(path.RELATIVE))
+        unstub(sublime)
 
     def test_absolute_path(self):
         """Test get absolute themes path."""
         test_path = "/a/b/Packages"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual(test_path + "/User/color_highlighter/themes", path.themes_path(path.ABSOLUTE))
+        unstub(sublime)
 
 
 class ColorPickerPathTest(unittest.TestCase):
@@ -93,12 +102,14 @@ class ColorPickerPathTest(unittest.TestCase):
         test_path = "/a/b/Packages"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual("Packages/User/color_highlighter/ColorPicker", path.color_picker_path(path.RELATIVE))
+        unstub(sublime)
 
     def test_absolute_path(self):
         """Test get absolute color picker path."""
         test_path = "/a/b/Packages"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual(test_path + "/User/color_highlighter/ColorPicker", path.color_picker_path(path.ABSOLUTE))
+        unstub(sublime)
 
 
 class ColorPickerFileTest(unittest.TestCase):
@@ -115,6 +126,7 @@ class ColorPickerFileTest(unittest.TestCase):
         self.assertEqual(
             "Packages/User/color_highlighter/ColorPicker/ColorPicker_%s_%s" % (platform, arch),
             path.color_picker_file(path.RELATIVE))
+        unstub(sublime)
 
     def test_path_windows(self):
         """Test get relative color picker path."""
@@ -136,19 +148,21 @@ class ColorPickerFileTest(unittest.TestCase):
         self.assertEqual(
             test_path + "/User/color_highlighter/ColorPicker/ColorPicker_%s_%s" % (platform, arch),
             path.color_picker_file(path.ABSOLUTE))
+        unstub(sublime)
 
 
 class FakeColorSchemeTest(unittest.TestCase):
     """Tests for fake_color_scheme_path."""
 
     def test_path(self):
-        """Test get a fake color scheme fath for a color scheme."""
+        """Test get a fake color scheme path for a color scheme."""
         test_path = "/a/b/Packages"
         scheme = "Scheme.tmTheme"
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual(
             "Packages/User/color_highlighter/themes/" + scheme,
             path.fake_color_scheme_path("Color/" + scheme, path.RELATIVE))
+        unstub(sublime)
 
     def test_absolute_path(self):
         """Test get absolute themes path."""
@@ -158,3 +172,15 @@ class FakeColorSchemeTest(unittest.TestCase):
         self.assertEqual(
             test_path + "/User/color_highlighter/themes/" + scheme,
             path.fake_color_scheme_path("Color/" + scheme, path.ABSOLUTE))
+        unstub(sublime)
+
+    def test_path_windows(self):
+        """Test get a fake color scheme path for a color scheme on windows."""
+        test_path = "/a/b/Packages"
+        scheme = "Scheme.tmTheme"
+        when(sublime).platform().thenReturn("windows")
+        when(sublime).packages_path().thenReturn(test_path)
+        self.assertEqual(
+            "Packages/User/color_highlighter/themes/" + scheme,
+            path.fake_color_scheme_path("Color/" + scheme, path.RELATIVE))
+        unstub(sublime)
