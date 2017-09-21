@@ -65,6 +65,10 @@ class NormalizedRegion(object):
         """Get the normalided regions string representation."""
         return "(%d, %d)" % (self.a, self.b)
 
+    def __repr__(self):
+        """Get the normalided regions string representation."""
+        return self.__str__()
+
 
 def intersects(region1, region2):
     """
@@ -87,3 +91,37 @@ def intersects(region1, region2):
     if region1.b <= region2.a:
         return False
     return True
+
+
+def intersects_any(input_region, regions):
+    """
+    Check a region intersects with any of the other regions.
+
+    If regions share an end, they don't intersect unless one of the regions has zero length in which case they do
+    intersect.
+
+    Arguments:
+    input_region -- a region to check.
+    regions -- a list of regions.
+    Returns True if the first region intersects with any of the other regions and False otherwise.
+    """
+    for region in regions:
+        if intersects(input_region, region):
+            return True
+    return False
+
+
+def deduplicate_regions(regions):
+    """
+    Deduplicate regions.
+
+    Argumens:
+    - regions - an iterable of pairs (region, color).
+    Returns an iterable of (region, color) with unique regions.
+    """
+    processed_regions = {}
+    for region in regions:
+        if region in processed_regions:
+            continue
+        processed_regions[region] = True
+    return processed_regions.keys()

@@ -3,7 +3,7 @@
 import unittest
 
 from color_highlighter.color_selection_listener import (  # pylint: disable=no-name-in-module,import-error
-    ColorSelectionListener, deduplicate_regions)
+    ColorSelectionListener)
 from color_highlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
 
 from mockito import ANY, mock, verify, when
@@ -90,15 +90,3 @@ class ColorSelectionListenerTest(unittest.TestCase):
         color_regions = captor()
         verify(color_highlighter).highlight_regions(color_regions)
         self.assertEqual([color_region], [region for region in color_regions.value])
-
-
-class DeduplicateRegionsTest(unittest.TestCase):
-    """Tests for deduplicate_regions."""
-
-    def test_deduplicate(self):
-        """Test deduplicating regions."""
-        region1 = 1
-        region2 = 2
-        regions = [region1, region2, region1]
-        output = [value for value in deduplicate_regions(regions)]
-        self.assertEqual([region1, region2], output)

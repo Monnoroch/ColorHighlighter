@@ -1,5 +1,10 @@
 """A base class for all color highlighters."""
 
+try:
+    from .regions import intersects_any
+except ValueError:
+    from regions import intersects_any
+
 
 class ColorHighlighter(object):
     """A base class for all color highlighters."""
@@ -111,11 +116,26 @@ class CachingColorHighlighter(CombinedColorHighlighter):  # pylint: disable=abst
         Highlight regions.
 
         Arguments:
-        - regions - an interable of tuples (region to highlight, it's color).
+        - regions - an iterable of tuples (region to highlight, it's color).
         """
         for region in self._existing_regions:
             self._existing_regions[region].need_delete = True
+        self._highlight_regions(regions)
 
+    def highlight_regions_in(self, regions, regions_in):
+        """
+        Highlight regions that lay within specified regions.
+
+        Arguments:
+        - regions - an iterable of tuples (region to highlight, it's color).
+        - regions_in - an iterable of regions wherr highlightings need to be updated.
+        """
+        for region in self._existing_regions:
+            if intersects_any(region, regions_in):
+                self._existing_regions[region].need_delete = True
+        self._highlight_regions(regions)
+
+    def _highlight_regions(self, regions):
         regions_to_highlight = []
         changed_color = []
         for value in regions:

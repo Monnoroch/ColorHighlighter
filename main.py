@@ -386,6 +386,11 @@ class ColorSelection(object):
         """on_hover event."""
         self._color_hover_listener.on_hover(point, hover_zone)
 
+    def on_modified(self):
+        """on_modified event."""
+        self._color_hover_listener.on_modified()
+        self._content_listener.on_modified()
+
     def clear_all(self):
         """Clean up all highlightings."""
         self._selection_color_highlighter.clear_all()
@@ -454,6 +459,14 @@ class ColorSelectionEventListener(object):
         if not self._init_view(view):
             return
         self._view_listeners[view.id()].on_hover(point, hover_zone)
+
+    def on_modified(self, view):
+        """on_modified event."""
+        if not self._listening:
+            return
+        if not self._init_view(view):
+            return
+        self._view_listeners[view.id()].on_modified()
 
     def _init_view(self, view):
         view_id = view.id()
@@ -529,13 +542,20 @@ class ColorSelectionEventSublimeListener(sublime_plugin.EventListener):
 
     def on_query_context(self, view, key, operator,  # pylint: disable=no-self-use,too-many-arguments,unused-argument
                          operand, match_all):  # pylint: disable=unused-argument
-        """on_query_context  event."""
+        """on_query_context event."""
         # ST2 calls these events before our simulated plugin_loaded.
         if ColorHighlighterPlugin.components is None:
             return
         if not key.startswith(COLOR_HIGHLIGHTER_KEY_PREFIX):
             return None
         return ColorHighlighterPlugin.components.provide_settings().default_keybindings
+
+    def on_modified(self, view):  # pylint: disable=no-self-use
+        """on_modified event."""
+        # ST2 calls these events before our simulated plugin_loaded.
+        if ColorHighlighterPlugin.components is None:
+            return
+        ColorHighlighterPlugin.components.provide_color_selection_event_listener().on_modified(view)
 
 
 def plugin_loaded():  # noqa: D401

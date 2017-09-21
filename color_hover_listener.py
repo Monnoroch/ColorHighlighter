@@ -31,6 +31,7 @@ class ColorHoverListener(object):
         self._color_highlighter = color_highlighter
         self._selection = None
         self._regions = []
+        self._point = None
 
     def on_hover(self, point, hover_zone):
         """
@@ -41,10 +42,15 @@ class ColorHoverListener(object):
         - hover_zone - the soze where the cursor is currently.
         """
         if hover_zone != sublime.HOVER_TEXT:
-            self._color_highlighter.highlight_regions([])
+            self._unhighlight()
             return
-        color_regions = self._generate_color_regions(point)
-        self._color_highlighter.highlight_regions(color_regions)
+        self._point = point
+        self._update_highlighting()
+
+    def on_modified(self):
+        """on_modified event."""
+        if _intersects(self._regions, self._selection):
+            self._update_highlighting()
 
     def on_selection_modified(self):
         """on_selection_modified event."""
@@ -53,9 +59,16 @@ class ColorHoverListener(object):
             self._selection = new_selection
             self._on_selection_really_modified()
 
+    def _unhighlight(self):
+        self._color_highlighter.highlight_regions([])
+
+    def _update_highlighting(self):
+        color_regions = self._generate_color_regions(self._point)
+        self._color_highlighter.highlight_regions(color_regions)
+
     def _on_selection_really_modified(self):
         if not _intersects(self._regions, self._selection):
-            self._color_highlighter.highlight_regions([])
+            self._unhighlight()
 
     def _generate_color_regions(self, point):
         self._regions = []

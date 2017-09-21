@@ -1,9 +1,9 @@
 """Component for listening for selection changes in a view and highlighting selected colors."""
 
 try:
-    from .regions import NormalizedRegion, intersects
+    from .regions import NormalizedRegion, intersects_any, deduplicate_regions
 except ValueError:
-    from regions import NormalizedRegion, intersects
+    from regions import NormalizedRegion, intersects_any, deduplicate_regions
 
 
 class ColorSelectionListener(object):
@@ -60,7 +60,7 @@ def _generate_color_regions(view, color_searcher, regions):
     normalized_regions = [NormalizedRegion(region) for region in regions]
     for line in deduplicate_regions(_generate_lines(view, regions)):
         for color_data in color_searcher.search(view, line):
-            if _intersects_any(color_data[0], normalized_regions):
+            if intersects_any(color_data[0], normalized_regions):
                 yield color_data
 
 
@@ -68,26 +68,3 @@ def _generate_lines(view, regions):
     for region in regions:
         for line in view.lines(region):
             yield NormalizedRegion(line)
-
-
-def _intersects_any(input_region, regions):
-    for region in regions:
-        if intersects(input_region, region):
-            return True
-    return False
-
-
-def deduplicate_regions(regions):
-    """
-    Deduplicate regions.
-
-    Argumens:
-    - regions - an iterable of pairs (region, color).
-    Returns an iterable of (region, color) with unique regions.
-    """
-    processed_regions = {}
-    for region in regions:
-        if region in processed_regions:
-            continue
-        processed_regions[region] = True
-        yield region
