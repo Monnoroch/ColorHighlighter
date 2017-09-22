@@ -19,3 +19,11 @@ class DummyEventListener(object):
     def on_load(self):
         """Call when view's content is loaded."""
         pass
+
+    def on_hover(self, point, hover_zone):
+        """on_hover event."""
+        pass
+
+    def on_modified(self):
+        """on_modified event."""
+        pass
