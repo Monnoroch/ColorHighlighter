@@ -2,8 +2,8 @@
 
 import unittest
 
-from color_highlighter import sublime  # pylint: disable=no-name-in-module
-from color_highlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter import sublime  # pylint: disable=no-name-in-module
+from ColorHighlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
 
 from mockito import mock, when
 

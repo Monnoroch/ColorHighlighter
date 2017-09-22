@@ -2,7 +2,7 @@
 
 import unittest
 
-from color_highlighter import colors  # pylint: disable=no-name-in-module
+from ColorHighlighter import colors  # pylint: disable=no-name-in-module
 
 
 class NormalizeHexColorTest(unittest.TestCase):

@@ -2,7 +2,7 @@
 
 import unittest
 
-from color_highlighter.regions import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.regions import (  # pylint: disable=no-name-in-module,import-error
     NormalizedRegion, deduplicate_regions, intersects, intersects_any)
 
 

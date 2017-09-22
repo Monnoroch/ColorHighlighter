@@ -2,9 +2,9 @@
 
 import unittest
 
-from color_highlighter.color_selection_listener import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.color_selection_listener import (  # pylint: disable=no-name-in-module,import-error
     ColorSelectionListener)
-from color_highlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
 
 from mockito import ANY, mock, verify, when
 from mockito.matchers import captor

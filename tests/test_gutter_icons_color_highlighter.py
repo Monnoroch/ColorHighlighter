@@ -2,10 +2,10 @@
 
 import unittest
 
-from color_highlighter import sublime  # pylint: disable=no-name-in-module
-from color_highlighter.gutter_icons_color_highlighter import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter import sublime  # pylint: disable=no-name-in-module
+from ColorHighlighter.gutter_icons_color_highlighter import (  # pylint: disable=no-name-in-module,import-error
     GutterIconsColorHighlighter)
-from color_highlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
 
 from mockito import mock, verify, when
 

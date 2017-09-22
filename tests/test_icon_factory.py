@@ -4,9 +4,9 @@ import os
 import subprocess
 import unittest
 
-from color_highlighter.gutter_icons_color_highlighter import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.gutter_icons_color_highlighter import (  # pylint: disable=no-name-in-module,import-error
     IconFactory)
-from color_highlighter.settings import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.settings import (  # pylint: disable=no-name-in-module,import-error
     GutterIconsColorHighlighterSettings)
 
 from mockito import mock, verify, when

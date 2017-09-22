@@ -2,10 +2,10 @@
 
 import unittest
 
-from color_highlighter import st_helper  # pylint: disable=no-name-in-module
-from color_highlighter.settings import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter import st_helper  # pylint: disable=no-name-in-module
+from ColorHighlighter.settings import (  # pylint: disable=no-name-in-module,import-error
     ColorSchemeColorHighlighterSettings, GutterIconsColorHighlighterSettings)
-from color_highlighter.settings import Settings  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.settings import Settings  # pylint: disable=no-name-in-module,import-error
 
 from mockito import unstub, when
 

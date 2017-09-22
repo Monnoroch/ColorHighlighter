@@ -34,7 +34,7 @@ RUN \
     mv "Sublime Text 2" /opt/sublime_text_2 && \
     rm -rf /tmp/*
 
-WORKDIR /color_highlighter
+WORKDIR /ColorHighlighter
 
 # Install linters.
 

@@ -27,7 +27,7 @@ def normalize_path_for_st(path):
     return path
 
 
-PLUGIN_NAME = "color_highlighter"
+PLUGIN_NAME = "ColorHighlighter"
 RELATIVE = True
 ABSOLUTE = False
 

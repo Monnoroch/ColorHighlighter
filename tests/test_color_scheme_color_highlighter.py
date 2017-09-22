@@ -4,12 +4,12 @@ import unittest
 
 from xml.etree import ElementTree
 
-from color_highlighter import sublime  # pylint: disable=no-name-in-module
-from color_highlighter.color_scheme import ColorSchemeData  # pylint: disable=no-name-in-module,import-error
-from color_highlighter.color_scheme_color_highlighter import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter import sublime  # pylint: disable=no-name-in-module
+from ColorHighlighter.color_scheme import ColorSchemeData  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.color_scheme_color_highlighter import (  # pylint: disable=no-name-in-module,import-error
     ColorSchemeBuilder, ColorSchemeColorHighlighter)
-from color_highlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
-from color_highlighter.settings import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.settings import (  # pylint: disable=no-name-in-module,import-error
     ColorSchemeColorHighlighterSettings)
 
 from mockito import ANY, captor, mock, verify, when

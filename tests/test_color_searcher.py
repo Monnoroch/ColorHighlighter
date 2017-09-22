@@ -3,9 +3,9 @@
 import re
 import unittest
 
-from color_highlighter import sublime  # pylint: disable=no-name-in-module
-from color_highlighter.color_searcher import ColorSearcher  # pylint: disable=no-name-in-module,import-error
-from color_highlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter import sublime  # pylint: disable=no-name-in-module
+from ColorHighlighter.color_searcher import ColorSearcher  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.regions import NormalizedRegion  # pylint: disable=no-name-in-module,import-error
 
 from mockito import ANY, mock, when
 

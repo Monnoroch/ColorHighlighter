@@ -5,8 +5,8 @@ import codecs
 import os
 import unittest
 
-from color_highlighter import path, st_helper, sublime  # pylint: disable=no-name-in-module
-from color_highlighter.load_resource import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter import path, st_helper, sublime  # pylint: disable=no-name-in-module
+from ColorHighlighter.load_resource import (  # pylint: disable=no-name-in-module,import-error
     get_binary_resource_size, load_binary_resource, load_resource)
 
 from mockito import ANY, mock, unstub, verify, when

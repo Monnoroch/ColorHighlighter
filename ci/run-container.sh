@@ -38,7 +38,7 @@ packages_dirs=(
     "/root/.config/sublime-text-3/Packages"
     "/root/.config/sublime-text-2/Packages"
 )
-plugin_name="color_highlighter"
+plugin_name="ColorHighlighter"
 for packages in "${packages_dirs[@]}"; do
     docker exec -i "${CONTAINER_NAME}" mkdir ${packages}/${plugin_name}
     docker exec -i "${CONTAINER_NAME}" mkdir ${packages}/0_test_plugin

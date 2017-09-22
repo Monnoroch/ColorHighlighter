@@ -289,9 +289,11 @@ class ColorHighlighterPlugin(object):
         color_searchers = settings.search_colors_in
         selection_searcher = color_searchers.selection
         all_content_searcher = color_searchers.all_content
+        hover_seacher = color_searchers.hover
         color_scheme_color_highlighter_enabled = (  # pylint: disable=invalid-name
             (selection_searcher.enabled and selection_searcher.color_highlighters.color_scheme.enabled) or
-            (all_content_searcher.enabled and all_content_searcher.color_highlighters.color_scheme.enabled))
+            (all_content_searcher.enabled and all_content_searcher.color_highlighters.color_scheme.enabled) or
+            (hover_seacher.enabled and hover_seacher.color_highlighters.color_scheme.enabled))
         if color_scheme_color_highlighter_enabled:  # pylint: disable=invalid-name
             ColorHighlighterPlugin._color_scheme = ColorHighlighterPlugin.components.provide_color_scheme()
             ColorHighlighterPlugin._fake_color_scheme = ColorHighlighterPlugin.components.provide_fake_color_scheme()
@@ -390,6 +392,7 @@ class ColorSelection(object):
         """on_modified event."""
         self._color_hover_listener.on_modified()
         self._content_listener.on_modified()
+        self._color_selection_listener.on_modified()
 
     def clear_all(self):
         """Clean up all highlightings."""

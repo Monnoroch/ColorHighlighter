@@ -35,6 +35,10 @@ class ColorSelectionListener(object):
             self._selection = new_selection
             self._on_selection_really_modified()
 
+    def on_modified(self):
+        """on_modified event."""
+        self._on_selection_really_modified()
+
     def _on_selection_really_modified(self):
         color_regions = _drop_match(_generate_color_regions(self._view, self._color_searcher, self._selection))
         self._color_highlighter.highlight_regions(color_regions)

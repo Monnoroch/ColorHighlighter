@@ -2,7 +2,7 @@
 
 import unittest
 
-from color_highlighter.color_highlighter import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter.color_highlighter import (  # pylint: disable=no-name-in-module,import-error
     CachingColorHighlighter, CombinedColorHighlighter)
 
 from mockito import ANY, mock, verify

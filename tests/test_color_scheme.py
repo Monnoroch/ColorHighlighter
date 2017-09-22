@@ -5,8 +5,8 @@ import unittest
 
 from xml.etree.ElementTree import ParseError
 
-from color_highlighter import load_resource, path, sublime  # pylint: disable=no-name-in-module
-from color_highlighter.color_scheme import (  # pylint: disable=no-name-in-module,import-error
+from ColorHighlighter import load_resource, path, sublime  # pylint: disable=no-name-in-module
+from ColorHighlighter.color_scheme import (  # pylint: disable=no-name-in-module,import-error
     CH_COLOR_SCOPE_NAME, ColorSchemeData, ColorSchemeWriter, parse_color_scheme)
 
 from mockito import ANY, mock, verify, when
