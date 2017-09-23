@@ -21,7 +21,7 @@ class ColorSelectionListener(object):
         self._color_searcher = color_searcher
         self._view = view
         self._color_highlighter = color_highlighter
-        self._selection = None
+        self._selection = []
 
     def on_selection_modified(self):
         """

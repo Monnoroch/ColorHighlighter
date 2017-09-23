@@ -49,7 +49,7 @@ class ColorSelectionListenerTest(unittest.TestCase):
 
         color_selection_listener.on_selection_modified()
         color_selection_listener.on_selection_modified()
-        verify(color_highlighter, times=1).highlight_regions(ANY)
+        verify(color_highlighter, times=0).highlight_regions(ANY)
 
     def test_selection_no_intersections(self):
         """Test modify selection with color searher returning regions with no intersections with the selection."""

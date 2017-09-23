@@ -155,7 +155,7 @@ class _RgbaColorConverter(ColorFormatConverter):
         g = _channel_to_decimal(color[3:5])  # pylint: disable=invalid-name
         b = _channel_to_decimal(color[5:7])  # pylint: disable=invalid-name
         a = _channel_to_float(color[7:9])  # pylint: disable=invalid-name
-        return "rgba(%d, %d, %d, %f)" % (r, g, b, a)
+        return "rgba(%d, %d, %d, %s)" % (r, g, b, a)
 
 
 class _RgbColorConverter(ColorFormatConverter):
@@ -223,7 +223,7 @@ class _HsvaColorConverter(ColorFormatConverter):
         b = _channel_to_decimal(color[5:7])  # pylint: disable=invalid-name
         a = _channel_to_float(color[7:9])  # pylint: disable=invalid-name
         h, s, v = _rgb_to_hsv(r, g, b)  # pylint: disable=invalid-name
-        return "hsva(%d, %d%%, %d%%, %f)" % (h, s, v, a)
+        return "hsva(%d, %d%%, %d%%, %s)" % (h, s, v, a)
 
 
 class _HsvColorConverter(ColorFormatConverter):
@@ -293,7 +293,7 @@ class _HslaColorConverter(ColorFormatConverter):
         b = _channel_to_decimal(color[5:7])  # pylint: disable=invalid-name
         a = _channel_to_float(color[7:9])  # pylint: disable=invalid-name
         h, s, l = _rgb_to_hsl(r, g, b)  # pylint: disable=invalid-name
-        return "hsla(%d, %d%%, %d%%, %f)" % (h, s, l, a)
+        return "hsla(%d, %d%%, %d%%, %s)" % (h, s, l, a)
 
 
 class _HslColorConverter(ColorFormatConverter):
@@ -365,7 +365,10 @@ class ColorConverter(ColorFormatConverter):
         """
         for name in self._formats:
             if match.get(name, None) is not None:
-                return ColorConverter._converters[name].to_color(match)
+                color = ColorConverter._converters[name].to_color(match)
+                if color is None:
+                    return None
+                return color.lower()
         raise Exception("Match %s could not be canonicalized." % match)
 
     def from_color(self, color):
@@ -388,7 +391,14 @@ def _channel_to_decimal(channel):
 
 
 def _channel_to_float(channel):
-    return int(channel, 16) / 255.0
+    value = str(int(channel, 16) / 255.0)
+    if value.find(".") == -1:
+        return value
+    while value[-1] == "0":
+        value = value[:-1]
+    if value.startswith("0."):
+        value = value[1:]
+    return value
 
 
 def _channel_to_percent(channel):
@@ -407,6 +417,8 @@ def _parse_decimal_channel(text):
 
 
 def _parse_float_channel(text):
+    if text == ".":
+        return None
     value = float(text)
     if value < 0 or value > 1:
         return None

@@ -29,7 +29,7 @@ class ColorHoverListener(object):
         self._color_searcher = color_searcher
         self._view = view
         self._color_highlighter = color_highlighter
-        self._selection = None
+        self._selection = []
         self._regions = []
         self._point = None
 
