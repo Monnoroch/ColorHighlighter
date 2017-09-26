@@ -4,7 +4,9 @@ import os
 
 try:
     from .st_helper import running_in_st
+    from .settings import COLOR_HIGHLIGHTER_SETTINGS_NAME
 except ValueError:
+    from settings import COLOR_HIGHLIGHTER_SETTINGS_NAME
     from st_helper import running_in_st
 
 if running_in_st():
@@ -27,9 +29,22 @@ def normalize_path_for_st(path):
     return path
 
 
-PLUGIN_NAME = "ColorHighlighter"
 RELATIVE = True
 ABSOLUTE = False
+
+
+def plugin_name():
+    """
+    Determine if the plugin is installed via a Package Control package or manually.
+
+    Returns the plugin directory or package name.
+    """
+    manual_install_plugin_name = "ColorHighlighter"
+    package_install_plugin_name = "Color Highlighter"
+    if (os.path.exists(os.path.join(
+            packages_path(ABSOLUTE), manual_install_plugin_name, COLOR_HIGHLIGHTER_SETTINGS_NAME))):
+        return manual_install_plugin_name
+    return package_install_plugin_name
 
 
 def packages_path(relative):
@@ -52,7 +67,7 @@ def data_path(relative):
     Arguments:
     - relative - whether to get an absolute path or a relative to sublime packages directory.
     """
-    return os.path.join(packages_path(relative), "User", PLUGIN_NAME)
+    return os.path.join(packages_path(relative), "User", plugin_name())
 
 
 def icons_path(relative):
@@ -112,7 +127,7 @@ def color_picker_binary(relative):
     Arguments:
     - relative - whether to get an absolute path or a relative to sublime packages directory.
     """
-    path = os.path.join(packages_path(relative), PLUGIN_NAME, "ColorPicker", _color_picker_file())
+    path = os.path.join(packages_path(relative), plugin_name(), "ColorPicker", _color_picker_file())
     if relative:
         path = normalize_path_for_st(path)
     return path

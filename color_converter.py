@@ -62,7 +62,7 @@ class _Sharp6ColorConverter(ColorFormatConverter):
         - match - a dict with matched color formats.
         Returns a canonical color representation for the match.
         """
-        return match["sharp6"] + "FF"
+        return match["sharp6"] + "ff"
 
     def from_color(self, color):
         """
@@ -111,7 +111,7 @@ class _Sharp3ColorConverter(ColorFormatConverter):
         - match - a dict with matched color formats.
         Returns a canonical color representation for the match.
         """
-        return "#%s%s%sFF" % (match["sharp3_R"] * 2, match["sharp3_G"] * 2, match["sharp3_B"] * 2)
+        return "#%s%s%sff" % (match["sharp3_R"] * 2, match["sharp3_G"] * 2, match["sharp3_B"] * 2)
 
     def from_color(self, color):
         """
@@ -174,7 +174,7 @@ class _RgbColorConverter(ColorFormatConverter):
         b = _parse_decimal_channel(match["rgb_B"])  # pylint: disable=invalid-name
         if r is None or g is None or b is None:
             return None
-        return "#%02X%02X%02XFF" % (r, g, b)
+        return "#%02X%02X%02Xff" % (r, g, b)
 
     def from_color(self, color):
         """
@@ -243,7 +243,7 @@ class _HsvColorConverter(ColorFormatConverter):
         if h is None or s is None or v is None:
             return None
         r, g, b = _hsv_to_rgb(h, s, v)  # pylint: disable=invalid-name
-        return "#%02X%02X%02XFF" % (r, g, b)
+        return "#%02X%02X%02Xff" % (r, g, b)
 
     def from_color(self, color):
         """
@@ -313,7 +313,7 @@ class _HslColorConverter(ColorFormatConverter):
         if h is None or s is None or l is None:
             return None
         r, g, b = _hsl_to_rgb(h, s, l)  # pylint: disable=invalid-name
-        return "#%02X%02X%02XFF" % (r, g, b)
+        return "#%02X%02X%02Xff" % (r, g, b)
 
     def from_color(self, color):
         """
@@ -426,6 +426,8 @@ def _parse_float_channel(text):
 
 
 def _parse_percent_channel(text):
+    if text == "0":
+        return 0.0
     if text[-1] != "%":
         return None
     value = int(text[:-1])
