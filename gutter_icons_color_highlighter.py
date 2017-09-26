@@ -69,9 +69,6 @@ class IconFactory(object):
         sublime_icon_path = normalize_path_for_st(os.path.join(self._sublime_icons_path, icon_name))
         # TODO(#5): return sublime_icon_path immediately and create icon in background.  # pylint: disable=fixme
         icon_path = os.path.join(self._icons_path, icon_name)
-        convert_style = IconFactory._convert_styles[style]
-        convert_command = IconFactory._convert_command_template % (
-            self._convert_command, color, convert_style, icon_path)
         cache_key = (style, color)
         with self._lock:
             if cache_key in self._icons_cache:
@@ -81,17 +78,39 @@ class IconFactory(object):
                 self._icons_cache[cache_key] = sublime_icon_path
                 return sublime_icon_path
 
-            if DEBUG:
-                print("ColorHighlighter: action=create_icon style=%s color=%s" % (style, color))
-
-            self._run_command(convert_command)
-            if os.path.exists(icon_path):
+            if self._create_icon(style, color, icon_path)[1]:
                 self._icons_cache[cache_key] = sublime_icon_path
                 return sublime_icon_path
 
         if DEBUG:
             print("ColorHighlighter: action=could_not_create_icon style=%s color=%s" % (style, color))
         return normalize_path_for_st(os.path.join(self._sublime_icons_path, IconFactory._bad_icon_name))
+
+    def check(self):
+        """
+        Get the icon path given the icon style and color.
+
+        If the icon does not exist, create it.
+        Arguments:
+        - style - the style of the icon.
+        - color -- the color of the icon.
+        Returns the icon path of None if creating the icon has failed.
+        """
+        style = "circle"
+        color = "#ffffffff"
+        icon_name = self._icon_name_template % (style, color[1:])
+        icon_path = os.path.join(self._icons_path, icon_name)
+        result = self._create_icon(style, color, icon_path)
+        return result[0] and result[1]
+
+    def _create_icon(self, style, color, icon_path):
+        convert_style = IconFactory._convert_styles[style]
+        convert_command = IconFactory._convert_command_template % (
+            self._convert_command, color, convert_style, icon_path)
+        if DEBUG:
+            print("ColorHighlighter: action=create_icon style=%s color=%s" % (style, color))
+        success = self._run_command(convert_command)
+        return (success, os.path.exists(icon_path))
 
     def _run_command(self, command):
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -106,6 +125,8 @@ class IconFactory(object):
 
         if error is not None and error != "":
             print("Traceback: error.\n\nOutput:\n%s\n\nError:\n%s" % (output, error))
+            return False
+        return True
 
 
 class GutterIconsColorHighlighter(ColorHighlighter):

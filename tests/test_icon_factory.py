@@ -15,6 +15,92 @@ from mockito import mock, verify, when
 class IconFactoryTest(unittest.TestCase):
     """Tests for IconFactory."""
 
+    def test_check(self):
+        """Test check."""
+        icons_path = "test/icons/path"
+        sublime_icons_path = "test/sublime/icons/path"
+        convert = "test/convert"
+        timeout = 50
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        style = "circle"
+        color = "#ffffffff"
+        icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
+        icon_path = os.path.join(icons_path, icon_name)
+        convert_command = IconFactory._convert_command_template % (  # pylint: disable=protected-access
+            convert, color, IconFactory._convert_styles[style], icon_path)  # pylint: disable=protected-access
+        process = mock()
+        when(process).communicate(timeout=timeout).thenReturn(("".encode("utf-8"), "".encode("utf-8")))
+        when(subprocess).Popen(
+            convert_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).thenReturn(process)
+        when(os.path).exists(icon_path).thenReturn(True)
+        self.assertTrue(icon_factory.check())
+
+    def test_check_fail(self):
+        """Test check failed."""
+        icons_path = "test/icons/path"
+        sublime_icons_path = "test/sublime/icons/path"
+        convert = "test/convert"
+        timeout = 50
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        style = "circle"
+        color = "#ffffffff"
+        icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
+        icon_path = os.path.join(icons_path, icon_name)
+        convert_command = IconFactory._convert_command_template % (  # pylint: disable=protected-access
+            convert, color, IconFactory._convert_styles[style], icon_path)  # pylint: disable=protected-access
+        process = mock()
+        when(process).communicate(timeout=timeout).thenReturn(("".encode("utf-8"), "".encode("utf-8")))
+        when(subprocess).Popen(
+            convert_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).thenReturn(process)
+        when(os.path).exists(icon_path).thenReturn(False)
+        self.assertFalse(icon_factory.check())
+
+    def test_check_kill_process_on_timeout(self):  # pylint: disable=invalid-name
+        """Test check fails when timeouted in Popen even if the test icon file already exists."""
+        icons_path = "test/icons/path"
+        sublime_icons_path = "test/sublime/icons/path"
+        convert = "test/convert"
+        timeout = 50
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        style = "circle"
+        color = "#ffffffff"
+        icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
+        icon_path = os.path.join(icons_path, icon_name)
+        convert_command = IconFactory._convert_command_template % (  # pylint: disable=protected-access
+            convert, color, IconFactory._convert_styles[style], icon_path)  # pylint: disable=protected-access
+        process = mock()
+        when(process).communicate(timeout=timeout).thenRaise(subprocess.TimeoutExpired(None, None))
+        when(process).communicate().thenReturn(("output".encode("utf-8"), "error".encode("utf-8")))
+        when(subprocess).Popen(
+            convert_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).thenReturn(process)
+        when(os.path).exists(icon_path).thenReturn(True)
+        self.assertFalse(icon_factory.check())
+        verify(process).kill()
+        verify(process).communicate()
+
+    def test_check_kill_process_on_timeout_empty_message(self):  # pylint: disable=invalid-name
+        """Test check doesn't fail when timeouted in Popen if stderr is empty."""
+        icons_path = "test/icons/path"
+        sublime_icons_path = "test/sublime/icons/path"
+        convert = "test/convert"
+        timeout = 50
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        style = "circle"
+        color = "#ffffffff"
+        icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
+        icon_path = os.path.join(icons_path, icon_name)
+        convert_command = IconFactory._convert_command_template % (  # pylint: disable=protected-access
+            convert, color, IconFactory._convert_styles[style], icon_path)  # pylint: disable=protected-access
+        process = mock()
+        when(process).communicate(timeout=timeout).thenRaise(subprocess.TimeoutExpired(None, None))
+        when(process).communicate().thenReturn(("".encode("utf-8"), "".encode("utf-8")))
+        when(subprocess).Popen(
+            convert_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).thenReturn(process)
+        when(os.path).exists(icon_path).thenReturn(True)
+        self.assertTrue(icon_factory.check())
+        verify(process).kill()
+        verify(process).communicate()
+
     def test_valid_style_set(self):
         """Test that sets of valid icon styles are consistent."""
         self.assertEqual(
@@ -95,7 +181,7 @@ class IconFactoryTest(unittest.TestCase):
         bad_icon_name = IconFactory._bad_icon_name  # pylint: disable=protected-access
         self.assertEqual(os.path.join(sublime_icons_path, bad_icon_name), icon_factory.get_icon_path(style, color))
 
-    def test_kill_process_on_timeout(self):  # pylint: disable=no-self-use
+    def test_kill_process_on_timeout(self):
         """Test create icon."""
         icons_path = "test/icons/path"
         sublime_icons_path = "test/sublime/icons/path"
@@ -111,9 +197,33 @@ class IconFactoryTest(unittest.TestCase):
             convert, color, IconFactory._convert_styles[style], icon_path)  # pylint: disable=protected-access
         process = mock()
         when(process).communicate(timeout=timeout).thenRaise(subprocess.TimeoutExpired(None, None))
-        when(process).communicate().thenReturn(("".encode("utf-8"), "".encode("utf-8")))
+        when(process).communicate().thenReturn(("output".encode("utf-8"), "error".encode("utf-8")))
         when(subprocess).Popen(
             convert_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).thenReturn(process)
-        icon_factory.get_icon_path(style, color)
+        bad_icon_name = IconFactory._bad_icon_name  # pylint: disable=protected-access
+        self.assertEqual(os.path.join(sublime_icons_path, bad_icon_name), icon_factory.get_icon_path(style, color))
+        verify(process).kill()
+        verify(process).communicate()
+
+    def test_kill_process_on_timeout_but_file_created(self):  # pylint: disable=invalid-name
+        """Test create icon."""
+        icons_path = "test/icons/path"
+        sublime_icons_path = "test/sublime/icons/path"
+        convert = "test/convert"
+        timeout = 50
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        style = "circle"
+        color = "#color"
+        icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
+        icon_path = os.path.join(icons_path, icon_name)
+        when(os.path).exists(icon_path).thenReturn(False).thenReturn(True)
+        convert_command = IconFactory._convert_command_template % (  # pylint: disable=protected-access
+            convert, color, IconFactory._convert_styles[style], icon_path)  # pylint: disable=protected-access
+        process = mock()
+        when(process).communicate(timeout=timeout).thenRaise(subprocess.TimeoutExpired(None, None))
+        when(process).communicate().thenReturn(("output".encode("utf-8"), "error".encode("utf-8")))
+        when(subprocess).Popen(
+            convert_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).thenReturn(process)
+        self.assertEqual(os.path.join(sublime_icons_path, icon_name), icon_factory.get_icon_path(style, color))
         verify(process).kill()
         verify(process).communicate()

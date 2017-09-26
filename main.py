@@ -101,11 +101,20 @@ class ColorHighlighterComponents(object):
         self._color_searcher = None
         self._fake_color_scheme_data = None
         self._color_scheme_builder = None
-        self._icon_factory = None
         self._color_selection_event_listener = None
         self._color_highlighters = {}
         for name in self._settings.search_colors_in.color_searcher_names:
             self._color_highlighters[name] = {}
+        self._icon_factory = None
+        color_searchers = self._settings.search_colors_in
+        if _gutter_icons_color_highlighter_enabled(self._settings):
+            self._icon_factory = self.provide_icon_factory()
+            if not self._icon_factory.check():
+                print("Highlighting colors with gutter icons is not supported with current ImageMagick setup. " +
+                      "Try configuring the \"icon_factory setting\"")
+                color_searchers.selection.color_highlighters.gutter_icons.enabled = False
+                color_searchers.all_content.color_highlighters.gutter_icons.enabled = False
+                color_searchers.hover.color_highlighters.gutter_icons.enabled = False
 
     def provide_settings(self):
         """Provide the plugin settings."""
@@ -266,6 +275,17 @@ def _color_scheme_color_highlighter_enabled(settings):
         (selection_searcher.enabled and selection_searcher.color_highlighters.color_scheme.enabled) or
         (all_content_searcher.enabled and all_content_searcher.color_highlighters.color_scheme.enabled) or
         (hover_seacher.enabled and hover_seacher.color_highlighters.color_scheme.enabled))
+
+
+def _gutter_icons_color_highlighter_enabled(settings):
+    color_searchers = settings.search_colors_in
+    selection_searcher = color_searchers.selection
+    all_content_searcher = color_searchers.all_content
+    hover_seacher = color_searchers.hover
+    return (
+        (selection_searcher.enabled and selection_searcher.color_highlighters.gutter_icons.enabled) or
+        (all_content_searcher.enabled and all_content_searcher.color_highlighters.gutter_icons.enabled) or
+        (hover_seacher.enabled and hover_seacher.color_highlighters.gutter_icons.enabled))
 
 
 class ColorHighlighterPlugin(object):
