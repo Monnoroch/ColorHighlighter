@@ -68,12 +68,13 @@ def copy_resource(resource, destination_path):
         file.write(load_binary_resource(resource))
 
 
-def set_fake_color_scheme(color_scheme, fake_color_scheme):
+def set_fake_color_scheme(view, color_scheme, fake_color_scheme):
     """
-    Set current color scheme to a fake one.
+    Set current color scheme on a setting object to a fake one.
 
     If the fake color scheme is not yet created, creates it.
     Arguments:
+    - view - a view to set the color scheme on.
     - color_scheme -- current color scheme.
     - fake_color_scheme -- a fake color scheme for the current color scheme.
     """
@@ -84,12 +85,11 @@ def set_fake_color_scheme(color_scheme, fake_color_scheme):
                   % (color_scheme, fake_color_scheme))
         copy_resource(color_scheme, fake_color_scheme_path)
 
-    settings = sublime.load_settings(PREFERENCES_SETTINGS_NAME)  # pylint: disable=assignment-from-none
+    settings = view.settings()
     if settings.get("color_scheme", None) != fake_color_scheme:
         if DEBUG:
-            print("ColorHighlighter: action=set_color_scheme scheme=%s" % (fake_color_scheme))
+            print("ColorHighlighter: action=set_view_color_scheme scheme=%s" % (fake_color_scheme))
         settings.set("color_scheme", fake_color_scheme)
-    sublime.save_settings(PREFERENCES_SETTINGS_NAME)
 
 
 class ColorHighlighterComponents(object):
@@ -257,6 +257,17 @@ class ColorHighlighterComponents(object):
         return self._color_selection_event_listener
 
 
+def _color_scheme_color_highlighter_enabled(settings):
+    color_searchers = settings.search_colors_in
+    selection_searcher = color_searchers.selection
+    all_content_searcher = color_searchers.all_content
+    hover_seacher = color_searchers.hover
+    return (
+        (selection_searcher.enabled and selection_searcher.color_highlighters.color_scheme.enabled) or
+        (all_content_searcher.enabled and all_content_searcher.color_highlighters.color_scheme.enabled) or
+        (hover_seacher.enabled and hover_seacher.color_highlighters.color_scheme.enabled))
+
+
 class ColorHighlighterPlugin(object):
     """A main class."""
 
@@ -286,18 +297,9 @@ class ColorHighlighterPlugin(object):
             ColorHighlighterPlugin._settings.add_on_change(
                 ColorHighlighterPlugin._ON_SETTINGS_CHANGE_KEY, ColorHighlighterPlugin._on_settings_change)
 
-        color_searchers = settings.search_colors_in
-        selection_searcher = color_searchers.selection
-        all_content_searcher = color_searchers.all_content
-        hover_seacher = color_searchers.hover
-        color_scheme_color_highlighter_enabled = (  # pylint: disable=invalid-name
-            (selection_searcher.enabled and selection_searcher.color_highlighters.color_scheme.enabled) or
-            (all_content_searcher.enabled and all_content_searcher.color_highlighters.color_scheme.enabled) or
-            (hover_seacher.enabled and hover_seacher.color_highlighters.color_scheme.enabled))
-        if color_scheme_color_highlighter_enabled:  # pylint: disable=invalid-name
+        if _color_scheme_color_highlighter_enabled(settings):  # pylint: disable=invalid-name
             ColorHighlighterPlugin._color_scheme = ColorHighlighterPlugin.components.provide_color_scheme()
             ColorHighlighterPlugin._fake_color_scheme = ColorHighlighterPlugin.components.provide_fake_color_scheme()
-            set_fake_color_scheme(ColorHighlighterPlugin._color_scheme, ColorHighlighterPlugin._fake_color_scheme)
             if autoreload.when_color_scheme_change:
                 ColorHighlighterPlugin._preferences.add_on_change(
                     ColorHighlighterPlugin._ON_SETTINGS_CHANGE_KEY, ColorHighlighterPlugin._on_preferences_change)
@@ -319,8 +321,6 @@ class ColorHighlighterPlugin(object):
         new_color_scheme = ColorHighlighterPlugin.components.provide_color_scheme()
         if new_color_scheme in [ColorHighlighterPlugin._color_scheme, ColorHighlighterPlugin._fake_color_scheme]:
             return
-
-        ColorHighlighterPlugin._color_scheme = new_color_scheme
         ColorHighlighterPlugin.restart()
 
     @staticmethod
@@ -477,6 +477,12 @@ class ColorSelectionEventListener(object):
             if not self._supported_file_extension(view):
                 return False
             self._view_listeners[view_id] = ColorHighlighterPlugin.components.provide_color_selection(view)
+            if _color_scheme_color_highlighter_enabled(ColorHighlighterPlugin.components.provide_settings()):
+                color_scheme = ColorHighlighterPlugin.components.provide_color_scheme()
+                # Do not change the color scheme on widgets.
+                if view.settings().get("color_scheme", None) == color_scheme:
+                    set_fake_color_scheme(
+                        view, color_scheme, ColorHighlighterPlugin.components.provide_fake_color_scheme())
         return True
 
     def _supported_file_extension(self, view):
@@ -561,6 +567,15 @@ class ColorSelectionEventSublimeListener(sublime_plugin.EventListener):
         ColorHighlighterPlugin.components.provide_color_selection_event_listener().on_modified(view)
 
 
+def _remove_old_user_settings():
+    settings = sublime.load_settings(COLOR_HIGHLIGHTER_SETTINGS_NAME)  # pylint: disable=assignment-from-none
+    if settings.get("channels", None) is not None:
+        user_settings_path = os.path.join(path.packages_path(path.ABSOLUTE), "User", COLOR_HIGHLIGHTER_SETTINGS_NAME)
+        if DEBUG:
+            print("ColorHighlighter: action=remove_old_settings")
+        os.remove(user_settings_path)
+
+
 def plugin_loaded():  # noqa: D401
     """Called when plugin has finished loading."""
     if DEBUG:
@@ -586,6 +601,7 @@ def plugin_loaded():  # noqa: D401
     _create_if_not_exists(path.themes_path(path.ABSOLUTE))
     _create_if_not_exists(path.color_picker_path(path.ABSOLUTE))
     _init_color_picker()
+    _remove_old_user_settings()
     ColorHighlighterPlugin.init()
 
 
