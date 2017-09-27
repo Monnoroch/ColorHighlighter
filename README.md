@@ -1,69 +1,128 @@
 # ColorHighlighter
 
+A plugin for the Sublime Text (2 and 3) for highlighting color values in an unobtrusive manner.
+
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C2L27SE4YDFAC)
 
-_ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively previews color values by underlaying the selected hex codes in different styles, coloring text or gutter icons. Also, plugin adds color picker, color format converter and less/sass/styl variables navigation to easily modify colors._
+![underline highlighting preview][image-underline-preview]
 
-![Description](http://i.imgur.com/UPmEk09.png)
+## Features
+ - [x] Customizable Highlighting of Colors
+ - [x] Gutter Icons
+ - [x] Color Picker
+ - [x] Color Format Converter
+ - [x] Less/SASS/SCSS/Stylus variable navigation
 
-![Description](http://i.imgur.com/kl4joGA.png)
+![gutter icons preview][image-gutter-dots-preview]
 
-![Description](http://sametmax.com/wp-content/uploads/2013/04/hilight-color.gif)
+## Installation
+With [Package Control][package-control] (Recommended):
 
-![Description](http://sametmax.com/wp-content/uploads/2013/04/color-picker.gif)
+1. Run “Package Control: Install Package” command
+2. Find and install Color Highlighter plugin from the list
+3. Just sit back every time an update is rolled out. Package Control will do the right thing.
 
-**Installation :**
+Manually:
 
-- **_Recommended_** - Using [Sublime Package Control](https://packagecontrol.io "Sublime Package Control")
-    - <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> then select `Package Control: Install Package`
-    - install `Color Highlighter`
-- Alternatively, download the package from [GitHub](https://github.com/Monnoroch/ColorHighlighter "ColorHighlighter") into your `Packages` folder and then rename plugins directory from "ColorHighlighter" to "Color Highlighter"
-- For gutter icons install [ImageMagick](http://www.imagemagick.org/)
-- For color picker on linux install Qt5 framework.
+  1. Clone or Download the [git repo][project-url] into your Packages folder (Preferences > Browse Packages...)
+  2. Rename the Plugin directory from "ColorHighlighter" to "Color Highlighter"
+  3. Repeat this process each time an update is rolled out.
 
-**Usage :**
+Dependencies:
 
-Just click or move the cursor (or multiple cursors) on the color code e.g. "#FFFFFF" or "rgba(255, 0, 0, 0.7)" or variable with color code value and it'll be highlighted with its real color.
-These color formats are currently supported:
-- All CSS color formats.
-- Hexadecimal RGBA ("0xFFFFFFFF") or ("0xFFFF") and RGB ("0xFFFFFF") or ("0xFFF").
-- Named colors like "green", "black" and many others.
-- Less/sass/scss/stylus variables (supports @importing from another files recursively).
-- [VAL, VAL, VAL] and [VAL, VAL, VAL, VAL] when editing e files. Where VAL can be one of the following:
-  - An integer: from 0 to 255.
-  - A float value from 0.0 to 1.0, you can also skip leading zero (like that: .25)
-  - A percentage from 0% to 100%.
+  - For Gutter Icons, install [ImageMagick][imagemagick-url].
+  - For Color Picker on Linux, install Qt5 framework.
 
-**Variables file :**
-You can define a list or string field `color_variables_files` in your .sublime-project file to automatically include all less/sass/scss/stylus color variables from these files for every file you edit (for now, only absolute path is supported).
-There is a deprecated but left for compatibility setting `color_variables_file`, which can only contain a string for a single file, not a list.
+## Usage
+A color-value or variable is highlighted with it's color whenever the cursor enters it.
 
-**Settings :**
+![underline highlighting preview][image-underline-preview]
+
+### Supported Color Formats
+  - All CSS color formats.
+    - Hexadecimal colors: `0xRRGGBBAA`, `0xRRGGBB`, `0xRGBA`, `0xRGB`
+    - RGB colors: `rgb(r, g, b)`
+    - RGBA colors: `rgba(r, g, b, a)`
+    - HSL colors: `hsl(h, s, l)`
+    - HSLA colors: `hsla(h, s, l, a)`
+    - Named colors: `black`, `white`, `green`
+  - Less/SASS/SCSS/Stylus variables (supports @importing from another files recursively)
+  - `[VAL, VAL, VAL]` and `[VAL, VAL, VAL, VAL]` when editing e files, where `VAL` can be one of the following:
+    - An integer from `0` to `255`
+    - A float from `0.0` to `1.0` (You may skip the leading zero as in `.25`)
+    - A percentage from `0%` to `100%`
+
+### Variables file
+You may define a list or string `color_variables_files` in your `.sublime-project` to include all Less/SASS/SCSS/Stylus color variables from that file as context for every file you edit. (Currently, only absolute paths are supported).
+
+> NOTE: The older `color_variables_file` is still supported but now deprecated. It can only contain a string for a single file, not a list.
+
+```js
+{
+    "folders": [...],
+    "color_variables_file": "/path/to/file",
+    ...
+}
+```
+
+### Color Picker usage
+Place cursor(s) on a color-value(s). Press <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>C</kbd></kbd> or select "Choose color" in the context menu.
+
+The Color Picker will pop up and the color you pick will replace the color(s) under the cursor(s). The replacement will preserve exact code format, so if `#FFF`, `rgb(255,255,255)` and `white` are selected and `#FF0000` is picked, the colours will be replaced as `#F00`, `rgb(255,0,0)` and `red`. As expected, this works with variables as well.
+
+![color picker preview][image-color-picker]
+
+### Color Format Converter usage
+Place cursor(s) on a color-value(s). Press <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>A</kbd></kbd> or select "Convert color" in the context menu.
+
+Select/Input a color format to use. The full list of all color formats is in the settings file. Format can be any format supported by this plugin, for example if you convert "rgb(255,255,255)" into format "hsv", you'll get "hsv(0, 0%, 100%)". As expected, this works with named colors and variables as well.
+
+![color converter preview][image-color-converter]
+
+Additionally, there are "Next Color" and "Previous Color" commands, triggered by <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>,</kbd></kbd> and <kbd><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>.</kbd></kbd> respectively to choose previous or next color format.
+
+### Less/SASS/SCSS/Stylus variables navigation
+Place cursor on a variable. Press <kbd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>D</kbd></kbd> or select "Go to variable definition" in the context menu. The cursor will then be moved to the line of declaration of that variable. If the variable is declared in another, that file will be opened in a new view (tab).
+
+![jump to variable definition preview][image-go-to-definition]
+
+## Settings
+ColorHighlighter is configurable via `ColorHighlighter.sublime-settings` like any other well-behaved package.
 
 You can choose the highlighting style from:
-- "Filled", "outlined", "none", "colored text" in ST2.
-- "Filled", "outlined", "none", "underlined" (solid, strippled, squiggly), "colored text" in ST3.
+`none` `text` `filled` `outlined` `underlined_solid` `underlined_strippled` `underlined_squiggly`
 
-You can also turn on highlighting all colors at once. This mode has own highlighting style, so you can highlight all colors with underline and selected colors with filled rect.
+![colored text highlighting preview][image-colored-text-preview]
+
+**NOTE**: Underlined styles are available in Sublime Text 3 only.
+
+You can also turn on highlighting all colors at once. This mode has own highlighting style, so you can highlight all colors with underline and selected colors with filled rectangle.
+
+![highlight all preview][image-highlight-all]
 
 You can also enable icons, which will be shown in the gutter of a file (might not work in ST2).
 
-You can always turn off default keybindings via main menu or settings.
+You can always turn off default key-bindings via main menu or settings.
 
-**Color picker usage:**
+## Contributing
+To contribute to the project, just head on over to the [Github Project][project-url].
 
-Just put the cursor (or multiple cursors) on the color code and select "Choose color" in context menu (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd>). Select the color in a popup color picker and all color codes under your cursors will change. The change will preserve exact code format, so if you select codes "#FFF" and "rgb(255,255,255)" and "white" and choose color "#FF0000", you get codes: "#F00" and "rgb(255,0,0)" and "red". Also, works with variables.
+Found something that doesn't work? Let us know by opening an issue.
+Have an idea? Open up an issue and let's make it happen!
+Found a typo? Send in a pull request.
 
-**Color converter usage:**
+Don't hesitate. :smile:
 
-Just put the cursor (or multiple cursors) on the color code and select "Convert color" in context menu (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd>). Input a color format to use and press enter. The full list of all color formats is in the plugins settings file.
-Format can be any format supported by this plugin, for example if you convert "rgb(255,255,255)" into format "hsv", you'll get "hsv(0, 0%, 100%)". Also works with named colors and variables.
-
-Also, there are Prev and Next color commands, triggered by <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>,</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>.</kbd> respectively to choose previous or next color format.
-
-**Less/sass/scss/stylus variables navigation:**
-
-Just put cursor on a variable, right click on it and press "Go to variable definition" and the plugin will open it. There is also a shortcut <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd>.
+ [project-url]: https://github.com/Monnoroch/ColorHighlighter
+ [package-control]: https://packagecontrol.io/installation
+ [imagemagick-url]: http://www.imagemagick.org/
+ [image-color-picker]: images/color-picker.gif
+ [image-color-converter]: images/convert.gif
+ [image-underline-preview]: images/underline-preview.gif
+ [image-colored-text-preview]: images/colored-text-preview.gif
+ [image-gutter-dots-preview]: images/dots.gif
+ [image-go-to-definition]: images/go-to-definition.gif
+ [image-highlight-all]: images/highlight-all.gif
 
 **Donate**
 
