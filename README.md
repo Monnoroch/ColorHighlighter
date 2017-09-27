@@ -1,5 +1,8 @@
 # ColorHighlighter
+
 A plugin for the Sublime Text (2 and 3) for highlighting color values in an unobtrusive manner.
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C2L27SE4YDFAC)
 
 ![underline highlighting preview][image-underline-preview]
 
@@ -113,7 +116,6 @@ Don't hesitate. :smile:
  [project-url]: https://github.com/Monnoroch/ColorHighlighter
  [package-control]: https://packagecontrol.io/installation
  [imagemagick-url]: http://www.imagemagick.org/
-
  [image-color-picker]: images/color-picker.gif
  [image-color-converter]: images/convert.gif
  [image-underline-preview]: images/underline-preview.gif
@@ -121,3 +123,9 @@ Don't hesitate. :smile:
  [image-gutter-dots-preview]: images/dots.gif
  [image-go-to-definition]: images/go-to-definition.gif
  [image-highlight-all]: images/highlight-all.gif
+
+**Donate**
+
+Thank you guys for all your support, I couldn't have done it wihout your contributions. Every little bit helps!
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C2L27SE4YDFAC)
