@@ -1,5 +1,6 @@
 {
-	"install": "messages/install.txt",
-	"7.2.1": "messages/install.txt",
-    "7.2.2": "messages/install.txt"
+    "install": "messages/install.txt",
+    "7.2.1": "messages/install.txt",
+    "7.2.2": "messages/install.txt",
+    "7.2.3": "messages/install.txt"
 }

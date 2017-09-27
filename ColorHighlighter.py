@@ -33,7 +33,7 @@ def st_time(func):
 
     return st_func
 
-version = "7.2.2"
+version = "7.2.3"
 
 ### ST version helpers
 
