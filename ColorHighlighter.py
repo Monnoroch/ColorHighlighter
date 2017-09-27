@@ -10,6 +10,10 @@ import threading
 import shutil
 import codecs
 import time
+from string import Template
+
+if int(sublime.version()) < 3000:
+    import build_system_hack
 
 plugin_name = "Color Highlighter"
 
@@ -1235,23 +1239,35 @@ class VarExtractor:
 
     def get_vars(self, view):
         color_vars_files = []
-        if is_st3():
+        if not is_st3():
+            project_settings = build_system_hack.get_project_settings(sublime.active_window())
+            wnd = sublime.active_window()
+        else:
             wnd = view.window()
-            if wnd is not None:
-                pdata = wnd.project_data()
-                if pdata is not None:
-                    color_vars_files = pdata.get("color_variables_files", [])
-                    if type(color_vars_files) is not list:
-                        color_vars_files = [color_vars_files]
-                    color_vars_file = pdata.get("color_variables_file", None)
-                    if color_vars_file is not None:
-                        color_vars_files.append(color_vars_file)
 
-                    for f in color_vars_files:
-                        self.parse_vars_file(f)
+        if wnd is not None:
+            if is_st3():
+                pdata = wnd.project_data()
+            else:
+                pdata = view.settings()
+
+            if pdata is not None:
+                color_vars_files = pdata.get("color_variables_files", [])
+                if type(color_vars_files) is not list:
+                    color_vars_files = [color_vars_files]
+                color_vars_file = pdata.get("color_variables_file", None)
+                if color_vars_file is not None:
+                    color_vars_files.append(color_vars_file)
+
+                for f in color_vars_files:
+                    if is_st3():
+                        self.parse_vars_file(sublime.expand_variables(f, wnd.extract_variables()))
+                    else:
+                        self.parse_vars_file(Template(f).substitute(project_settings))
 
         fn = view.file_name()
         res = {}
+
         if fn is not None:
             self.parse_vars_file(fn)
             self.get_file_vars(fn, res)
@@ -1259,9 +1275,12 @@ class VarExtractor:
             self.parse_vars_view(view)
             self.get_view_vars(view, res)
 
-        if is_st3():
+        if wnd is not None:
             for f in color_vars_files:
-                self.get_file_vars(f, res)
+                if is_st3():
+                    self.get_file_vars(sublime.expand_variables(f, wnd.extract_variables()), res)
+                else:
+                    self.get_file_vars(Template(f).substitute(project_settings), res)
 
         # map text to colors
         for k in res.keys():
