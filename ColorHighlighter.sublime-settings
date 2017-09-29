@@ -5,7 +5,7 @@
             "color_highlighters": {
                 "color_scheme": {
                     "enabled": false,
-                    "highlight_style": "text"
+                    "highlight_style": "filled"
                 },
                 "gutter_icons": {
                     "enabled": false,
@@ -20,7 +20,7 @@
             "enabled": true,
             "color_highlighters": {
                 "color_scheme": {
-                    "enabled": false,
+                    "enabled": true,
                     "highlight_style": "text"
                 },
                 "gutter_icons": {
@@ -124,5 +124,6 @@
     },
     "experimental": {
         "asynchronosly_update_color_scheme": false
-    }
+    },
+    "debug": false
 }

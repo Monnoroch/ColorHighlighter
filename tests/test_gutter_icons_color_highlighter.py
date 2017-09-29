@@ -20,7 +20,7 @@ class GutterIconsColorHighlighterTest(unittest.TestCase):
         view = mock()
         icon_factory = mock()
         test_style = "circle"
-        color_highlighter = GutterIconsColorHighlighter(view, test_style, icon_factory, self.test_name)
+        color_highlighter = GutterIconsColorHighlighter(view, test_style, icon_factory, self.test_name, False)
 
         test_color = "test"
         begin = 4
@@ -41,7 +41,7 @@ class GutterIconsColorHighlighterTest(unittest.TestCase):
     def test_unhighlight(self):  # pylint: disable=no-self-use
         """Check unhighlighting a region."""
         view = mock()
-        color_highlighter = GutterIconsColorHighlighter(view, "circle", mock(), self.test_name)
+        color_highlighter = GutterIconsColorHighlighter(view, "circle", mock(), self.test_name, False)
         normalized_region = NormalizedRegion(4, 9)
 
         color_highlighter.unhighlight_region(None, (normalized_region, None))

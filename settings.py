@@ -33,6 +33,7 @@ class Settings(object):  # pylint: disable=too-few-public-methods,too-many-insta
         self.regex_compiler = _RegexCompilerSettings(copy.deepcopy(settings.get("regex_compiler", {})))
         self.default_keybindings = settings.get("default_keybindings", True)
         self.experimental = _ExperimentalSettings(copy.deepcopy(settings.get("experimental", {})))
+        self.debug = settings.get("debug", False)
 
 
 class _ExperimentalSettings(object):  # pylint: disable=too-few-public-methods

@@ -23,7 +23,7 @@ class ColorSchemeColorHighlighterTest(unittest.TestCase):
     def test_bad_style(self):
         """Check that bad style failes."""
         with self.assertRaises(AssertionError):
-            ColorSchemeColorHighlighter(None, "bad-style", None, self.test_name)
+            ColorSchemeColorHighlighter(None, "bad-style", None, self.test_name, False)
 
     def test_valid_style_set(self):
         """Test that sets of valid highlighting styles are consistent."""
@@ -43,7 +43,7 @@ class ColorSchemeColorHighlighterTest(unittest.TestCase):
         scope = mock()
         when(color_scheme_builder).get_scopes(ANY, ANY).thenReturn([scope])
         view = mock()
-        color_highlighter = ColorSchemeColorHighlighter(view, "filled", color_scheme_builder, self.test_name)
+        color_highlighter = ColorSchemeColorHighlighter(view, "filled", color_scheme_builder, self.test_name, False)
         context = {}
         color_highlighter.highlight_region(context, (region, color))
         color_highlighter.highlight_regions_done(context)
@@ -64,7 +64,7 @@ class ColorSchemeColorHighlighterTest(unittest.TestCase):
         scope = mock()
         when(color_scheme_builder).get_scopes(ANY, ANY).thenReturn([scope])
         view = mock()
-        color_highlighter = ColorSchemeColorHighlighter(view, "text", color_scheme_builder, self.test_name)
+        color_highlighter = ColorSchemeColorHighlighter(view, "text", color_scheme_builder, self.test_name, False)
         context = {}
         color_highlighter.highlight_region(context, (region, color))
         color_highlighter.highlight_regions_done(context)
@@ -93,7 +93,7 @@ class ColorSchemeColorHighlighterTest(unittest.TestCase):
         scope2 = mock()
         when(color_scheme_builder).get_scopes(ANY, ANY).thenReturn([scope1, scope2])
         view = mock()
-        color_highlighter = ColorSchemeColorHighlighter(view, "filled", color_scheme_builder, self.test_name)
+        color_highlighter = ColorSchemeColorHighlighter(view, "filled", color_scheme_builder, self.test_name, False)
         context = {}
         color_highlighter.highlight_region(context, (region1, color1))
         color_highlighter.highlight_region(context, (region2, color2))
@@ -110,7 +110,7 @@ class ColorSchemeColorHighlighterTest(unittest.TestCase):
         """Test highlight zero regions."""
         color_scheme_builder = mock()
         view = mock()
-        color_highlighter = ColorSchemeColorHighlighter(view, "filled", color_scheme_builder, self.test_name)
+        color_highlighter = ColorSchemeColorHighlighter(view, "filled", color_scheme_builder, self.test_name, False)
         context = {}
         color_highlighter.highlight_regions_done(context)
         verify(color_scheme_builder, times=0).get_scopes(ANY, ANY)
@@ -120,7 +120,7 @@ class ColorSchemeColorHighlighterTest(unittest.TestCase):
         """Test unhighlight a region."""
         region = NormalizedRegion(10, 20)
         view = mock()
-        color_highlighter = ColorSchemeColorHighlighter(view, "filled", None, self.test_name)
+        color_highlighter = ColorSchemeColorHighlighter(view, "filled", None, self.test_name, False)
         color_highlighter.unhighlight_region(None, (region, None))
         verify(view).erase_regions(
             ColorSchemeColorHighlighter.region_name_template % (self.test_name, region.a, region.b))

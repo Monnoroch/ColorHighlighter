@@ -40,7 +40,7 @@ class PhantomColorHighlighterTest(unittest.TestCase):
             PhantomColorHighlighter.phantom_key_template %
             (self.test_name, begin, end), region, html, sublime.LAYOUT_BELOW, None).thenReturn(phantom_id)
 
-        PhantomColorHighlighter(view, self.test_name).highlight_region(
+        PhantomColorHighlighter(view, self.test_name, False).highlight_region(
             None, (NormalizedRegion(begin, end), test_color))
         verify(view).add_phantom(
             PhantomColorHighlighter.phantom_key_template %
@@ -49,7 +49,7 @@ class PhantomColorHighlighterTest(unittest.TestCase):
     def test_unhighlight(self):  # pylint: disable=no-self-use
         """Test unhighlighting a region removes the added phantom from the view."""
         view = mock()
-        color_highlighter = PhantomColorHighlighter(view, self.test_name)
+        color_highlighter = PhantomColorHighlighter(view, self.test_name, False)
 
         begin = 4
         end = 9

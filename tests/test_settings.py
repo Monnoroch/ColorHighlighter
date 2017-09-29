@@ -92,6 +92,7 @@ class SettingsTest(unittest.TestCase):
             "experimental": {
                 "asynchronosly_update_color_scheme": True,
             },
+            "debug": True,
         })
         self.assertEqual(
             {"selection": True, "all_content": True, "hover": True},
@@ -152,6 +153,7 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(["test-after"], settings.regex_compiler.formats["sharp8"].after)
 
         self.assertEqual(True, settings.experimental.asynchronosly_update_color_scheme)
+        self.assertTrue(settings.debug)
 
     def test_create_default(self):
         """Test creating color format settings with default values."""
@@ -225,6 +227,7 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual([], settings.regex_compiler.formats["sharp8"].after)
 
         self.assertEqual(False, settings.experimental.asynchronosly_update_color_scheme)
+        self.assertFalse(settings.debug)
 
     def test_create_single_after(self):
         """Test creating color format settings with singular format after field."""

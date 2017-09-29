@@ -21,7 +21,7 @@ class IconFactoryTest(unittest.TestCase):
         sublime_icons_path = "test/sublime/icons/path"
         convert = "test/convert"
         timeout = 50
-        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout, False)
         style = "circle"
         color = "#ffffffff"
         icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
@@ -41,7 +41,7 @@ class IconFactoryTest(unittest.TestCase):
         sublime_icons_path = "test/sublime/icons/path"
         convert = "test/convert"
         timeout = 50
-        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout, False)
         style = "circle"
         color = "#ffffffff"
         icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
@@ -61,7 +61,7 @@ class IconFactoryTest(unittest.TestCase):
         sublime_icons_path = "test/sublime/icons/path"
         convert = "test/convert"
         timeout = 50
-        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout, False)
         style = "circle"
         color = "#ffffffff"
         icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
@@ -84,7 +84,7 @@ class IconFactoryTest(unittest.TestCase):
         sublime_icons_path = "test/sublime/icons/path"
         convert = "test/convert"
         timeout = 50
-        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout, False)
         style = "circle"
         color = "#ffffffff"
         icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
@@ -110,7 +110,7 @@ class IconFactoryTest(unittest.TestCase):
     def test_invalid_style(self):
         """Invalid icon style yields none."""
         sublime_icons_path = "test/sublime/icons/path"
-        icon_factory = IconFactory("test/icons/path", sublime_icons_path, "", 50)
+        icon_factory = IconFactory("test/icons/path", sublime_icons_path, "", 50, False)
         color = "#color"
         with self.assertRaises(AssertionError):
             icon_factory.get_icon_path("invalid-style", color)
@@ -119,7 +119,7 @@ class IconFactoryTest(unittest.TestCase):
         """Test icon exists."""
         icons_path = "test/icons/path"
         sublime_icons_path = "test/sublime/icons/path"
-        icon_factory = IconFactory(icons_path, sublime_icons_path, "test/convert", 50)
+        icon_factory = IconFactory(icons_path, sublime_icons_path, "test/convert", 50, False)
         style = "circle"
         color = "#color"
         icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
@@ -130,7 +130,7 @@ class IconFactoryTest(unittest.TestCase):
         """Test icon path in cache."""
         icons_path = "test/icons/path"
         sublime_icons_path = "test/sublime/icons/path"
-        icon_factory = IconFactory(icons_path, sublime_icons_path, "test/convert", 50)
+        icon_factory = IconFactory(icons_path, sublime_icons_path, "test/convert", 50, False)
         style = "circle"
         color = "#color"
         icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
@@ -146,7 +146,7 @@ class IconFactoryTest(unittest.TestCase):
         sublime_icons_path = "test/sublime/icons/path"
         convert = "test/convert"
         timeout = 50
-        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout, False)
         style = "circle"
         color = "#color"
         icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
@@ -166,7 +166,7 @@ class IconFactoryTest(unittest.TestCase):
         sublime_icons_path = "test/sublime/icons/path"
         convert = "test/convert"
         timeout = 50
-        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout, False)
         style = "circle"
         color = "#color"
         icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
@@ -187,7 +187,7 @@ class IconFactoryTest(unittest.TestCase):
         sublime_icons_path = "test/sublime/icons/path"
         convert = "test/convert"
         timeout = 50
-        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout, False)
         style = "circle"
         color = "#color"
         icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access
@@ -211,7 +211,7 @@ class IconFactoryTest(unittest.TestCase):
         sublime_icons_path = "test/sublime/icons/path"
         convert = "test/convert"
         timeout = 50
-        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout)
+        icon_factory = IconFactory(icons_path, sublime_icons_path, convert, timeout, False)
         style = "circle"
         color = "#color"
         icon_name = IconFactory._icon_name_template % (style, color[1:])  # pylint: disable=protected-access

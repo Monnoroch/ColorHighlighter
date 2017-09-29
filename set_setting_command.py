@@ -2,12 +2,10 @@
 
 try:
     from . import st_helper
-    from .debug import DEBUG
-    from .settings import COLOR_HIGHLIGHTER_SETTINGS_NAME, ColorSchemeColorHighlighterSettings
+    from .settings import COLOR_HIGHLIGHTER_SETTINGS_NAME, ColorSchemeColorHighlighterSettings, Settings
 except ValueError:
     import st_helper
-    from debug import DEBUG
-    from settings import COLOR_HIGHLIGHTER_SETTINGS_NAME, ColorSchemeColorHighlighterSettings
+    from settings import COLOR_HIGHLIGHTER_SETTINGS_NAME, ColorSchemeColorHighlighterSettings, Settings
 
 
 if st_helper.running_in_st():
@@ -204,10 +202,10 @@ def _get_setting(setting):
 
 
 def _set_setting(setting, value):
-    if DEBUG:
+    settings = sublime.load_settings(COLOR_HIGHLIGHTER_SETTINGS_NAME)
+    if Settings(settings).debug:
         print("ColorHighlighter: action=run_command name=color_highlighter_set_setting setting=%s value=%s"
               % (setting, value))
-    settings = sublime.load_settings(COLOR_HIGHLIGHTER_SETTINGS_NAME)
     setting_path = setting.split(".")
     if len(setting_path) == 1:
         settings.set(setting_path[0], value)

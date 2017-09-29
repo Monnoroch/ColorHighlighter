@@ -9,12 +9,10 @@ except ValueError:
     import st_helper
 
 try:
-    from .debug import DEBUG
     from . import path
     from . import colors
     from . import load_resource
 except ValueError:
-    from debug import DEBUG
     import path
     import colors
     import load_resource
@@ -24,7 +22,7 @@ except ValueError:
 CH_COLOR_SCOPE_NAME = "CH_color"
 
 
-def parse_color_scheme(color_scheme):
+def parse_color_scheme(color_scheme, debug):
     """
     Load, parse, validate and prepare the color scheme.
 
@@ -57,8 +55,7 @@ def parse_color_scheme(color_scheme):
     background_color = colors.normalize_hex_color(background_color.text)
     color_scheme_data = ColorSchemeData(background_color, existing_colors)
     color_scheme_writer = ColorSchemeWriter(
-        fake_color_scheme,
-        ElementTree.ElementTree(color_scheme_xml), scopes_array_element)
+        fake_color_scheme, ElementTree.ElementTree(color_scheme_xml), scopes_array_element, debug)
     return new_color_scheme, color_scheme_data, color_scheme_writer
 
 
@@ -80,7 +77,7 @@ class ColorSchemeData(object):  # pylint: disable=too-few-public-methods
 class ColorSchemeWriter(object):
     """A class that writes elements to a color scheme."""
 
-    def __init__(self, color_scheme, xml_tree, scopes_array_element):
+    def __init__(self, color_scheme, xml_tree, scopes_array_element, debug):
         """
         Create a ColorSchemeWriter.
 
@@ -88,10 +85,12 @@ class ColorSchemeWriter(object):
         - color_scheme - an absolute path to a color scheme.
         - xml_tree - an ElementTree object for the color scheme.
         - scopes_array_element - an Element that represents the dict array in the color scheme XML.
+        - debug - whether to enable debug mode.
         """
         self._color_scheme = color_scheme
         self._xml_tree = xml_tree
         self._scopes_array_element = scopes_array_element
+        self._debug = debug
 
     def add_scopes(self, scopes):
         """
@@ -101,7 +100,7 @@ class ColorSchemeWriter(object):
         - scopes -- an iterable of Elements with scopes to add.
         """
         self._scopes_array_element.extend(scopes)
-        if DEBUG:
+        if self._debug:
             packages_path = os.path.dirname(path.packages_path(path.ABSOLUTE))
             print("ColorHighlighter: action=write_color_scheme scheme=%s" % self._color_scheme[len(packages_path) + 1:])
         self._xml_tree.write(self._color_scheme, encoding="utf-8")

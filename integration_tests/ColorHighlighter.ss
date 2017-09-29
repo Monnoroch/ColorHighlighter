@@ -124,5 +124,6 @@
     },
     "experimental": {
         "asynchronosly_update_color_scheme": false
-    }
+    },
+    "debug": true
 }

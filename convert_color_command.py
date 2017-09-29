@@ -5,7 +5,6 @@ try:
     from .color_converter import ColorConverter
     from .color_searcher import ColorSearcher
     from .color_selection_listener import search_colors_in_selection
-    from .debug import DEBUG
     from .regex_compiler import compile_regex
     from .settings import Settings, COLOR_HIGHLIGHTER_SETTINGS_NAME
 except ValueError:
@@ -13,7 +12,6 @@ except ValueError:
     from color_converter import ColorConverter
     from color_searcher import ColorSearcher
     from color_selection_listener import search_colors_in_selection
-    from debug import DEBUG
     from regex_compiler import compile_regex
     from settings import Settings, COLOR_HIGHLIGHTER_SETTINGS_NAME
 
@@ -45,7 +43,7 @@ class ColorHighlighterNextColor(sublime_plugin.TextCommand):
                 index = 0
             new_format = formats[index]
             new_color = color_converter.from_color((color, new_format))
-            if DEBUG:
+            if settings.debug:
                 print(("ColorHighlighter: action=run_command name=color_highlighter_next_color region=%s format=%s " +
                        "color=%s new_format=%s new_color=%s")
                       % (str(region.region()), format_name, color, new_format, new_color))
@@ -75,7 +73,7 @@ class ColorHighlighterPreviousColor(sublime_plugin.TextCommand):
                 index = len(formats) - 1
             new_format = formats[index]
             new_color = color_converter.from_color((color, new_format))
-            if DEBUG:
+            if settings.debug:
                 print(("ColorHighlighter: action=run_command name=color_highlighter_previous_color region=%s " +
                        "format=%s color=%s new_format=%s new_color=%s")
                       % (str(region.region()), format_name, color, new_format, new_color))

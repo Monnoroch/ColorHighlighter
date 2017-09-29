@@ -2,11 +2,9 @@
 
 try:
     from .st_helper import running_in_st
-    from .debug import DEBUG
     from .color_highlighter import ColorHighlighter
 except ValueError:
     from st_helper import running_in_st
-    from debug import DEBUG
     from color_highlighter import ColorHighlighter
 
 
@@ -37,16 +35,18 @@ class PhantomColorHighlighter(ColorHighlighter):
 '''
     space_symbol = "&nbsp;"
 
-    def __init__(self, view, name):
+    def __init__(self, view, name, debug):
         """
         Create a phantom color highlighter.
 
         Arguments:
         - view - a view to highlight colors in.
         - name - the name of the color highlighter.
+        - debug - whether to enable debug mode.
         """
         self._view = view
         self._name = name
+        self._debug = debug
 
     def highlight_region(self, context, value):
         """
@@ -59,7 +59,7 @@ class PhantomColorHighlighter(ColorHighlighter):
         """
         (region, color) = value
         html = _generate_phantom_html(region, color)
-        if DEBUG:
+        if self._debug:
             print("ColorHighlighter: action=highlight highlighter=PhantomColorHighlighter region=%s color=%s"
                   % (str(region), str(color)))
         self._view.add_phantom(

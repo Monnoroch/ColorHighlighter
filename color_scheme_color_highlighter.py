@@ -5,12 +5,10 @@ from xml.etree import ElementTree
 
 try:
     from .st_helper import running_in_st, is_st3
-    from .debug import DEBUG
     from . import colors
     from .color_highlighter import ColorHighlighter
 except ValueError:
     from st_helper import running_in_st, is_st3
-    from debug import DEBUG
     import colors
     from color_highlighter import ColorHighlighter
 
@@ -145,7 +143,7 @@ class ColorSchemeColorHighlighter(ColorHighlighter):
             "outlined": sublime.DRAW_OUTLINED,
         }
 
-    def __init__(self, view, style, color_scheme_builder, name):
+    def __init__(self, view, style, color_scheme_builder, name, debug):  # pylint: disable=too-many-arguments
         """
         Init a ColorSchemeColorHighlighter.
 
@@ -154,6 +152,7 @@ class ColorSchemeColorHighlighter(ColorHighlighter):
         - style - the style of color highlighting.
         - color_scheme_builder - the color scheme builder to build regions for colors.
         - name - the name of the color highlighter.
+        - debug - whether to enable debug mode.
         """
         assert style in ColorSchemeColorHighlighter._region_style_flags
         self._view = view
@@ -161,6 +160,7 @@ class ColorSchemeColorHighlighter(ColorHighlighter):
         self._text_coloring = style == "text"
         self._flags = ColorSchemeColorHighlighter._region_style_flags[style]
         self._name = name
+        self._debug = debug
 
     def highlight_region(self, context, value):
         """
@@ -194,7 +194,7 @@ class ColorSchemeColorHighlighter(ColorHighlighter):
         for index, value in enumerate(values):
             (region, color) = value
             region_key = ColorSchemeColorHighlighter.region_name_template % (self._name, region.a, region.b)
-            if DEBUG:
+            if self._debug:
                 print("ColorHighlighter: action=highlight highlighter=ColorSchemeColorHighlighter region=%s color=%s"
                       % (region, color))
             self._view.add_regions(region_key, [region.region()], scopes[index], "", self._flags)

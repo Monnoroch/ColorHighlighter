@@ -11,7 +11,6 @@ try:
     from .color_converter import ColorConverter
     from .color_searcher import ColorSearcher
     from .color_selection_listener import search_colors_in_selection
-    from .debug import DEBUG
     from .regex_compiler import compile_regex
     from .settings import Settings, COLOR_HIGHLIGHTER_SETTINGS_NAME
 except ValueError:
@@ -20,7 +19,6 @@ except ValueError:
     from color_converter import ColorConverter
     from color_searcher import ColorSearcher
     from color_selection_listener import search_colors_in_selection
-    from debug import DEBUG
     from regex_compiler import compile_regex
     from settings import Settings, COLOR_HIGHLIGHTER_SETTINGS_NAME
 
@@ -65,7 +63,7 @@ class ColorHighlighterPickColor(sublime_plugin.TextCommand):
             print("Color Picker error:\n" + error)
 
         if output == "CANCEL":
-            if DEBUG:
+            if settings.debug:
                 print("ColorHighlighter: action=run_command name=color_highlighter_pick_color result=canceled")
             return
 
@@ -73,13 +71,13 @@ class ColorHighlighterPickColor(sublime_plugin.TextCommand):
         if replace_colors:
             for (region, _, format_name) in colors:
                 new_color = color_converter.from_color((output, format_name))
-                if DEBUG:
+                if settings.debug:
                     print(("ColorHighlighter: action=run_command name=color_highlighter_pick_color result=replace " +
                            "region=%s format=%s color=%s") % (region.region(), format_name, new_color))
                 replace_data.append((region.region(), new_color))
         else:
             for region in self.view.sel():
-                if DEBUG:
+                if settings.debug:
                     print(("ColorHighlighter: action=run_command name=color_highlighter_pick_color result=insert " +
                            "region=%s color=%s") % (region, output))
                 replace_data.append((region, output))
