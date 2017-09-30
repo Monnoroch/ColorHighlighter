@@ -30,9 +30,9 @@ namespace Cyotek.Windows.Forms
       this.colorGrid = new Cyotek.Windows.Forms.ColorGrid();
       this.colorEditorManager = new Cyotek.Windows.Forms.ColorEditorManager();
       this.SuspendLayout();
-      // 
+      //
       // okButton
-      // 
+      //
       this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
       this.okButton.Location = new System.Drawing.Point(453, 12);
       this.okButton.Name = "okButton";
@@ -41,9 +41,9 @@ namespace Cyotek.Windows.Forms
       this.okButton.Text = "OK";
       this.okButton.UseVisualStyleBackColor = true;
       this.okButton.Click += new System.EventHandler(this.okButton_Click);
-      // 
+      //
       // cancelButton
-      // 
+      //
       this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
       this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
       this.cancelButton.Location = new System.Drawing.Point(453, 41);
@@ -53,18 +53,18 @@ namespace Cyotek.Windows.Forms
       this.cancelButton.Text = "Cancel";
       this.cancelButton.UseVisualStyleBackColor = true;
       this.cancelButton.Click += new System.EventHandler(this.cancelButton_Click);
-      // 
+      //
       // previewPanel
-      // 
+      //
       this.previewPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
       this.previewPanel.Location = new System.Drawing.Point(453, 203);
       this.previewPanel.Name = "previewPanel";
       this.previewPanel.Size = new System.Drawing.Size(75, 47);
       this.previewPanel.TabIndex = 3;
       this.previewPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.previewPanel_Paint);
-      // 
+      //
       // loadPaletteButton
-      // 
+      //
       this.loadPaletteButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
       this.loadPaletteButton.Image = global::Cyotek.Windows.Forms.Properties.Resources.LoadPalette;
       this.loadPaletteButton.Location = new System.Drawing.Point(12, 147);
@@ -74,9 +74,9 @@ namespace Cyotek.Windows.Forms
       this.toolTip.SetToolTip(this.loadPaletteButton, "Load Palette");
       this.loadPaletteButton.UseVisualStyleBackColor = false;
       this.loadPaletteButton.Click += new System.EventHandler(this.loadPaletteButton_Click);
-      // 
+      //
       // savePaletteButton
-      // 
+      //
       this.savePaletteButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
       this.savePaletteButton.Image = global::Cyotek.Windows.Forms.Properties.Resources.SavePalette;
       this.savePaletteButton.Location = new System.Drawing.Point(34, 147);
@@ -86,9 +86,9 @@ namespace Cyotek.Windows.Forms
       this.toolTip.SetToolTip(this.savePaletteButton, "Save Palette");
       this.savePaletteButton.UseVisualStyleBackColor = false;
       this.savePaletteButton.Click += new System.EventHandler(this.savePaletteButton_Click);
-      // 
+      //
       // screenColorPicker
-      // 
+      //
       this.screenColorPicker.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
       this.screenColorPicker.Color = System.Drawing.Color.Black;
       this.screenColorPicker.Image = global::Cyotek.Windows.Forms.Properties.Resources.eyedropper;
@@ -97,28 +97,28 @@ namespace Cyotek.Windows.Forms
       this.screenColorPicker.Size = new System.Drawing.Size(73, 85);
       this.toolTip.SetToolTip(this.screenColorPicker, "Click and drag to select screen color");
       this.screenColorPicker.Zoom = 6;
-      // 
+      //
       // colorWheel
-      // 
+      //
       this.colorWheel.Color = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
       this.colorWheel.Location = new System.Drawing.Point(12, 12);
       this.colorWheel.Name = "colorWheel";
       this.colorWheel.Size = new System.Drawing.Size(192, 147);
       this.colorWheel.TabIndex = 4;
-      // 
+      //
       // colorEditor
-      // 
-      this.colorEditor.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+      //
+      this.colorEditor.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
       this.colorEditor.Color = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
       this.colorEditor.Location = new System.Drawing.Point(210, 12);
       this.colorEditor.Name = "colorEditor";
       this.colorEditor.Size = new System.Drawing.Size(230, 238);
       this.colorEditor.TabIndex = 0;
-      // 
+      //
       // colorGrid
-      // 
+      //
       this.colorGrid.AutoAddColors = false;
       this.colorGrid.CellBorderStyle = Cyotek.Windows.Forms.ColorCellBorderStyle.None;
       this.colorGrid.EditMode = Cyotek.Windows.Forms.ColorEditingMode.Both;
@@ -132,17 +132,17 @@ namespace Cyotek.Windows.Forms
       this.colorGrid.Spacing = new System.Drawing.Size(0, 0);
       this.colorGrid.TabIndex = 7;
       this.colorGrid.EditingColor += new System.EventHandler<Cyotek.Windows.Forms.EditColorCancelEventArgs>(this.colorGrid_EditingColor);
-      // 
+      //
       // colorEditorManager
-      // 
+      //
       this.colorEditorManager.ColorEditor = this.colorEditor;
       this.colorEditorManager.ColorGrid = this.colorGrid;
       this.colorEditorManager.ColorWheel = this.colorWheel;
       this.colorEditorManager.ScreenColorPicker = this.screenColorPicker;
       this.colorEditorManager.ColorChanged += new System.EventHandler(this.colorEditorManager_ColorChanged);
-      // 
+      //
       // ColorPickerDialog
-      // 
+      //
       this.AcceptButton = this.okButton;
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;

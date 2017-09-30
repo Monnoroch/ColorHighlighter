@@ -1,11 +1,19 @@
-NEW VERSION AVAILABLE!
+
+Color Highlighter v8.0 is released!
+
+For more info about the plugin visit https://github.com/Monnoroch/ColorHighlighter.
 
 Color Highlighter was developed for many years and features were added without consideration.
 As a result it has plenty of bugs and code is completely unmaintainable.
-Because of it, I've decided to rewrite the plugin from scratch using all the good programming practices I learned over the years.
+Because of it, I've decided to rewrite the plugin from scratch using all the good programming practices I learned
+over the years.
 
-Right now the new version is still in the alpha stage, but it's very stable and just doesn't have several features of the current version.
-If you want to help the development, please check out the announce here https://github.com/Monnoroch/ColorHighlighter/issues/366.
+This is the first release of the new version and it might have some subtle bugs, especially on Windows and Mac, as I
+don't have machines with these systems. If you find any bugs, please file them in
+the bug tracker here: https://github.com/Monnoroch/ColorHighlighter/issues. I always appreciate your help and try to fix
+problems as soon as possible.
 
-The plugin is being developed by me alone in my spare time, so if you want to encourage me to build it better and faster, donations as always welcome (See https://github.com/Monnoroch/ColorHighlighter).
+The plugin is being developed by me alone in my spare time, so if you want to encourage me to build it
+better and faster, donations as always welcome.
+
 Thank you guys for your support, every little bit helps!

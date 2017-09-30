@@ -1,47 +1,29 @@
 [
-	{
-		"keys": ["super+shift+c"],
-		"command": "color_picker",
-		"context": [
-			{
-				"key": "color_highlighter.color_picker"
-			}
-		]
-	},
-	{
-		"keys": ["super+shift+a"],
-		"command": "color_convert",
-		"context": [
-			{
-				"key": "color_highlighter.color_convert"
-			}
-		]
-	},
-	{
-		"keys": ["super+shift+,"],
-		"command": "color_convert_prev",
-		"context": [
-			{
-				"key": "color_highlighter.color_convert_prev"
-			}
-		]
-	},
-	{
-		"keys": ["super+shift+."],
-		"command": "color_convert_next",
-		"context": [
-			{
-				"key": "color_highlighter.color_convert_next"
-			}
-		]
-	},
-	{
-		"keys": ["super+alt+d"],
-		"command": "go_to_var_definition",
-		"context": [
-			{
-				"key": "color_highlighter.go_to_var_definition"
-			}
-		]
-	}
+    {
+        "keys": ["super+shift+,"],
+        "command": "color_highlighter_next_color",
+        "context": [
+            {
+                "key": "color_highlighter.color_highlighter_next_color"
+            }
+        ]
+    },
+    {
+        "keys": ["super+shift+."],
+        "command": "color_highlighter_previous_color",
+        "context": [
+            {
+                "key": "color_highlighter.color_highlighter_previous_color"
+            }
+        ]
+    },
+    {
+        "keys": ["super+shift+c"],
+        "command": "color_highlighter_pick_color",
+        "context": [
+            {
+                "key": "color_highlighter.color_highlighter_pick_color"
+            }
+        ]
+    }
 ]

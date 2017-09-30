@@ -1,0 +1,37 @@
+stages:
+  - build-container
+  - test
+  - cleanup
+
+variables:
+  TEST_IMAGE_NAME: gxservers.com:5500/${CI_PROJECT_PATH}:${CI_BUILD_REF_NAME}
+  TEST_CONTAINER_NAME: ${CI_PROJECT_NAME}--${CI_BUILD_REF_NAME}
+  TIMEOUT: 2h
+
+build-container:
+  stage: build-container
+  script:
+    - echo CI image name ${TEST_IMAGE_NAME}
+    - docker build -f ci/Dockerfile -t ${TEST_IMAGE_NAME} --build-arg LINTER_TOKEN=${PRIVATE_LINTER_TOKEN} ./
+    - docker rm -f ${TEST_CONTAINER_NAME} || true
+    - ci/run-container.sh --image ${TEST_IMAGE_NAME} --name ${TEST_CONTAINER_NAME} --timeout ${TIMEOUT}
+
+lint:
+  stage: test
+  script:
+    - ci/run-linters.sh --container ${TEST_CONTAINER_NAME}
+
+test:
+  stage: test
+  script:
+    - docker exec -i ${TEST_CONTAINER_NAME} ci/test-python.sh
+
+integration-test:
+  stage: test
+  script:
+    - docker exec -i ${TEST_CONTAINER_NAME} ci/integration-tests.sh
+
+cleanup:
+  stage: cleanup
+  script:
+    - docker stop ${TEST_CONTAINER_NAME}

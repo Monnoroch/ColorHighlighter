@@ -2,7 +2,7 @@
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C2L27SE4YDFAC)
 
-_ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively previews color values by underlaying the selected hex codes in different styles, coloring text or gutter icons. Also, plugin adds color picker, color format converter and less/sass/styl variables navigation to easily modify colors._
+_ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively previews color values by underlaying the selected hex codes in different styles, coloring text or gutter icons. Also, plugin adds color picker, color format converter to easily modify colors._
 
 ![Description](http://i.imgur.com/UPmEk09.png)
 
@@ -12,58 +12,108 @@ _ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively 
 
 ![Description](http://sametmax.com/wp-content/uploads/2013/04/color-picker.gif)
 
-**Installation :**
+## Installation
 
 - **_Recommended_** - Using [Sublime Package Control](https://packagecontrol.io "Sublime Package Control")
     - <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> then select `Package Control: Install Package`
     - install `Color Highlighter`
-- Alternatively, download the package from [GitHub](https://github.com/Monnoroch/ColorHighlighter "ColorHighlighter") into your `Packages` folder and then rename plugins directory from "ColorHighlighter" to "Color Highlighter"
-- For gutter icons install [ImageMagick](http://www.imagemagick.org/)
-- For color picker on linux install Qt5 framework.
+- Alternatively, download the package from [GitHub](https://github.com/Monnoroch/ColorHighlighter "ColorHighlighter") into your `Packages` folder.
+- For gutter icons install [ImageMagick](http://www.imagemagick.org/). To configure ImageMagick, update `icon_factory.convert_command` plugin setting.
 
-**Usage :**
+## Color Highlighting styles
 
-Just click or move the cursor (or multiple cursors) on the color code e.g. "#FFFFFF" or "rgba(255, 0, 0, 0.7)" or variable with color code value and it'll be highlighted with its real color.
-These color formats are currently supported:
-- All CSS color formats.
-- Hexadecimal RGBA ("0xFFFFFFFF") or ("0xFFFF") and RGB ("0xFFFFFF") or ("0xFFF").
-- Named colors like "green", "black" and many others.
-- Less/sass/scss/stylus variables (supports @importing from another files recursively).
-- [VAL, VAL, VAL] and [VAL, VAL, VAL, VAL] when editing e files. Where VAL can be one of the following:
-  - An integer: from 0 to 255.
-  - A float value from 0.0 to 1.0, you can also skip leading zero (like that: .25)
-  - A percentage from 0% to 100%.
+There are three color highlighting styles: inline highlighting, underline blocks, and gutter icons.
 
-**Variables file :**
-You can define a list or string field `color_variables_files` in your .sublime-project file to automatically include all less/sass/scss/stylus color variables from these files for every file you edit (for now, only absolute path is supported).
-There is a deprecated but left for compatibility setting `color_variables_file`, which can only contain a string for a single file, not a list.
+### Gutter icons
 
-**Settings :**
+To enable highlighting colors with gutter icons go to
+`Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Gutter icon style` and select `Circle` or `Square`.
+Highlighting colors with gutter icons requires ImageMagick to be installed (see the installation section).
+Going to `Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Gutter icon style` and selecting `None` will disable it.
 
-You can choose the highlighting style from:
-- "Filled", "outlined", "none", "colored text" in ST2.
-- "Filled", "outlined", "none", "underlined" (solid, strippled, squiggly), "colored text" in ST3.
+This mode can cause pauses when opening big files for the first time with "highlihgt everything" mode because
+the plugin needs to create icons for all newly encountered colors.
 
-You can also turn on highlighting all colors at once. This mode has own highlighting style, so you can highlight all colors with underline and selected colors with filled rect.
+### Underline blocks
 
-You can also enable icons, which will be shown in the gutter of a file (might not work in ST2).
+Highlighting colors with underline blocks will display colored blocks right under highlighted colors.
+These blocks cause text reflow.
+To enable highlighting colors with underline blocks go to
+`Tools > Color Highlighter > Color Highlighters > Highlight colors in all text` and click `Highlight colors with blocks`.
+Clicking on this setting again will disable it.
 
-You can always turn off default keybindings via main menu or settings.
+### Inline highlighting
 
-**Color picker usage:**
+Inline color highlighting itself has several styles.
+All of them require Color Scheme modification, so when this mode is enabled the view's color scheme is changed to a fake one,
+which is a copy of the real color scheme, but augmented with the plugin-specific definitions.
+To disable inline highlighting  go to
+`Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Inline highlighting style` and select `None`.
 
-Just put the cursor (or multiple cursors) on the color code and select "Choose color" in context menu (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd>). Select the color in a popup color picker and all color codes under your cursors will change. The change will preserve exact code format, so if you select codes "#FFF" and "rgb(255,255,255)" and "white" and choose color "#FF0000", you get codes: "#F00" and "rgb(255,0,0)" and "red". Also, works with variables.
+##### Inline blocks
 
-**Color converter usage:**
+Highlighting colors with inline blocks will display colored blocks right on top of highlighted colors.
+To enable highlighting colors with inline blocks go to
+`Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Inline highlighting style` and select `Filled`.
 
-Just put the cursor (or multiple cursors) on the color code and select "Convert color" in context menu (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd>). Input a color format to use and press enter. The full list of all color formats is in the plugins settings file.
-Format can be any format supported by this plugin, for example if you convert "rgb(255,255,255)" into format "hsv", you'll get "hsv(0, 0%, 100%)". Also works with named colors and variables.
+##### Colored text
 
-Also, there are Prev and Next color commands, triggered by <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>,</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>.</kbd> respectively to choose previous or next color format.
+Highlighting colors with colored text will make colors text be rendered with that color.
+To enable highlighting colors with colored text go to
+`Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Inline highlighting style` and select `Text`.
 
-**Less/sass/scss/stylus variables navigation:**
+##### Outline and underline styles
 
-Just put cursor on a variable, right click on it and press "Go to variable definition" and the plugin will open it. There is also a shortcut <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>D</kbd>.
+If one wants color highlighting to be more subtle that one with inline blocks he can select one of
+`Outlined`, `Underlined solid`, `Underlined strippled`, `Underlined squiggly` styles in
+`Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Inline highlighting style` menu.
+
+## Color Highlighting modes
+
+#### Highlight everything
+
+In this mode the plugin parses the whole file and highlights all colors it can find.
+Highlighting style settings for that mode are in `Tools > Color Highlighter > Color Highlighters > Highlight colors in all text`.
+
+This mode can cause pauses when opening big files because the plugin needs to parse the whole file.
+
+#### Highlight selection
+
+In this mode the plugin highlights colors under the cursor. It supports multiple selections as well.
+Highlighting style settings for that mode are in `Tools > Color Highlighter > Color Highlighters > Highlight colors in selected text`.
+
+#### Highlight when hovering
+
+In this mode the plugin highlights colors when one hovers over them with the mouse cursor.
+Highlighting style settings for that mode are in `Tools > Color Highlighter > Color Highlighters > Highlight colors when hovering the cursor above them`.
+
+#### Combined
+
+These three modes can be combined in any possible way.
+The settings for all three modes are completely independent and can be configured all at once.
+For example, the default settings are to highlight all colors with gutter icons and with colored text,
+highlight selected colors with underline blocks and highlight colors one hovers over with inline blocks.
+
+## Color picker
+
+Just put the cursor (or multiple cursors) where you want the color and and select "Insert color with color picker"
+in context menu (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd>).
+Select the color in a popup color picker and it will be inserted in place of all your cursors.
+If some of your cursors are in existing colors, these colors will be replaces with a newly selected one.
+
+## Color converter
+
+Just put the cursor (or multiple cursors) on the color code and select "Convert color to the next format" in context menu (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>,</kbd>) or "Convert color to the previous format" in context menu (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>.</kbd>).
+This will convert colors under cursors between different supported color formats.
+
+## Variables highlighting
+
+THIS FEATURE CURRENTLY DOESN'T WORK.
+
+It was removed because it didn't work very well, was slow and buggy.
+Right now I'm in the process of searching for ways to implement it nicely, but it's not ready yet.
+I also plan to include color functions and native CSS variables into the release of this feature.
+Please be patient.
 
 **Donate**
 
