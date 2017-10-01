@@ -116,6 +116,24 @@ Right now I'm in the process of searching for ways to implement it nicely, but i
 I also plan to include color functions and native CSS variables into the release of this feature.
 Please be patient.
 
+## FAQ
+
+#### My plugin settings are gone!
+
+The settings file in the 8.0 has a completely different structure and way more features to configure.
+Because of it it's incompatible with the old one.
+To eliminate weird migration bugs I've decided to delete user settings file upon migration to the new version.
+The settings are only deleted this once, so you can reconfigure the plugin again after update and the settings won't
+disappear again.
+
+#### The plugin doesn't work in HTML/JS/VUE/OTHER files
+
+Yes, it does.
+Highlighting colors is just disabled by default in all files but stylesheets.
+To enable highlighting colors in files with any extension you need to modify `file_extensions` setting
+and add the requiresextension there.
+You can also put `"all"` there and the plugin will be enabled for all files.
+
 **Donate**
 
 Thank you guys for all your support, I couldn't have done it wihout your contributions. Every little bit helps!
