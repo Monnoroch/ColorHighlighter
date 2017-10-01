@@ -427,7 +427,7 @@
                             {
                                 "command": "open_file", "args":
                                 {
-                                    "file": "${packages}/ColorHighlighter/ColorHighlighter.sublime-settings"
+                                    "file": "${packages}/Color Highlighter/ColorHighlighter.sublime-settings"
                                 },
                                 "caption": "Settings – Default"
                             },
