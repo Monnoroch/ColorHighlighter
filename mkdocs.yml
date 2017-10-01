@@ -1,0 +1,62 @@
+site_name: ColorHighlighter Documentation
+site_url: https://Monnoroch.github.io/ColorHighlighter
+repo_url: https://github.com/Monnoroch/ColorHighlighter
+edit_uri: tree/master/docs/src
+site_description: A color highlighting plugin for Sublime Text 2 and 3.
+
+pages:
+  - ColorHighlighter: index.md
+
+theme: material
+docs_dir: docs/src
+theme_dir: docs/theme
+
+markdown_extensions:
+  - markdown.extensions.toc:
+      slugify: !!python/name:pymdownx.slugs.gfm
+  - markdown.extensions.admonition:
+  - markdown.extensions.smarty:
+      smart_quotes: false
+  - pymdownx.betterem:
+  - markdown.extensions.attr_list:
+  - markdown.extensions.def_list:
+  - markdown.extensions.tables:
+  - markdown.extensions.abbr:
+  - pymdownx.extrarawhtml:
+  - pymdownx.superfences:
+  - pymdownx.highlight:
+      css_class: codehilite
+  - pymdownx.inlinehilite:
+  - pymdownx.magiclink:
+      repo_url_shortener: true
+      base_repo_url: https://github.com/Monnoroch/ColorHighlighter
+  - pymdownx.tilde:
+  - pymdownx.caret:
+  - pymdownx.smartsymbols:
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_png
+  - pymdownx.escapeall:
+      hardbreak: true
+      nbsp: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  # TODO: Setup common includes in _snippets like links etc.
+  # - pymdownx.snippets:
+  #     base_path: docs/src/_snippets
+  - pymdownx.keys:
+      separator: "\uff0b"
+  - pymdownx.details:
+
+extra:
+  palette:
+    primary: blue
+    accent: blue
+  font:
+    text: Roboto
+    code: Roboto Mono
+  social:
+    - type: github
+      link: https://github.com/Monnoroch
+
+extra_css:
+  - extra.css
