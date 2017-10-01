@@ -133,6 +133,13 @@ Highlighting colors is just disabled by default in all files but stylesheets.
 To enable highlighting colors in files with any extension you need to modify `file_extensions` setting
 and add the requiresextension there.
 You can also put `"all"` there and the plugin will be enabled for all files.
+If you have enabled some extensions before, they need to be reenabled due to the previous section.
+
+#### Text color highlighting works incorrectly
+
+This might happen during the upgrade.
+The reason is that during the upgrate the color scheme basically gets changed by two incompatible plugins:
+the old one and the new one. To fix all possible issues delete the sublime session file and the cache and restart the plugin.
 
 **Donate**
 
