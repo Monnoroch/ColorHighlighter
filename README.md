@@ -131,7 +131,7 @@ disappear again.
 Yes, it does.
 Highlighting colors is just disabled by default in all files but stylesheets.
 To enable highlighting colors in files with any extension you need to modify `file_extensions` setting
-and add the requiresextension there.
+and add the required extension there.
 You can also put `"all"` there and the plugin will be enabled for all files.
 If you have enabled some extensions before, they need to be reenabled due to the previous section.
 
