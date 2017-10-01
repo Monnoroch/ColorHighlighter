@@ -29,7 +29,7 @@ markdown_extensions:
   - pymdownx.inlinehilite:
   - pymdownx.magiclink:
       repo_url_shortener: true
-      base_repo_url: https://github.com/facelessuser/ColorHighlighter
+      base_repo_url: https://github.com/Monnoroch/ColorHighlighter
   - pymdownx.tilde:
   - pymdownx.caret:
   - pymdownx.smartsymbols:
