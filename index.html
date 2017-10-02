@@ -1,0 +1,666 @@
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="A color highlighting plugin for Sublime Text 2 and 3.">
+      
+      
+        <link rel="canonical" href="https://Monnoroch.github.io/ColorHighlighter/">
+      
+      
+      
+        <link rel="shortcut icon" href="./assets/images/favicon.png">
+      
+      <meta name="generator" content="mkdocs-0.16.3, mkdocs-material-1.10.1">
+    
+    
+      
+        <title>ColorHighlighter Documentation</title>
+      
+    
+    
+      <script src="./assets/javascripts/modernizr-e826f8942a.js"></script>
+    
+    
+      <link rel="stylesheet" href="./assets/stylesheets/application-a20f419c8e.css">
+      
+        <link rel="stylesheet" href="./assets/stylesheets/application-23f75ab9c7.palette.css">
+      
+    
+    
+      
+        
+        
+        
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    
+      <link rel="stylesheet" href="./extra.css">
+    
+    
+  </head>
+  
+  
+  
+  
+    <body data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="drawer">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search">
+    <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="https://Monnoroch.github.io/ColorHighlighter" title="ColorHighlighter Documentation" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon md-icon--home"></i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <span class="md-flex__ellipsis md-header-nav__title">
+          
+            
+              
+            
+            ColorHighlighter
+          
+        </span>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__inner">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" required placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query">
+      <label class="md-icon md-search__icon" for="search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset">&#xE5CD;</button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result" data-md-lang-search="" data-md-lang-tokenizer="[\s\-]+">
+          <div class="md-search-result__meta" data-md-lang-result-none="No matching documents" data-md-lang-result-one="1 matching document" data-md-lang-result-other="# matching documents">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/Monnoroch/ColorHighlighter" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      GitHub
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="drawer">
+    <div class="md-nav__button md-logo">
+      
+        <i class="md-icon md-icon--home"></i>
+      
+    </div>
+    ColorHighlighter Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/Monnoroch/ColorHighlighter" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      GitHub
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        ColorHighlighter
+      </label>
+    
+    <a href="." title="ColorHighlighter" class="md-nav__link md-nav__link--active">
+      ColorHighlighter
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" title="Installation" class="md-nav__link">
+    Installation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-highlighting-styles" title="Color Highlighting styles" class="md-nav__link">
+    Color Highlighting styles
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gutter-icons" title="Gutter icons" class="md-nav__link">
+    Gutter icons
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#underline-blocks" title="Underline blocks" class="md-nav__link">
+    Underline blocks
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inline-highlighting" title="Inline highlighting" class="md-nav__link">
+    Inline highlighting
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inline-blocks" title="Inline blocks" class="md-nav__link">
+    Inline blocks
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#colored-text" title="Colored text" class="md-nav__link">
+    Colored text
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#outline-and-underline-styles" title="Outline and underline styles" class="md-nav__link">
+    Outline and underline styles
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-highlighting-modes" title="Color Highlighting modes" class="md-nav__link">
+    Color Highlighting modes
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#highlight-everything" title="Highlight everything" class="md-nav__link">
+    Highlight everything
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#highlight-selection" title="Highlight selection" class="md-nav__link">
+    Highlight selection
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#highlight-when-hovering" title="Highlight when hovering" class="md-nav__link">
+    Highlight when hovering
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combined" title="Combined" class="md-nav__link">
+    Combined
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-picker" title="Color picker" class="md-nav__link">
+    Color picker
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-converter" title="Color converter" class="md-nav__link">
+    Color converter
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables-highlighting" title="Variables highlighting" class="md-nav__link">
+    Variables highlighting
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" title="Installation" class="md-nav__link">
+    Installation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-highlighting-styles" title="Color Highlighting styles" class="md-nav__link">
+    Color Highlighting styles
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gutter-icons" title="Gutter icons" class="md-nav__link">
+    Gutter icons
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#underline-blocks" title="Underline blocks" class="md-nav__link">
+    Underline blocks
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inline-highlighting" title="Inline highlighting" class="md-nav__link">
+    Inline highlighting
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inline-blocks" title="Inline blocks" class="md-nav__link">
+    Inline blocks
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#colored-text" title="Colored text" class="md-nav__link">
+    Colored text
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#outline-and-underline-styles" title="Outline and underline styles" class="md-nav__link">
+    Outline and underline styles
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-highlighting-modes" title="Color Highlighting modes" class="md-nav__link">
+    Color Highlighting modes
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#highlight-everything" title="Highlight everything" class="md-nav__link">
+    Highlight everything
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#highlight-selection" title="Highlight selection" class="md-nav__link">
+    Highlight selection
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#highlight-when-hovering" title="Highlight when hovering" class="md-nav__link">
+    Highlight when hovering
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combined" title="Combined" class="md-nav__link">
+    Combined
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-picker" title="Color picker" class="md-nav__link">
+    Color picker
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-converter" title="Color converter" class="md-nav__link">
+    Color converter
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variables-highlighting" title="Variables highlighting" class="md-nav__link">
+    Variables highlighting
+  </a>
+  
+</li>
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/Monnoroch/ColorHighlighter/tree/master/docs/src/index.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="colorhighlighter">ColorHighlighter</h1>
+<p><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=C2L27SE4YDFAC"><img alt="Donate" src="https://img.shields.io/badge/Donate-PayPal-green.svg" /></a>
+<a href="https://packagecontrol.io/packages/Color%20Highlighter"><img alt="Package Control Downloads" src="https://img.shields.io/packagecontrol/dt/Color%20Highlighter.svg" /></a></p>
+<p><em>ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively previews color values by underlaying the selected hex codes in different styles, coloring text or gutter icons. Also, plugin adds color picker, color format converter to easily modify colors.</em></p>
+<p><img alt="Description" src="http://i.imgur.com/UPmEk09.png" /></p>
+<p><img alt="Description" src="http://i.imgur.com/kl4joGA.png" /></p>
+<p><img alt="Description" src="http://sametmax.com/wp-content/uploads/2013/04/hilight-color.gif" /></p>
+<p><img alt="Description" src="http://sametmax.com/wp-content/uploads/2013/04/color-picker.gif" /></p>
+<h2 id="installation">Installation</h2>
+<ul>
+<li><strong><em>Recommended</em></strong> - Using <a href="https://packagecontrol.io" title="Sublime Package Control">Sublime Package Control</a><ul>
+<li><span class="keys"><kbd class="key-control">Ctrl</kbd><span>＋</span><kbd class="key-shift">Shift</kbd><span>＋</span><kbd class="key-p">P</kbd></span> then select <code>Package Control: Install Package</code></li>
+<li>install <code>Color Highlighter</code></li>
+</ul>
+</li>
+<li>Alternatively, download the package from <a href="https://github.com/Monnoroch/ColorHighlighter" title="ColorHighlighter">GitHub</a> into your <code>Packages</code> folder.</li>
+<li>For gutter icons install <a href="http://www.imagemagick.org/">ImageMagick</a>. To configure ImageMagick, update <code>icon_factory.convert_command</code> plugin setting.</li>
+</ul>
+<h2 id="color-highlighting-styles">Color Highlighting styles</h2>
+<p>There are three color highlighting styles: inline highlighting, underline blocks, and gutter icons.</p>
+<h3 id="gutter-icons">Gutter icons</h3>
+<p>To enable highlighting colors with gutter icons go to
+<code>Tools &gt; Color Highlighter &gt; Color Highlighters &gt; Highlight colors in all text &gt; Gutter icon style</code> and select <code>Circle</code> or <code>Square</code>.
+Highlighting colors with gutter icons requires ImageMagick to be installed (see the installation section).
+Going to <code>Tools &gt; Color Highlighter &gt; Color Highlighters &gt; Highlight colors in all text &gt; Gutter icon style</code> and selecting <code>None</code> will disable it.</p>
+<p>This mode can cause pauses when opening big files for the first time with "highlihgt everything" mode because
+the plugin needs to create icons for all newly encountered colors.</p>
+<h3 id="underline-blocks">Underline blocks</h3>
+<p>Highlighting colors with underline blocks will display colored blocks right under highlighted colors.
+These blocks cause text reflow.
+To enable highlighting colors with underline blocks go to
+<code>Tools &gt; Color Highlighter &gt; Color Highlighters &gt; Highlight colors in all text</code> and click <code>Highlight colors with blocks</code>.
+Clicking on this setting again will disable it.</p>
+<h3 id="inline-highlighting">Inline highlighting</h3>
+<p>Inline color highlighting itself has several styles.
+All of them require Color Scheme modification, so when this mode is enabled the view's color scheme is changed to a fake one,
+which is a copy of the real color scheme, but augmented with the plugin-specific definitions.
+To disable inline highlighting  go to
+<code>Tools &gt; Color Highlighter &gt; Color Highlighters &gt; Highlight colors in all text &gt; Inline highlighting style</code> and select <code>None</code>.</p>
+<h5 id="inline-blocks">Inline blocks</h5>
+<p>Highlighting colors with inline blocks will display colored blocks right on top of highlighted colors.
+To enable highlighting colors with inline blocks go to
+<code>Tools &gt; Color Highlighter &gt; Color Highlighters &gt; Highlight colors in all text &gt; Inline highlighting style</code> and select <code>Filled</code>.</p>
+<h5 id="colored-text">Colored text</h5>
+<p>Highlighting colors with colored text will make colors text be rendered with that color.
+To enable highlighting colors with colored text go to
+<code>Tools &gt; Color Highlighter &gt; Color Highlighters &gt; Highlight colors in all text &gt; Inline highlighting style</code> and select <code>Text</code>.</p>
+<h5 id="outline-and-underline-styles">Outline and underline styles</h5>
+<p>If one wants color highlighting to be more subtle that one with inline blocks he can select one of
+<code>Outlined</code>, <code>Underlined solid</code>, <code>Underlined strippled</code>, <code>Underlined squiggly</code> styles in
+<code>Tools &gt; Color Highlighter &gt; Color Highlighters &gt; Highlight colors in all text &gt; Inline highlighting style</code> menu.</p>
+<h2 id="color-highlighting-modes">Color Highlighting modes</h2>
+<h4 id="highlight-everything">Highlight everything</h4>
+<p>In this mode the plugin parses the whole file and highlights all colors it can find.
+Highlighting style settings for that mode are in <code>Tools &gt; Color Highlighter &gt; Color Highlighters &gt; Highlight colors in all text</code>.</p>
+<p>This mode can cause pauses when opening big files because the plugin needs to parse the whole file.</p>
+<h4 id="highlight-selection">Highlight selection</h4>
+<p>In this mode the plugin highlights colors under the cursor. It supports multiple selections as well.
+Highlighting style settings for that mode are in <code>Tools &gt; Color Highlighter &gt; Color Highlighters &gt; Highlight colors in selected text</code>.</p>
+<h4 id="highlight-when-hovering">Highlight when hovering</h4>
+<p>In this mode the plugin highlights colors when one hovers over them with the mouse cursor.
+Highlighting style settings for that mode are in <code>Tools &gt; Color Highlighter &gt; Color Highlighters &gt; Highlight colors when hovering the cursor above them</code>.</p>
+<h4 id="combined">Combined</h4>
+<p>These three modes can be combined in any possible way.
+The settings for all three modes are completely independent and can be configured all at once.
+For example, the default settings are to highlight all colors with gutter icons and with colored text,
+highlight selected colors with underline blocks and highlight colors one hovers over with inline blocks.</p>
+<h2 id="color-picker">Color picker</h2>
+<p>Just put the cursor (or multiple cursors) where you want the color and and select "Insert color with color picker"
+in context menu (or press <span class="keys"><kbd class="key-control">Ctrl</kbd><span>＋</span><kbd class="key-shift">Shift</kbd><span>＋</span><kbd class="key-c">C</kbd></span>).
+Select the color in a popup color picker and it will be inserted in place of all your cursors.
+If some of your cursors are in existing colors, these colors will be replaces with a newly selected one.</p>
+<h2 id="color-converter">Color converter</h2>
+<p>Just put the cursor (or multiple cursors) on the color code and select "Convert color to the next format" in context menu (or press <span class="keys"><kbd class="key-control">Ctrl</kbd><span>＋</span><kbd class="key-shift">Shift</kbd><span>＋</span><kbd class="key-comma">,</kbd></span>) or "Convert color to the previous format" in context menu (or press <span class="keys"><kbd class="key-control">Ctrl</kbd><span>＋</span><kbd class="key-shift">Shift</kbd><span>＋</span><kbd class="key-period">.</kbd></span>).
+This will convert colors under cursors between different supported color formats.</p>
+<h2 id="variables-highlighting">Variables highlighting</h2>
+<p>THIS FEATURE CURRENTLY DOESN'T WORK.</p>
+<p>It was removed because it didn't work very well, was slow and buggy.
+Right now I'm in the process of searching for ways to implement it nicely, but it's not ready yet.
+I also plan to include color functions and native CSS variables into the release of this feature.
+Please be patient.</p>
+<p><strong>Donate</strong></p>
+<p>Thank you guys for all your support, I couldn't have done it wihout your contributions. Every little bit helps!</p>
+<p><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=C2L27SE4YDFAC"><img alt="paypal" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" /></a></p>
+                
+                  
+                
+              
+              
+                
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        powered by
+        <a href="http://www.mkdocs.org" title="MkDocs">MkDocs</a>
+        and
+        <a href="http://squidfunk.github.io/mkdocs-material/" title="Material for MkDocs">
+          Material for MkDocs</a>
+        with emoji provided free by
+        <a href="http://www.emojione.com">EmojiOne</a>
+      </div>
+      
+        
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="https://github.com/Monnoroch" class="md-footer-social__link fa fa-github"></a>
+    
+  </div>
+
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="./assets/javascripts/application-f3ab9e5ff8.js"></script>
+      
+      
+      <script>app.initialize({url:{base:"."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>

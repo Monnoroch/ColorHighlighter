@@ -1,0 +1,70 @@
+.md-typeset .keys kbd::before,
+.md-typeset .keys kbd::after {
+    position: relative;
+    margin: 0;
+    color: #bdbdbd;
+    font-family: sans-serif;
+    -moz-osx-font-smoothing: initial;
+    -webkit-font-smoothing: initial;
+    font-weight: 400;
+}
+
+.md-typeset .keys span {
+    padding: 0 0.2rem;
+    color: #bdbdbd;
+}
+
+.md-typeset .keys .key-backspace::before {
+    padding-left: 0.2rem;
+    content: "←";
+}
+
+.md-typeset .keys .key-command::before {
+    padding-left: 0.2rem;
+    content: "⌘";
+}
+
+.md-typeset .keys .key-windows::before {
+    padding-left: 0.2rem;
+    content: "⊞";
+}
+
+.md-typeset .keys .key-caps-lock::before {
+    padding-left: 0.2rem;
+    content: "⇪";
+}
+
+.md-typeset .keys .key-control::before {
+    padding-left: 0.2rem;
+    content: "⌃";
+}
+
+.md-typeset .keys .key-meta::before {
+    padding-left: 0.2rem;
+    content: "◆";
+}
+
+.md-typeset .keys .key-shift::before {
+    padding-left: 0.2rem;
+    content: "⇧";
+}
+
+.md-typeset .keys .key-option::before {
+    padding-left: 0.2rem;
+    content: "⌥";
+}
+
+.md-typeset .keys .key-tab::after {
+    padding-left: 0.2rem;
+    content: "↹";
+}
+
+.md-typeset .keys .key-num-enter::after {
+    padding-left: 0.2rem;
+    content: "↵";
+}
+
+.md-typeset .keys .key-enter::after {
+    padding-left: 0.2rem;
+    content: "↩";
+}
