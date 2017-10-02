@@ -137,9 +137,13 @@ If you have enabled some extensions before, they need to be reenabled due to the
 
 #### Inline color highlighting works incorrectly
 
-This might happen during the upgrade.
-The reason is that during the upgrate the color scheme basically gets changed by two incompatible plugins:
-the old one and the new one. To fix all possible issues delete the sublime session file and the cache and restart the plugin.
+Due to a Sublime Text not ordering added regions deterministically enabling both text and non-text inline highlihgting
+at the same time doesn't work properly. For example, if you select `Text` in
+`Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Inline highlighting style`
+and `Filled` in
+`Tools > Color Highlighter > Color Highlighters > Highlight colors in selected text > Inline highlighting style`
+it might not work all the time. If you close/open the file a few times and sometimes it's wirking fine and sometimes it
+doesn't, this is exactly this issue.
 
 **Donate**
 
