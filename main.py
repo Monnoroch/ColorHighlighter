@@ -503,7 +503,7 @@ class ColorSelectionEventListener(object):
         if _color_scheme_color_highlighter_enabled(ColorHighlighterPlugin.components.provide_settings()):
             color_scheme = ColorHighlighterPlugin.components.provide_color_scheme()
             # Do not change the color scheme on widgets.
-            if view.settings().get("color_scheme", None) == color_scheme:
+            if not view.settings().get("color_scheme", None).endswith(".stTheme"):
                 set_fake_color_scheme(
                     view, color_scheme, ColorHighlighterPlugin.components.provide_fake_color_scheme())
         return True
