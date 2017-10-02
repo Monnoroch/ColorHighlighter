@@ -135,7 +135,7 @@ and add the required extension there.
 You can also put `"all"` there and the plugin will be enabled for all files.
 If you have enabled some extensions before, they need to be reenabled due to the previous section.
 
-#### Text color highlighting works incorrectly
+#### Inline color highlighting works incorrectly
 
 This might happen during the upgrade.
 The reason is that during the upgrate the color scheme basically gets changed by two incompatible plugins:
