@@ -3,13 +3,13 @@
 import os
 
 try:
-    from .st_helper import running_in_st
+    from . import st_helper
     from .settings import COLOR_HIGHLIGHTER_SETTINGS_NAME
 except ValueError:
     from settings import COLOR_HIGHLIGHTER_SETTINGS_NAME
-    from st_helper import running_in_st
+    import st_helper
 
-if running_in_st():
+if st_helper.running_in_st():
     import sublime  # pylint: disable=import-error
 else:
     from . import sublime
@@ -147,3 +147,19 @@ def fake_color_scheme_path(color_scheme, relative):
     if relative:
         path = normalize_path_for_st(path)
     return path
+
+
+def cached_scheme_path(color_scheme):
+    """
+    Get the .cache file path for a color scheme file.
+
+    Arguments:
+    - color_scheme - the absolute color scheme file path.
+    """
+    cache_suffix = ".cache"
+    if st_helper.is_st3():
+        packages = packages_path(ABSOLUTE)
+        cache_dir = os.path.join(os.path.dirname(packages), "Cache")
+        return os.path.join(cache_dir, color_scheme[len(packages) + 1:] + cache_suffix)
+    else:
+        return color_scheme + cache_suffix

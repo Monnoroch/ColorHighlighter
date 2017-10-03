@@ -106,6 +106,12 @@ class ColorSchemeWriter(object):
             packages_path = os.path.dirname(path.packages_path(path.ABSOLUTE))
             print("ColorHighlighter: action=write_color_scheme scheme=%s" % self._color_scheme[len(packages_path) + 1:])
         self._xml_tree.write(self._color_scheme, encoding="utf-8")
+        try:
+            os.remove(path.cached_scheme_path(self._color_scheme))
+        except FileNotFoundError:
+            # No cache -- no problems.
+            pass
+
 
     def fix_color_scheme_for_gutter_colors(self):
         """Fix color scheme for gutter icons to work properly."""
