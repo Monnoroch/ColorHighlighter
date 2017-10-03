@@ -107,6 +107,7 @@ class ColorSchemeWriter(object):
             print("ColorHighlighter: action=write_color_scheme scheme=%s" % self._color_scheme[len(packages_path) + 1:])
         self._xml_tree.write(self._color_scheme, encoding="utf-8")
         try:
+            print("~~~~~ " + path.cached_scheme_path(self._color_scheme))
             os.remove(path.cached_scheme_path(self._color_scheme))
         except FileNotFoundError:
             # No cache -- no problems.

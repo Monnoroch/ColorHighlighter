@@ -225,10 +225,11 @@ class FakeColorSchemeTest(unittest.TestCase):
         """Test get a fake color scheme path for a color scheme."""
         test_path = "/a/b/Packages"
         scheme = "Scheme.tmTheme"
+        fake_scheme = "Scheme.hidden-tmTheme"
         when(os.path).exists(test_path + "/ColorHighlighter/" + COLOR_HIGHLIGHTER_SETTINGS_NAME).thenReturn(True)
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual(
-            "Packages/User/ColorHighlighter/themes/" + scheme,
+            "Packages/User/ColorHighlighter/themes/" + fake_scheme,
             path.fake_color_scheme_path("Color/" + scheme, path.RELATIVE))
         unstub(sublime)
         unstub(os.path)
@@ -237,10 +238,11 @@ class FakeColorSchemeTest(unittest.TestCase):
         """Test get absolute themes path."""
         test_path = "/a/b/Packages"
         scheme = "Scheme.tmTheme"
+        fake_scheme = "Scheme.hidden-tmTheme"
         when(os.path).exists(test_path + "/ColorHighlighter/" + COLOR_HIGHLIGHTER_SETTINGS_NAME).thenReturn(True)
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual(
-            test_path + "/User/ColorHighlighter/themes/" + scheme,
+            test_path + "/User/ColorHighlighter/themes/" + fake_scheme,
             path.fake_color_scheme_path("Color/" + scheme, path.ABSOLUTE))
         unstub(sublime)
         unstub(os.path)
@@ -249,10 +251,11 @@ class FakeColorSchemeTest(unittest.TestCase):
         """Test get absolute themes path with a package installation."""
         test_path = "/a/b/Packages"
         scheme = "Scheme.tmTheme"
+        fake_scheme = "Scheme.hidden-tmTheme"
         when(os.path).exists(test_path + "/ColorHighlighter/" + COLOR_HIGHLIGHTER_SETTINGS_NAME).thenReturn(False)
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual(
-            test_path + "/User/Color Highlighter/themes/" + scheme,
+            test_path + "/User/Color Highlighter/themes/" + fake_scheme,
             path.fake_color_scheme_path("Color/" + scheme, path.ABSOLUTE))
         unstub(sublime)
         unstub(os.path)
@@ -261,11 +264,12 @@ class FakeColorSchemeTest(unittest.TestCase):
         """Test get a fake color scheme path for a color scheme on windows."""
         test_path = "/a/b/Packages"
         scheme = "Scheme.tmTheme"
+        fake_scheme = "Scheme.hidden-tmTheme"
         when(os.path).exists(test_path + "/ColorHighlighter/" + COLOR_HIGHLIGHTER_SETTINGS_NAME).thenReturn(True)
         when(sublime).platform().thenReturn("windows")
         when(sublime).packages_path().thenReturn(test_path)
         self.assertEqual(
-            "Packages/User/ColorHighlighter/themes/" + scheme,
+            "Packages/User/ColorHighlighter/themes/" + fake_scheme,
             path.fake_color_scheme_path("Color/" + scheme, path.RELATIVE))
         unstub(sublime)
         unstub(os.path)

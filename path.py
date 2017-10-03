@@ -143,7 +143,8 @@ def fake_color_scheme_path(color_scheme, relative):
     Returns a path to the fake color scheme for this color scheme.
     """
     file_name = os.path.basename(color_scheme)
-    path = os.path.join(themes_path(relative), file_name)
+    file_name, extension = os.path.splitext(file_name)
+    path = os.path.join(themes_path(relative), file_name + ".hidden-tmTheme")
     if relative:
         path = normalize_path_for_st(path)
     return path
