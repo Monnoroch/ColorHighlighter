@@ -200,6 +200,10 @@ class ColorHighlighterComponents(object):
         self._fake_color_scheme_data = parse_color_scheme(self.provide_color_scheme(), self._settings.debug)
         return self._fake_color_scheme_data
 
+    def provide_fake_color_scheme_writer(self):
+        """Provide a fake color scheme data."""
+        return self.provide_fake_color_scheme_data()[2]
+
     def provide_fake_color_scheme(self):
         """Provide a fake color scheme."""
         return self.provide_fake_color_scheme_data()[0]
@@ -215,9 +219,10 @@ class ColorHighlighterComponents(object):
         if self._color_scheme_builder is not None:
             return self._color_scheme_builder
 
-        _, color_scheme_data, color_scheme_writer = self.provide_fake_color_scheme_data()
+        _, color_scheme_data, _ = self.provide_fake_color_scheme_data()
         self._color_scheme_builder = ColorSchemeBuilder(
-            color_scheme_data, color_scheme_writer, self._settings.experimental.asynchronosly_update_color_scheme)
+            color_scheme_data, self.provide_fake_color_scheme_writer(),
+            self._settings.experimental.asynchronosly_update_color_scheme)
         return self._color_scheme_builder
 
     def provide_icon_factory(self):
@@ -249,6 +254,7 @@ class ColorHighlighterComponents(object):
                 view, searcher.color_highlighters.color_scheme.highlight_style, self.provide_color_scheme_builder(),
                 searcher.name, self._settings.debug))
         if searcher.color_highlighters.gutter_icons.enabled:
+            self.provide_fake_color_scheme_writer().fix_color_scheme_for_gutter_colors()
             color_highlighters.append(GutterIconsColorHighlighter(
                 view, searcher.color_highlighters.gutter_icons.icon_style, self.provide_icon_factory(), searcher.name,
                 self._settings.debug))

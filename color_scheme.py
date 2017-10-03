@@ -12,10 +12,12 @@ try:
     from . import path
     from . import colors
     from . import load_resource
+    from .gutter_icons_color_highlighter import GutterIconsColorHighlighter
 except ValueError:
     import path
     import colors
     import load_resource
+    from gutter_icons_color_highlighter import GutterIconsColorHighlighter
 
 
 # NOTE: keep in sync with ColorSchemeBuilder._color_scope_template.
@@ -104,6 +106,35 @@ class ColorSchemeWriter(object):
             packages_path = os.path.dirname(path.packages_path(path.ABSOLUTE))
             print("ColorHighlighter: action=write_color_scheme scheme=%s" % self._color_scheme[len(packages_path) + 1:])
         self._xml_tree.write(self._color_scheme, encoding="utf-8")
+
+    def fix_color_scheme_for_gutter_colors(self):
+        """Fix color scheme for gutter icons to work properly."""
+        for child in self._scopes_array_element:
+            if child.tag != "dict":
+                continue
+
+            scope = _get_value_child_with_tag(child, "scope", "string")
+            if scope is None:
+                continue
+            # The scheme is already fixed.
+            if scope == GutterIconsColorHighlighter.region_scope:
+                return
+
+        if self._debug:
+            print("ColorHighlighter: action=fix_color_scheme")
+        self.add_scopes([ElementTree.fromstring("""
+<dict>
+    <key>name</key>
+    <string>CH_color_scheme_fix</string>
+    <key>scope</key>
+    <string>%s</string>
+    <key>settings</key>
+    <dict>
+        <key>foreground</key>
+        <string>#ffffff</string>
+    </dict>
+</dict>
+""" % GutterIconsColorHighlighter.region_scope)])
 
 
 def _get_child_by_tag(element, child_tag):
