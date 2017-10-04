@@ -137,13 +137,20 @@ If you have enabled some extensions before, they need to be reenabled due to the
 
 #### Inline color highlighting works incorrectly
 
+Inline color highlighting is not guaranteed to be compatible with any plugin that generates or changes color schemes,
+such as `SublimeLinter`. If you use one of those plugins you have to either disable them completely, or configure them
+to not modify the color scheme or configure Color Highlighter to not modify the color scheme, which basically means
+disabling inline color highlighting.
+
+##### I don't have any other plugin that modifies the color scheme and inline highlighting still works incorrectly
+
 Due to a Sublime Text not ordering added regions deterministically enabling both text and non-text inline highlihgting
-at the same time doesn't work properly. For example, if you select `Text` in
+at the same time might work properly. For example, if you select `Text` in
 `Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Inline highlighting style`
 and `Filled` in
 `Tools > Color Highlighter > Color Highlighters > Highlight colors in selected text > Inline highlighting style`
-it might not work all the time. If you close/open the file a few times and sometimes it's wirking fine and sometimes it
-doesn't, this is exactly this issue.
+it might not work all the time. If you close/open the file a few times and sometimes it's working fine and sometimes it
+isn't, this is exactly this issue.
 
 **Donate**
 
