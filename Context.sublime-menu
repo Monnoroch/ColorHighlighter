@@ -1,6 +1,6 @@
 [
     { "caption": "-", "id": "Color Highlighter" },
-    { "command": "color_picker", "caption": "Choose color"},
-    { "command": "color_convert", "caption": "Convert color"},
-    { "command": "go_to_var_definition", "caption": "Go to variable definition"}
+    { "command": "color_highlighter_pick_color", "caption": "Insert color with color picker"},
+    { "command": "color_highlighter_next_color", "caption": "Convert color to the next format"},
+    { "command": "color_highlighter_previous_color", "caption": "Convert color to the previous format"}
 ]
