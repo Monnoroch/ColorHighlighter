@@ -43,6 +43,11 @@ To enable highlighting colors with underline blocks go to
 `Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Highlight colors with blocks`
 and choose one of `To the right of the color`, `To the left of the color`, `Below the color`.
 These are options are self-explanatory.
+
+For `Below the color` the block will be the same size that the color code is. For `To the right of the color` and
+`To the left of the color` the block size can be configured with the `length` parameter which defines the size of
+the block in characters.
+
 Going to `Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Highlight colors with blocks`
 and selecting `None` will disable it.
 
