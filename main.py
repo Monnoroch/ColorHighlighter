@@ -2,7 +2,6 @@
 
 import os
 import shutil
-import stat
 
 import sublime  # pylint: disable=import-error
 
@@ -19,11 +18,11 @@ try:
     from .color_highlighter import CachingColorHighlighter
     from .phantoms_color_highlighter import PhantomColorHighlighter
     from .gutter_icons_color_highlighter import IconFactory, GutterIconsColorHighlighter
-    from .color_scheme import parse_color_scheme
+    from .color_scheme import init_color_scheme_dir, parse_color_scheme
     from .color_scheme_color_highlighter import ColorSchemeBuilder, ColorSchemeColorHighlighter
     from .color_selection_listener import ColorSelectionListener
     from .color_hover_listener import ColorHoverListener
-    from .load_resource import load_binary_resource, get_binary_resource_size
+    from .load_resource import copy_resource
     from .regex_compiler import compile_regex
 except ValueError:
     import st_helper
@@ -36,11 +35,11 @@ except ValueError:
     from phantoms_color_highlighter import PhantomColorHighlighter
     from color_highlighter import CachingColorHighlighter
     from gutter_icons_color_highlighter import IconFactory, GutterIconsColorHighlighter
-    from color_scheme import parse_color_scheme
+    from color_scheme import init_color_scheme_dir, parse_color_scheme
     from color_scheme_color_highlighter import ColorSchemeBuilder, ColorSchemeColorHighlighter
     from color_selection_listener import ColorSelectionListener
     from color_hover_listener import ColorHoverListener
-    from load_resource import load_binary_resource, get_binary_resource_size
+    from load_resource import copy_resource
     from regex_compiler import compile_regex
 
 # ST2's python doesn't have XMLTreeBuilder, this code is supposed to fix this, see
@@ -53,18 +52,6 @@ if not st_helper.is_st3():
 
 PREFERENCES_SETTINGS_NAME = "Preferences.sublime-settings"
 COLOR_HIGHLIGHTER_KEY_PREFIX = "color_highlighter."
-
-
-def copy_resource(resource, destination_path):
-    """
-    Copy resource to a file.
-
-    Arguments:
-    - resource - the resource to copy.
-    - destination_path - the path where to copy the resource.
-    """
-    with open(destination_path, "wb") as file:
-        file.write(load_binary_resource(resource))
 
 
 def set_fake_color_scheme(view, color_scheme, fake_color_scheme):
@@ -83,6 +70,7 @@ def set_fake_color_scheme(view, color_scheme, fake_color_scheme):
         if debug:
             print("ColorHighlighter: action=copy_color_scheme scheme=%s fake_scheme=%s"
                   % (color_scheme, fake_color_scheme))
+        init_color_scheme_dir()
         copy_resource(color_scheme, fake_color_scheme_path)
 
     settings = view.settings()
@@ -615,27 +603,6 @@ def plugin_loaded():  # noqa: D401
     debug = Settings(sublime.load_settings(COLOR_HIGHLIGHTER_SETTINGS_NAME)).debug
     if debug:
         print("ColorHighlighter: action=start st=%s" % (st_helper.st_version()))
-
-    def _create_if_not_exists(path_to_create):
-        if not os.path.exists(path_to_create):
-            os.mkdir(path_to_create)
-
-    def _init_color_picker():
-        color_picker_file = path.color_picker_file(path.ABSOLUTE)
-        color_picker_resource = path.color_picker_binary(path.RELATIVE)
-        if (os.path.exists(color_picker_file) and
-                os.path.getsize(color_picker_file) == get_binary_resource_size(color_picker_resource)):
-            return
-
-        copy_resource(color_picker_resource, color_picker_file)
-        chmod_flags = stat.S_IXUSR | stat.S_IXGRP | stat.S_IRUSR | stat.S_IRUSR | stat.S_IWUSR | stat.S_IWGRP
-        os.chmod(color_picker_file, chmod_flags)
-
-    _create_if_not_exists(path.data_path(path.ABSOLUTE))
-    _create_if_not_exists(path.icons_path(path.ABSOLUTE))
-    _create_if_not_exists(path.themes_path(path.ABSOLUTE))
-    _create_if_not_exists(path.color_picker_path(path.ABSOLUTE))
-    _init_color_picker()
     ColorHighlighterPlugin.init()
 
 

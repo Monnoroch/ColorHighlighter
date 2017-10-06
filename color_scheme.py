@@ -105,6 +105,8 @@ class ColorSchemeWriter(object):
         if self._debug:
             packages_path = os.path.dirname(path.packages_path(path.ABSOLUTE))
             print("ColorHighlighter: action=write_color_scheme scheme=%s" % self._color_scheme[len(packages_path) + 1:])
+
+        init_color_scheme_dir()
         self._xml_tree.write(self._color_scheme, encoding="utf-8")
         try:
             os.remove(path.cached_scheme_path(self._color_scheme))
@@ -204,3 +206,14 @@ def _load_colors(scopes_array_element):
         color = background.text
         existing_colors[color] = color[1:]
     return existing_colors
+
+
+def init_color_scheme_dir():
+    """Initialise the directory for color schemes."""
+    _create_if_not_exists(path.data_path(path.ABSOLUTE))
+    _create_if_not_exists(path.themes_path(path.ABSOLUTE))
+
+
+def _create_if_not_exists(path_to_create):
+    if not os.path.exists(path_to_create):
+        os.mkdir(path_to_create)

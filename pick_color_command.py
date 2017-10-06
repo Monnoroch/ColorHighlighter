@@ -1,5 +1,7 @@
 """A ST3 commands for converting colors between formats."""
 
+import os
+import stat
 import subprocess
 import threading
 
@@ -11,6 +13,7 @@ try:
     from .color_converter import ColorConverter
     from .color_searcher import ColorSearcher
     from .color_selection_listener import search_colors_in_selection
+    from .load_resource import copy_resource, get_binary_resource_size
     from .regex_compiler import compile_regex
     from .settings import Settings, COLOR_HIGHLIGHTER_SETTINGS_NAME
 except ValueError:
@@ -19,6 +22,7 @@ except ValueError:
     from color_converter import ColorConverter
     from color_searcher import ColorSearcher
     from color_selection_listener import search_colors_in_selection
+    from load_resource import copy_resource, get_binary_resource_size
     from regex_compiler import compile_regex
     from settings import Settings, COLOR_HIGHLIGHTER_SETTINGS_NAME
 
@@ -44,6 +48,7 @@ class ColorHighlighterPickColor(sublime_plugin.TextCommand):
         _run_async(self._open_color_picker)
 
     def _open_color_picker(self):
+        _init_color_picker()
         settings = Settings(sublime.load_settings(COLOR_HIGHLIGHTER_SETTINGS_NAME))
         formats = [value for value in sorted(settings.regex_compiler.formats.keys())]
         color_converter = ColorConverter(formats)
@@ -131,3 +136,22 @@ class _RunAsync(threading.Thread):
 
     def run(self):
         self.callback()
+
+
+def _create_if_not_exists(path_to_create):
+    if not os.path.exists(path_to_create):
+        os.mkdir(path_to_create)
+
+
+def _init_color_picker():
+    _create_if_not_exists(path.data_path(path.ABSOLUTE))
+    _create_if_not_exists(path.color_picker_path(path.ABSOLUTE))
+    color_picker_file = path.color_picker_file(path.ABSOLUTE)
+    color_picker_resource = path.color_picker_binary(path.RELATIVE)
+    if (os.path.exists(color_picker_file) and
+            os.path.getsize(color_picker_file) == get_binary_resource_size(color_picker_resource)):
+        return
+
+    copy_resource(color_picker_resource, color_picker_file)
+    chmod_flags = stat.S_IXUSR | stat.S_IXGRP | stat.S_IRUSR | stat.S_IRUSR | stat.S_IWUSR | stat.S_IWGRP
+    os.chmod(color_picker_file, chmod_flags)

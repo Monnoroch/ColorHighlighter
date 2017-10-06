@@ -9,7 +9,7 @@ from ColorHighlighter import load_resource, path, sublime  # pylint: disable=no-
 from ColorHighlighter.color_scheme import (  # pylint: disable=no-name-in-module,import-error
     CH_COLOR_SCOPE_NAME, ColorSchemeData, ColorSchemeWriter, parse_color_scheme)
 
-from mockito import ANY, mock, verify, when
+from mockito import ANY, mock, unstub, verify, when
 
 
 class ParseColorSchemeTest(unittest.TestCase):
@@ -481,6 +481,7 @@ class ColorSchemeWriterTest(unittest.TestCase):
 
     def test_add_scopes(self):
         """Test that add_scopes adds scopes and writes the file."""
+        when(os.path).exists(ANY).thenReturn(True)
         xml_tree = mock()
         color_scheme = "test color scheme"
         initial_scopes = ["test"]
@@ -490,3 +491,4 @@ class ColorSchemeWriterTest(unittest.TestCase):
         color_scheme_writer.add_scopes(new_scopes)
         self.assertEqual(initial_scopes + new_scopes, scopes)
         verify(xml_tree).write(color_scheme, encoding="utf-8")
+        unstub(os)

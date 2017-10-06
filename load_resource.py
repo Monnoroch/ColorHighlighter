@@ -63,6 +63,18 @@ def get_binary_resource_size(file_path):
     return os.path.getsize(file_path)
 
 
+def copy_resource(resource, destination_path):
+    """
+    Copy resource to a file.
+
+    Arguments:
+    - resource - the resource to copy.
+    - destination_path - the path where to copy the resource.
+    """
+    with open(destination_path, "wb") as file:
+        file.write(load_binary_resource(resource))
+
+
 def _read_file(file_path):
     with codecs.open(file_path, "r", "utf-8") as file:
         return file.read()

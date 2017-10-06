@@ -5,12 +5,12 @@ import subprocess
 import threading
 
 try:
+    from . import path
     from .st_helper import running_in_st
-    from .path import normalize_path_for_st
     from .color_highlighter import ColorHighlighter
 except ValueError:
+    import path
     from st_helper import running_in_st
-    from path import normalize_path_for_st
     from color_highlighter import ColorHighlighter
 
 
@@ -67,7 +67,7 @@ class IconFactory(object):
         assert style in self._convert_styles
 
         icon_name = self._icon_name_template % (style, color[1:])
-        sublime_icon_path = normalize_path_for_st(os.path.join(self._sublime_icons_path, icon_name))
+        sublime_icon_path = path.normalize_path_for_st(os.path.join(self._sublime_icons_path, icon_name))
         # TODO(#5): return sublime_icon_path immediately and create icon in background.  # pylint: disable=fixme
         icon_path = os.path.join(self._icons_path, icon_name)
         cache_key = (style, color)
@@ -85,7 +85,7 @@ class IconFactory(object):
 
         if self._debug:
             print("ColorHighlighter: action=could_not_create_icon style=%s color=%s" % (style, color))
-        return normalize_path_for_st(os.path.join(self._sublime_icons_path, IconFactory._bad_icon_name))
+        return path.normalize_path_for_st(os.path.join(self._sublime_icons_path, IconFactory._bad_icon_name))
 
     def check(self):
         """
@@ -114,6 +114,8 @@ class IconFactory(object):
         return (success, os.path.exists(icon_path))
 
     def _run_command(self, command):
+        _create_if_not_exists(path.data_path(path.ABSOLUTE))
+        _create_if_not_exists(path.icons_path(path.ABSOLUTE))
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         try:
             output, error = process.communicate(timeout=self._execute_timeout_seconds)
@@ -190,3 +192,8 @@ def _decode_data(data):
         return data.decode("utf-8")
     except UnicodeDecodeError as exception:
         return str(exception)
+
+
+def _create_if_not_exists(path_to_create):
+    if not os.path.exists(path_to_create):
+        os.mkdir(path_to_create)
