@@ -1,4 +1,5 @@
 ColorHighlighter: action=start st=st3
 ColorHighlighter: action=create_icon style=circle color=#ffffffff
-ColorHighlighter: action=copy_color_scheme scheme=Packages/Color Scheme - Default/Monokai.tmTheme fake_scheme=Packages/User/ColorHighlighter/themes/Monokai.tmTheme
+ColorHighlighter: action=fix_color_scheme
+ColorHighlighter: action=write_color_scheme scheme=Packages/User/ColorHighlighter/themes/Monokai.tmTheme
 ColorHighlighter: action=set_view_color_scheme scheme=Packages/User/ColorHighlighter/themes/Monokai.tmTheme

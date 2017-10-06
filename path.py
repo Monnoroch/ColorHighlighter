@@ -161,5 +161,4 @@ def cached_scheme_path(color_scheme):
         packages = packages_path(ABSOLUTE)
         cache_dir = os.path.join(os.path.dirname(packages), "Cache")
         return os.path.join(cache_dir, color_scheme[len(packages) + 1:] + cache_suffix)
-    else:
-        return color_scheme + cache_suffix
+    return color_scheme + cache_suffix

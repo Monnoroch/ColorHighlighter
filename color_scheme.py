@@ -112,8 +112,7 @@ class ColorSchemeWriter(object):
             # No cache -- no problems.
             pass
 
-
-    def fix_color_scheme_for_gutter_colors(self):
+    def fix_color_scheme_for_gutter_colors(self):  # pylint: disable=invalid-name
         """Fix color scheme for gutter icons to work properly."""
         for child in self._scopes_array_element:
             if child.tag != "dict":

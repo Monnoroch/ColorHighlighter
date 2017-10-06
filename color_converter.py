@@ -412,7 +412,7 @@ def _channel_to_hue(channel):
 def _parse_decimal_or_percent_channel(text):
     try:
         return _parse_decimal_channel(text)
-    except:
+    except Exception:  # pylint: disable=broad-except
         return int(round(_parse_percent_channel(text) * 255))
 
 

@@ -1,14 +1,14 @@
 """A color highlighters that uses phantom sets to highlight colors."""
 
 try:
-    from .st_helper import running_in_st
+    from . import st_helper
     from .color_highlighter import ColorHighlighter
 except ValueError:
-    from st_helper import running_in_st
+    import st_helper
     from color_highlighter import ColorHighlighter
 
 
-if running_in_st():
+if st_helper.running_in_st():
     import sublime  # pylint: disable=import-error
 else:
     from . import sublime
@@ -35,15 +35,16 @@ class PhantomColorHighlighter(ColorHighlighter):
 '''
     space_symbol = "&nbsp;"
 
-    _phantom_styles = {
-        "right": sublime.LAYOUT_INLINE,
-        "left": sublime.LAYOUT_INLINE,
-        "below": sublime.LAYOUT_BELOW
-    }
+    if st_helper.is_st3():
+        _phantom_styles = {
+            "right": sublime.LAYOUT_INLINE,
+            "left": sublime.LAYOUT_INLINE,
+            "below": sublime.LAYOUT_BELOW
+        }
 
     _inline_styles = {"right": True, "left": True}
 
-    def __init__(self, view, name, style, length, debug):
+    def __init__(self, view, name, style, length, debug):  # pylint: disable=too-many-arguments
         """
         Create a phantom color highlighter.
 

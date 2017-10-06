@@ -12,7 +12,9 @@
                     "icon_style": "circle"
                 },
                 "phantoms": {
-                    "enabled": true
+                    "enabled": true,
+                    "style": "right",
+                    "length": 2
                 }
             }
         },
@@ -28,7 +30,9 @@
                     "icon_style": "circle"
                 },
                 "phantoms": {
-                    "enabled": false
+                    "enabled": false,
+                    "style": "right",
+                    "length": 2
                 }
             }
         },
@@ -36,7 +40,7 @@
             "enabled": true,
             "color_highlighters": {
                 "color_scheme": {
-                    "enabled": true,
+                    "enabled": false,
                     "highlight_style": "filled"
                 },
                 "gutter_icons": {
@@ -44,13 +48,15 @@
                     "icon_style": "circle"
                 },
                 "phantoms": {
-                    "enabled": false
+                    "enabled": false,
+                    "style": "right",
+                    "length": 2
                 }
             }
         }
     },
     "default_keybindings": true,
-    "file_extensions": [".py", ".css"],
+    "file_extensions": [".css", ".less", ".scss", ".sass", ".styl"],
     "icon_factory": {
         "convert_command": "convert",
         "convert_timeout": 5
@@ -64,7 +70,7 @@
             "hex": "[0-9a-fA-F]",
             "dec": "\\d{1,3}",
             "float": "(?:[0|1])|(?:[1][\\.]?[0]*)|(?:[0]?[\\.]\\d*)",
-            "perc": "\\d{1,3}[%]"
+            "perc": "(?:\\d{1,3}[%])|(?:0)"
         },
         "formats": {
             "sharp8": {
@@ -91,32 +97,32 @@
                 "after": "sharp4"
             },
             "rgba": {
-                "description": "rgba(255,255,255,1) color format",
-                "regex": "rgba[(][ ]*(?P<R>dec)[ ]*[,][ ]*(?P<G>dec)[ ]*[,][ ]*(?P<B>dec)[ ]*[,][ ]*(?P<A>float)[ ]*[)]",
-                "white": "rgba(255, 255, 255, 1)"
+                "description": "rgba(255,255,100%,1) color format",
+                "regex": "rgba[(][ ]*(?P<R>dec|perc)[ ]*[,][ ]*(?P<G>dec|perc)[ ]*[,][ ]*(?P<B>dec|perc)[ ]*[,][ ]*(?P<A>float)[ ]*[)]",
+                "white": "rgba(255, 255, 100%, 1)"
             },
             "rgb": {
-                "description": "rgb(255,255,255) color format",
-                "regex": "rgb[(][ ]*(?P<R>dec)[ ]*[,][ ]*(?P<G>dec)[ ]*[,][ ]*(?P<B>dec)[ ]*[)]",
-                "white": "rgb(255, 255, 255)"
+                "description": "rgb(255,255,100%) color format",
+                "regex": "rgb[(][ ]*(?P<R>dec|perc)[ ]*[,][ ]*(?P<G>dec|perc)[ ]*[,][ ]*(?P<B>dec|perc)[ ]*[)]",
+                "white": "rgb(255, 255, 100%)"
             },
             "hsva": {
-                "description": "hsva(hue 0..255, s%, v%, alpha 0.0 .. 1.0) color format",
+                "description": "hsva(hue 0..360, s%, v%, alpha 0.0 .. 1.0) color format",
                 "regex": "hsva[(][ ]*(?P<H>dec)[ ]*[,][ ]*(?P<S>perc)[ ]*[,][ ]*(?P<V>perc)[ ]*[,][ ]*(?P<A>float)[ ]*[)]",
                 "white": "hsva(0, 0%, 100%, 1.)"
             },
             "hsv": {
-                "description": "hsv(hue 0..255, s%, v%) color format",
+                "description": "hsv(hue 0..360, s%, v%) color format",
                 "regex": "hsv[(][ ]*(?P<H>dec)[ ]*[,][ ]*(?P<S>perc)[ ]*[,][ ]*(?P<V>perc)[ ]*[)]",
                 "white": "hsv(0, 0%, 100%)"
             },
             "hsla": {
-                "description": "hsla(hue 0..255, s%, v%, alpha 0.0 .. 1.0) color format",
+                "description": "hsla(hue 0..360, s%, v%, alpha 0.0 .. 1.0) color format",
                 "regex": "hsla[(][ ]*(?P<H>dec)[ ]*[,][ ]*(?P<S>perc)[ ]*[,][ ]*(?P<L>perc)[ ]*[,][ ]*(?P<A>float)[ ]*[)]",
                 "white": "hsla(0, 0%, 100%, 1.)"
             },
             "hsl": {
-                "description": "hsl(hue 0..255, s%, v%) color format",
+                "description": "hsl(hue 0..360, s%, v%) color format",
                 "regex": "hsl[(][ ]*(?P<H>dec)[ ]*[,][ ]*(?P<S>perc)[ ]*[,][ ]*(?P<L>perc)[ ]*[)]",
                 "white": "hsl(0, 0%, 100%)"
             }

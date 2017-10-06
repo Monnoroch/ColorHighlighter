@@ -334,7 +334,7 @@ class SettingsTest(unittest.TestCase):
             }
         }))
 
-    def test_create_invalid_phantom_style(self):
+    def test_create_invalid_phantom_style(self):  # pylint: disable=invalid-name
         """Test creating color highlighting settings with invaid phantom style."""
         self.assertRaises(AssertionError, lambda: Settings({
             "search_colors_in": {

@@ -200,7 +200,7 @@ class ColorHighlighterComponents(object):
         self._fake_color_scheme_data = parse_color_scheme(self.provide_color_scheme(), self._settings.debug)
         return self._fake_color_scheme_data
 
-    def provide_fake_color_scheme_writer(self):
+    def provide_fake_color_scheme_writer(self):  # pylint: disable=invalid-name
         """Provide a fake color scheme data."""
         return self.provide_fake_color_scheme_data()[2]
 
