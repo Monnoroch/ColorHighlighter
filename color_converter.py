@@ -135,9 +135,9 @@ class _RgbaColorConverter(ColorFormatConverter):
         - match - a dict with matched color formats.
         Returns a canonical color representation for the match.
         """
-        r = _parse_decimal_channel(match["rgba_R"])  # pylint: disable=invalid-name
-        g = _parse_decimal_channel(match["rgba_G"])  # pylint: disable=invalid-name
-        b = _parse_decimal_channel(match["rgba_B"])  # pylint: disable=invalid-name
+        r = _parse_decimal_or_percent_channel(match["rgba_R"])  # pylint: disable=invalid-name
+        g = _parse_decimal_or_percent_channel(match["rgba_G"])  # pylint: disable=invalid-name
+        b = _parse_decimal_or_percent_channel(match["rgba_B"])  # pylint: disable=invalid-name
         a = _parse_float_channel(match["rgba_A"])  # pylint: disable=invalid-name
         if r is None or g is None or b is None or a is None:
             return None
@@ -169,9 +169,9 @@ class _RgbColorConverter(ColorFormatConverter):
         - match - a dict with matched color formats.
         Returns a canonical color representation for the match.
         """
-        r = _parse_decimal_channel(match["rgb_R"])  # pylint: disable=invalid-name
-        g = _parse_decimal_channel(match["rgb_G"])  # pylint: disable=invalid-name
-        b = _parse_decimal_channel(match["rgb_B"])  # pylint: disable=invalid-name
+        r = _parse_decimal_or_percent_channel(match["rgb_R"])  # pylint: disable=invalid-name
+        g = _parse_decimal_or_percent_channel(match["rgb_G"])  # pylint: disable=invalid-name
+        b = _parse_decimal_or_percent_channel(match["rgb_B"])  # pylint: disable=invalid-name
         if r is None or g is None or b is None:
             return None
         return "#%02X%02X%02Xff" % (r, g, b)
@@ -407,6 +407,13 @@ def _channel_to_percent(channel):
 
 def _channel_to_hue(channel):
     return int(round((int(channel, 16) * 360) / 255.0))
+
+
+def _parse_decimal_or_percent_channel(text):
+    try:
+        return _parse_decimal_channel(text)
+    except:
+        return int(round(_parse_percent_channel(text) * 255))
 
 
 def _parse_decimal_channel(text):

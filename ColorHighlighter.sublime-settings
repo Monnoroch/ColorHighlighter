@@ -91,14 +91,14 @@
                 "after": "sharp4"
             },
             "rgba": {
-                "description": "rgba(255,255,255,1) color format",
-                "regex": "rgba[(][ ]*(?P<R>dec)[ ]*[,][ ]*(?P<G>dec)[ ]*[,][ ]*(?P<B>dec)[ ]*[,][ ]*(?P<A>float)[ ]*[)]",
-                "white": "rgba(255, 255, 255, 1)"
+                "description": "rgba(255,255,100%,1) color format",
+                "regex": "rgba[(][ ]*(?P<R>dec|perc)[ ]*[,][ ]*(?P<G>dec|perc)[ ]*[,][ ]*(?P<B>dec|perc)[ ]*[,][ ]*(?P<A>float)[ ]*[)]",
+                "white": "rgba(255, 255, 100%, 1)"
             },
             "rgb": {
-                "description": "rgb(255,255,255) color format",
-                "regex": "rgb[(][ ]*(?P<R>dec)[ ]*[,][ ]*(?P<G>dec)[ ]*[,][ ]*(?P<B>dec)[ ]*[)]",
-                "white": "rgb(255, 255, 255)"
+                "description": "rgb(255,255,100%) color format",
+                "regex": "rgb[(][ ]*(?P<R>dec|perc)[ ]*[,][ ]*(?P<G>dec|perc)[ ]*[,][ ]*(?P<B>dec|perc)[ ]*[)]",
+                "white": "rgb(255, 255, 100%)"
             },
             "hsva": {
                 "description": "hsva(hue 0..360, s%, v%, alpha 0.0 .. 1.0) color format",
