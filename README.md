@@ -35,13 +35,16 @@ Going to `Tools > Color Highlighter > Color Highlighters > Highlight colors in a
 This mode can cause pauses when opening big files for the first time with "highlihgt everything" mode because
 the plugin needs to create icons for all newly encountered colors.
 
-### Underline blocks
+### Blocks
 
-Highlighting colors with underline blocks will display colored blocks right under highlighted colors.
+Highlighting colors with blocks will display colored blocks right near highlighted colors.
 These blocks cause text reflow.
 To enable highlighting colors with underline blocks go to
-`Tools > Color Highlighter > Color Highlighters > Highlight colors in all text` and click `Highlight colors with blocks`.
-Clicking on this setting again will disable it.
+`Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Highlight colors with blocks`
+and choose one of `To the right of the color`, `To the left of the color`, `Below the color`.
+These are options are self-explanatory.
+Going to `Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Highlight colors with blocks`
+and selecting `None` will disable it.
 
 ### Inline highlighting
 
@@ -93,7 +96,7 @@ Highlighting style settings for that mode are in `Tools > Color Highlighter > Co
 These three modes can be combined in any possible way.
 The settings for all three modes are completely independent and can be configured all at once.
 For example, the default settings are to highlight all colors with gutter icons and with colored text,
-highlight selected colors with underline blocks and highlight colors one hovers over with inline blocks.
+highlight selected colors with blocks to the right of the color and highlight colors one hovers over with inline blocks.
 
 ## Color picker
 

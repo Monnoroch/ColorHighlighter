@@ -29,7 +29,9 @@ class SettingsTest(unittest.TestCase):
                             "icon_style": "square"
                         },
                         "phantoms": {
-                            "enabled": True
+                            "enabled": True,
+                            "style": "below",
+                            "length": 10
                         }
                     }
                 },
@@ -45,7 +47,9 @@ class SettingsTest(unittest.TestCase):
                             "icon_style": "square"
                         },
                         "phantoms": {
-                            "enabled": True
+                            "enabled": True,
+                            "style": "below",
+                            "length": 10
                         }
                     }
                 },
@@ -61,7 +65,9 @@ class SettingsTest(unittest.TestCase):
                             "icon_style": "square"
                         },
                         "phantoms": {
-                            "enabled": True
+                            "enabled": True,
+                            "style": "below",
+                            "length": 10
                         }
                     }
                 }
@@ -109,6 +115,8 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(True, settings.search_colors_in.selection.color_highlighters.gutter_icons.enabled)
         self.assertEqual("square", settings.search_colors_in.selection.color_highlighters.gutter_icons.icon_style)
         self.assertEqual(True, settings.search_colors_in.selection.color_highlighters.phantoms.enabled)
+        self.assertEqual("below", settings.search_colors_in.selection.color_highlighters.phantoms.style)
+        self.assertEqual(10, settings.search_colors_in.selection.color_highlighters.phantoms.length)
 
         self.assertEqual(True, settings.search_colors_in.all_content.enabled)
         self.assertEqual("all_content", settings.search_colors_in.all_content.name)
@@ -122,6 +130,8 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(
             "square", settings.search_colors_in.all_content.color_highlighters.gutter_icons.icon_style)
         self.assertEqual(True, settings.search_colors_in.all_content.color_highlighters.phantoms.enabled)
+        self.assertEqual("below", settings.search_colors_in.all_content.color_highlighters.phantoms.style)
+        self.assertEqual(10, settings.search_colors_in.all_content.color_highlighters.phantoms.length)
 
         self.assertEqual(True, settings.search_colors_in.hover.enabled)
         self.assertEqual("hover", settings.search_colors_in.hover.name)
@@ -135,6 +145,8 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(
             "square", settings.search_colors_in.hover.color_highlighters.gutter_icons.icon_style)
         self.assertEqual(True, settings.search_colors_in.hover.color_highlighters.phantoms.enabled)
+        self.assertEqual("below", settings.search_colors_in.hover.color_highlighters.phantoms.style)
+        self.assertEqual(10, settings.search_colors_in.hover.color_highlighters.phantoms.length)
 
         self.assertEqual(False, settings.default_keybindings)
         self.assertEqual({".py": True, ".css": True}, settings.file_extensions)
@@ -183,6 +195,8 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(False, settings.search_colors_in.selection.color_highlighters.gutter_icons.enabled)
         self.assertEqual("circle", settings.search_colors_in.selection.color_highlighters.gutter_icons.icon_style)
         self.assertEqual(False, settings.search_colors_in.selection.color_highlighters.phantoms.enabled)
+        self.assertEqual("right", settings.search_colors_in.selection.color_highlighters.phantoms.style)
+        self.assertEqual(2, settings.search_colors_in.selection.color_highlighters.phantoms.length)
 
         self.assertEqual(False, settings.search_colors_in.all_content.enabled)
         self.assertEqual("all_content", settings.search_colors_in.all_content.name)
@@ -196,6 +210,8 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(
             "circle", settings.search_colors_in.all_content.color_highlighters.gutter_icons.icon_style)
         self.assertEqual(False, settings.search_colors_in.all_content.color_highlighters.phantoms.enabled)
+        self.assertEqual("right", settings.search_colors_in.all_content.color_highlighters.phantoms.style)
+        self.assertEqual(2, settings.search_colors_in.all_content.color_highlighters.phantoms.length)
 
         self.assertEqual(False, settings.search_colors_in.hover.enabled)
         self.assertEqual("hover", settings.search_colors_in.hover.name)
@@ -209,6 +225,8 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(
             "circle", settings.search_colors_in.hover.color_highlighters.gutter_icons.icon_style)
         self.assertEqual(False, settings.search_colors_in.hover.color_highlighters.phantoms.enabled)
+        self.assertEqual("right", settings.search_colors_in.hover.color_highlighters.phantoms.style)
+        self.assertEqual(2, settings.search_colors_in.hover.color_highlighters.phantoms.length)
 
         self.assertEqual(True, settings.default_keybindings)
         self.assertEqual({}, settings.file_extensions)
@@ -310,6 +328,22 @@ class SettingsTest(unittest.TestCase):
                         "gutter_icons": {
                             "enabled": True,
                             "icon_style": "invalid-style"
+                        },
+                    }
+                }
+            }
+        }))
+
+    def test_create_invalid_phantom_style(self):
+        """Test creating color highlighting settings with invaid phantom style."""
+        self.assertRaises(AssertionError, lambda: Settings({
+            "search_colors_in": {
+                "selection": {
+                    "enabled": True,
+                    "color_highlighters": {
+                        "phantoms": {
+                            "enabled": True,
+                            "style": "invalid-style"
                         },
                     }
                 }

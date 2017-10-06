@@ -12,7 +12,9 @@
                     "icon_style": "circle"
                 },
                 "phantoms": {
-                    "enabled": true
+                    "enabled": true,
+                    "style": "right",
+                    "length": 2
                 }
             }
         },
@@ -28,7 +30,9 @@
                     "icon_style": "circle"
                 },
                 "phantoms": {
-                    "enabled": false
+                    "enabled": false,
+                    "style": "right",
+                    "length": 2
                 }
             }
         },
@@ -44,7 +48,9 @@
                     "icon_style": "circle"
                 },
                 "phantoms": {
-                    "enabled": false
+                    "enabled": false,
+                    "style": "right",
+                    "length": 2
                 }
             }
         }

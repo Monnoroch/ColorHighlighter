@@ -177,6 +177,8 @@ class GutterIconsColorHighlighterSettings(object):  # pylint: disable=too-few-pu
 class _PhantomsColorHighlighterSettings(object):  # pylint: disable=too-few-public-methods
     """The data structure for holding phantoms color highlihgter settings."""
 
+    VALID_STYLES = ["right", "left", "below"]
+
     def __init__(self, settings):
         """
         Init phantoms color highlihgter settings.
@@ -185,6 +187,9 @@ class _PhantomsColorHighlighterSettings(object):  # pylint: disable=too-few-publ
         - settings - the phantoms color highlihgter settings dict.
         """
         self.enabled = settings.get("enabled", False)
+        self.style = settings.get("style", "right")
+        assert self.style in self.VALID_STYLES
+        self.length = settings.get("length", 2)
         if not st_helper.is_st3():
             print("Highlighting colors with phantoms is not supported on ST2.")
             self.enabled = False

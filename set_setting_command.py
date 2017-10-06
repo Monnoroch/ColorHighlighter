@@ -54,14 +54,20 @@ class ColorHighlighterSetSetting(sublime_plugin.ApplicationCommand):
             "search_colors_in.selection.color_highlighters.color_scheme.enabled",
         "search_colors_in.selection.color_highlighters.gutter_icons.icon_style":
             "search_colors_in.selection.color_highlighters.gutter_icons.enabled",
+        "search_colors_in.selection.color_highlighters.phantoms.style":
+            "search_colors_in.selection.color_highlighters.phantoms.enabled",
         "search_colors_in.all_content.color_highlighters.color_scheme.highlight_style":
             "search_colors_in.all_content.color_highlighters.color_scheme.enabled",
         "search_colors_in.all_content.color_highlighters.gutter_icons.icon_style":
             "search_colors_in.all_content.color_highlighters.gutter_icons.enabled",
+        "search_colors_in.all_content.color_highlighters.phantoms.style":
+            "search_colors_in.all_content.color_highlighters.phantoms.enabled",
         "search_colors_in.hover.color_highlighters.color_scheme.highlight_style":
             "search_colors_in.hover.color_highlighters.color_scheme.enabled",
         "search_colors_in.hover.color_highlighters.gutter_icons.icon_style":
             "search_colors_in.hover.color_highlighters.gutter_icons.enabled",
+        "search_colors_in.hover.color_highlighters.phantoms.style":
+            "search_colors_in.hover.color_highlighters.phantoms.enabled",
     }
 
     # A key is a boolean setting, a value is a list of boolean settings that need to be OR-ed to compute the key

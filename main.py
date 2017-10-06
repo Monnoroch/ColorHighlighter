@@ -259,7 +259,9 @@ class ColorHighlighterComponents(object):
                 view, searcher.color_highlighters.gutter_icons.icon_style, self.provide_icon_factory(), searcher.name,
                 self._settings.debug))
         if searcher.color_highlighters.phantoms.enabled:
-            color_highlighters.append(PhantomColorHighlighter(view, searcher.name, self._settings.debug))
+            color_highlighters.append(PhantomColorHighlighter(
+                view, searcher.name, searcher.color_highlighters.phantoms.style,
+                searcher.color_highlighters.phantoms.length, self._settings.debug))
         color_highlighter = CachingColorHighlighter(color_highlighters)
         self._color_highlighters[searcher.name][view.id()] = color_highlighter
         return color_highlighter

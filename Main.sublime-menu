@@ -149,11 +149,45 @@
                                     },
                                     {
                                         "caption": "Highlight colors with blocks",
-                                        "command": "color_highlighter_set_setting",
-                                        "checkbox": true,
-                                        "args": {
-                                            "setting": "search_colors_in.selection.color_highlighters.phantoms.enabled"
-                                        }
+                                        "children":
+                                        [
+                                            {
+                                                "caption": "None",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.phantoms.style",
+                                                    "value": "none"
+                                                }
+                                            },
+                                            {
+                                                "caption": "To the right of the color",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.phantoms.style",
+                                                    "value": "right"
+                                                }
+                                            },
+                                            {
+                                                "caption": "To the left of the color",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.phantoms.style",
+                                                    "value": "left"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Below the color",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.selection.color_highlighters.phantoms.style",
+                                                    "value": "below"
+                                                }
+                                            }
+                                        ]
                                     }
                                 ]
                             },
@@ -265,11 +299,45 @@
                                     },
                                     {
                                         "caption": "Highlight colors with blocks",
-                                        "command": "color_highlighter_set_setting",
-                                        "checkbox": true,
-                                        "args": {
-                                            "setting": "search_colors_in.hover.color_highlighters.phantoms.enabled"
-                                        }
+                                        "children":
+                                        [
+                                            {
+                                                "caption": "None",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.phantoms.style",
+                                                    "value": "none"
+                                                }
+                                            },
+                                            {
+                                                "caption": "To the right of the color",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.phantoms.style",
+                                                    "value": "inline"
+                                                }
+                                            },
+                                            {
+                                                "caption": "To the left of the color",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.phantoms.style",
+                                                    "value": "left"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Below the color",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.hover.color_highlighters.phantoms.style",
+                                                    "value": "below"
+                                                }
+                                            }
+                                        ]
                                     }
                                 ]
                             },
@@ -381,11 +449,45 @@
                                     },
                                     {
                                         "caption": "Highlight colors with blocks",
-                                        "command": "color_highlighter_set_setting",
-                                        "checkbox": true,
-                                        "args": {
-                                            "setting": "search_colors_in.all_content.color_highlighters.phantoms.enabled"
-                                        }
+                                        "children":
+                                        [
+                                            {
+                                                "caption": "None",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.phantoms.style",
+                                                    "value": "none"
+                                                }
+                                            },
+                                            {
+                                                "caption": "To the right of the color",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.phantoms.style",
+                                                    "value": "inline"
+                                                }
+                                            },
+                                            {
+                                                "caption": "To the left of the color",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.phantoms.style",
+                                                    "value": "left"
+                                                }
+                                            },
+                                            {
+                                                "caption": "Below the color",
+                                                "command": "color_highlighter_set_setting",
+                                                "checkbox": true,
+                                                "args": {
+                                                    "setting": "search_colors_in.all_content.color_highlighters.phantoms.style",
+                                                    "value": "below"
+                                                }
+                                            }
+                                        ]
                                     }
                                 ]
                             }

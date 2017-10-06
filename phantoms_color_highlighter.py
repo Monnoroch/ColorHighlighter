@@ -35,17 +35,30 @@ class PhantomColorHighlighter(ColorHighlighter):
 '''
     space_symbol = "&nbsp;"
 
-    def __init__(self, view, name, debug):
+    _phantom_styles = {
+        "right": sublime.LAYOUT_INLINE,
+        "left": sublime.LAYOUT_INLINE,
+        "below": sublime.LAYOUT_BELOW
+    }
+
+    _inline_styles = {"right": True, "left": True}
+
+    def __init__(self, view, name, style, length, debug):
         """
         Create a phantom color highlighter.
 
         Arguments:
         - view - a view to highlight colors in.
         - name - the name of the color highlighter.
+        - style - the style of the phantoms.
+        - length - the length of the block in the "inline" mode.
         - debug - whether to enable debug mode.
         """
+        assert style in self._phantom_styles
         self._view = view
         self._name = name
+        self._style = style
+        self._length = length
         self._debug = debug
 
     def highlight_region(self, context, value):
@@ -58,13 +71,14 @@ class PhantomColorHighlighter(ColorHighlighter):
         Returns True, if highlighted, False otherwise.
         """
         (region, color) = value
-        html = _generate_phantom_html(region, color)
+        html = self._generate_phantom_html(region, color)
         if self._debug:
             print("ColorHighlighter: action=highlight highlighter=PhantomColorHighlighter region=%s color=%s"
                   % (str(region), str(color)))
         self._view.add_phantom(
-            PhantomColorHighlighter.phantom_key_template % (self._name, region.a, region.b), region.region(), html,
-            sublime.LAYOUT_BELOW, None)
+            PhantomColorHighlighter.phantom_key_template % (self._name, region.a, region.b),
+            self._get_region(region), html,
+            self._phantom_styles[self._style], None)
 
     def unhighlight_region(self, context, value):
         """
@@ -77,6 +91,17 @@ class PhantomColorHighlighter(ColorHighlighter):
         (region, _) = value
         self._view.erase_phantoms(PhantomColorHighlighter.phantom_key_template % (self._name, region.a, region.b))
 
+    def _get_region(self, region):
+        if self._style == "below":
+            return region.region()
+        elif self._style == "right":
+            return sublime.Region(region.b, region.b)
+        elif self._style == "left":
+            return sublime.Region(region.a, region.a)
 
-def _generate_phantom_html(region, color):
-    return PhantomColorHighlighter.html_template % (color, PhantomColorHighlighter.space_symbol * region.length())
+    def _generate_phantom_html(self, region, color):
+        if self._style == "below":
+            size = region.length()
+        elif self._style in self._inline_styles:
+            size = self._length
+        return PhantomColorHighlighter.html_template % (color, PhantomColorHighlighter.space_symbol * size)
