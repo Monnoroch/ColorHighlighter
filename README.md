@@ -19,7 +19,7 @@ _ColorHighlighter is a plugin for the Sublime Text 2 and 3, which unobtrusively 
     - <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> then select `Package Control: Install Package`
     - install `Color Highlighter`
 - Alternatively, download the package from [GitHub](https://github.com/Monnoroch/ColorHighlighter "ColorHighlighter") into your `Packages` folder.
-- For gutter icons install [ImageMagick](http://www.imagemagick.org/). To configure ImageMagick, update `icon_factory.convert_command` plugin setting.
+- For gutter icons install [ImageMagick](http://www.imagemagick.org/). To configure ImageMagick, update `icon_factory.convert_command` plugin setting to the path of the convert utility on your machine, hint: use the `which convert` command on *nix machines.
 
 ## Color Highlighting styles
 
@@ -32,7 +32,7 @@ To enable highlighting colors with gutter icons go to
 Highlighting colors with gutter icons requires ImageMagick to be installed (see the installation section).
 Going to `Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Gutter icon style` and selecting `None` will disable it.
 
-This mode can cause pauses when opening big files for the first time with "highlihgt everything" mode because
+This mode can cause pauses when opening big files for the first time with "highlight everything" mode because
 the plugin needs to create icons for all newly encountered colors.
 
 ### Blocks
