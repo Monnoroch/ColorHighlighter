@@ -316,7 +316,7 @@
                                                 "checkbox": true,
                                                 "args": {
                                                     "setting": "search_colors_in.hover.color_highlighters.phantoms.style",
-                                                    "value": "inline"
+                                                    "value": "right"
                                                 }
                                             },
                                             {
@@ -466,7 +466,7 @@
                                                 "checkbox": true,
                                                 "args": {
                                                     "setting": "search_colors_in.all_content.color_highlighters.phantoms.style",
-                                                    "value": "inline"
+                                                    "value": "right"
                                                 }
                                             },
                                             {
