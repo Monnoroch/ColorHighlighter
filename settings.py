@@ -151,7 +151,8 @@ class ColorSchemeColorHighlighterSettings(object):  # pylint: disable=too-few-pu
             valid_styles = self.ST2_VALID_STYLES
         self.enabled = settings.get("enabled", False)
         self.highlight_style = settings.get("highlight_style", "filled")
-        assert self.highlight_style in valid_styles, "Color scheme highlihgting style is invalid"
+        assert self.highlight_style in valid_styles, ("Color scheme highlihgting style \"%s\" is invalid"
+            % self.highlight_style)
 
 
 class GutterIconsColorHighlighterSettings(object):  # pylint: disable=too-few-public-methods
@@ -168,7 +169,7 @@ class GutterIconsColorHighlighterSettings(object):  # pylint: disable=too-few-pu
         """
         self.enabled = settings.get("enabled", False)
         self.icon_style = settings.get("icon_style", "circle")
-        assert self.icon_style in self.VALID_STYLES, "Gutter icons style is invalid"
+        assert self.icon_style in self.VALID_STYLES, "Gutter icons style \"%s\" is invalid" % self.icon_style
         if not st_helper.is_st3():
             print("Highlighting colors with gutter icons is not supported on ST2.")
             self.enabled = False
@@ -188,7 +189,7 @@ class _PhantomsColorHighlighterSettings(object):  # pylint: disable=too-few-publ
         """
         self.enabled = settings.get("enabled", False)
         self.style = settings.get("style", "right")
-        assert self.style in self.VALID_STYLES, "Phantoms style is invalid"
+        assert self.style in self.VALID_STYLES, "Phantoms style \"%s\" is invalid" % self.style
         self.length = settings.get("length", 2)
         if not st_helper.is_st3():
             print("Highlighting colors with phantoms is not supported on ST2.")
