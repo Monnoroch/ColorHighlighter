@@ -152,7 +152,7 @@ disabling inline color highlighting.
 
 ##### I don't have any other plugin that modifies the color scheme and inline highlighting still works incorrectly
 
-Due to a Sublime Text not ordering added regions deterministically enabling both text and non-text inline highlihgting
+Due to a Sublime Text not ordering added regions deterministically enabling both text and non-text inline highlighting
 at the same time might work properly. For example, if you select `Text` in
 `Tools > Color Highlighter > Color Highlighters > Highlight colors in all text > Inline highlighting style`
 and `Filled` in
@@ -162,7 +162,7 @@ isn't, this is exactly this issue.
 
 **Donate**
 
-Thank you guys for all your support, I couldn't have done it wihout your contributions. Every little bit helps!
+Thank you guys for all your support, I couldn't have done it without your contributions. Every little bit helps!
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C2L27SE4YDFAC)
 
